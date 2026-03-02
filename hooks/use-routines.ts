@@ -1,71 +1,141 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { storage, KEYS } from "@/lib/storage";
 import type { Routine } from "@/lib/types";
 import { mockRoutines } from "@/lib/data";
 
-export function useRoutines() {
-  const [routines, setRoutines] = useState<Routine[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+// Progress structure: Record<childId, Record<taskId, boolean>>
+type RoutineProgress = Record<string, Record<string, boolean>>;
 
+export function useRoutines(selectedChildId?: string) {
+  const [routineTemplates, setRoutineTemplates] = useState<Routine[]>([]);
+  const [progress, setProgress] = useState<RoutineProgress>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const hasMigrated = useRef(false);
+
+  // Load routine templates and progress
   useEffect(() => {
     async function load() {
-      const stored = await storage.getItem<Routine[]>(KEYS.CUSTOM_ROUTINES);
-      if (stored && stored.length > 0) {
-        setRoutines(stored);
+      const [storedRoutines, storedProgress] = await Promise.all([
+        storage.getItem<Routine[]>(KEYS.CUSTOM_ROUTINES),
+        storage.getItem<RoutineProgress>(KEYS.ROUTINE_PROGRESS),
+      ]);
+
+      let templates: Routine[];
+      if (storedRoutines && storedRoutines.length > 0) {
+        templates = storedRoutines;
       } else {
-        // Seed with mock data on first use
-        const seeded = JSON.parse(JSON.stringify(mockRoutines));
-        setRoutines(seeded);
-        await storage.setItem(KEYS.CUSTOM_ROUTINES, seeded);
+        templates = JSON.parse(JSON.stringify(mockRoutines));
+        await storage.setItem(KEYS.CUSTOM_ROUTINES, templates);
       }
+
+      // Migration: if no progress exists yet but routines have completed tasks,
+      // migrate existing completion state as progress for the current child
+      if (!storedProgress && !hasMigrated.current) {
+        hasMigrated.current = true;
+        const hasCompletedTasks = templates.some((r) =>
+          r.tasks.some((t) => t.completed)
+        );
+
+        if (hasCompletedTasks && selectedChildId) {
+          const migratedProgress: Record<string, boolean> = {};
+          for (const routine of templates) {
+            for (const task of routine.tasks) {
+              if (task.completed) {
+                migratedProgress[task.id] = true;
+              }
+            }
+          }
+          const newProgress: RoutineProgress = { [selectedChildId]: migratedProgress };
+          setProgress(newProgress);
+          await storage.setItem(KEYS.ROUTINE_PROGRESS, newProgress);
+
+          // Reset all tasks in templates to completed: false
+          const cleanTemplates = templates.map((r) => ({
+            ...r,
+            tasks: r.tasks.map((t) => ({ ...t, completed: false })),
+          }));
+          templates = cleanTemplates;
+          await storage.setItem(KEYS.CUSTOM_ROUTINES, cleanTemplates);
+        }
+      } else if (storedProgress) {
+        setProgress(storedProgress);
+      }
+
+      setRoutineTemplates(templates);
       setIsLoading(false);
     }
     load();
-  }, []);
+  }, [selectedChildId]);
+
+  // Computed routines: merge templates with child-specific progress
+  const routines = useMemo(() => {
+    if (!selectedChildId) return routineTemplates;
+    const childProgress = progress[selectedChildId] ?? {};
+    return routineTemplates.map((r) => ({
+      ...r,
+      tasks: r.tasks.map((t) => ({
+        ...t,
+        completed: childProgress[t.id] ?? false,
+      })),
+    }));
+  }, [routineTemplates, progress, selectedChildId]);
 
   const addRoutine = useCallback(async (routine: Routine) => {
-    const updated = [...routines, routine];
-    setRoutines(updated);
-    await storage.setItem(KEYS.CUSTOM_ROUTINES, updated);
-  }, [routines]);
+    setRoutineTemplates((prev) => {
+      const updated = [...prev, { ...routine, tasks: routine.tasks.map((t) => ({ ...t, completed: false })) }];
+      storage.setItem(KEYS.CUSTOM_ROUTINES, updated);
+      return updated;
+    });
+  }, []);
 
   const updateRoutine = useCallback(async (id: string, updates: Partial<Routine>) => {
-    const updated = routines.map((r) => (r.id === id ? { ...r, ...updates } : r));
-    setRoutines(updated);
-    await storage.setItem(KEYS.CUSTOM_ROUTINES, updated);
-  }, [routines]);
+    setRoutineTemplates((prev) => {
+      const updated = prev.map((r) => (r.id === id ? { ...r, ...updates } : r));
+      storage.setItem(KEYS.CUSTOM_ROUTINES, updated);
+      return updated;
+    });
+  }, []);
 
   const removeRoutine = useCallback(async (id: string) => {
-    const updated = routines.filter((r) => r.id !== id);
-    setRoutines(updated);
-    await storage.setItem(KEYS.CUSTOM_ROUTINES, updated);
-  }, [routines]);
+    setRoutineTemplates((prev) => {
+      const updated = prev.filter((r) => r.id !== id);
+      storage.setItem(KEYS.CUSTOM_ROUTINES, updated);
+      return updated;
+    });
+  }, []);
 
   const toggleTaskCompletion = useCallback(async (routineId: string, taskId: string) => {
-    const updated = routines.map((routine) => {
-      if (routine.id !== routineId) return routine;
-      return {
-        ...routine,
-        tasks: routine.tasks.map((task) =>
-          task.id === taskId ? { ...task, completed: !task.completed } : task
-        ),
+    if (!selectedChildId) return;
+
+    setProgress((prev) => {
+      const childProgress = prev[selectedChildId] ?? {};
+      const newChildProgress = {
+        ...childProgress,
+        [taskId]: !childProgress[taskId],
       };
+      const updated = { ...prev, [selectedChildId]: newChildProgress };
+      storage.setItem(KEYS.ROUTINE_PROGRESS, updated);
+      return updated;
     });
-    setRoutines(updated);
-    await storage.setItem(KEYS.CUSTOM_ROUTINES, updated);
+
     // Return the toggled task for star calculation
-    const routine = updated.find((r) => r.id === routineId);
-    return routine?.tasks.find((t) => t.id === taskId);
-  }, [routines]);
+    const routine = routineTemplates.find((r) => r.id === routineId);
+    const task = routine?.tasks.find((t) => t.id === taskId);
+    if (task) {
+      const childProgress = progress[selectedChildId] ?? {};
+      return { ...task, completed: !childProgress[taskId] };
+    }
+  }, [selectedChildId, routineTemplates, progress]);
 
   const resetDailyProgress = useCallback(async () => {
-    const updated = routines.map((routine) => ({
-      ...routine,
-      tasks: routine.tasks.map((task) => ({ ...task, completed: false })),
-    }));
-    setRoutines(updated);
-    await storage.setItem(KEYS.CUSTOM_ROUTINES, updated);
-  }, [routines]);
+    if (!selectedChildId) return;
+
+    setProgress((prev) => {
+      const updated = { ...prev, [selectedChildId]: {} };
+      storage.setItem(KEYS.ROUTINE_PROGRESS, updated);
+      return updated;
+    });
+  }, [selectedChildId]);
 
   return {
     routines,
@@ -75,6 +145,6 @@ export function useRoutines() {
     removeRoutine,
     toggleTaskCompletion,
     resetDailyProgress,
-    setRoutines,
+    setRoutines: setRoutineTemplates,
   };
 }

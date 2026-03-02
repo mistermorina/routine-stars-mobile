@@ -9,7 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useRoutines } from "@/hooks/use-routines";
 import type { Routine, Task } from "@/lib/types";
 import { Header } from "@/components/routine-stars/header";
-import { ChildSelector } from "@/components/routine-stars/child-selector";
 import { RoutineCard } from "@/components/routine-stars/routine-card";
 import { TaskTimerModal } from "@/components/routine-stars/task-timer-modal";
 import { RoutineCompleteDialog } from "@/components/routine-stars/routine-complete-dialog";
@@ -28,7 +27,7 @@ export default function DashboardScreen() {
   } = useChildren();
   const { logActivity } = useActivityLogs();
   const { toast } = useToast();
-  const { routines, toggleTaskCompletion, resetDailyProgress, isLoading: routinesLoading } = useRoutines();
+  const { routines, toggleTaskCompletion, resetDailyProgress, isLoading: routinesLoading } = useRoutines(selectedChildId);
 
   // Timer modal state
   const [timerTask, setTimerTask] = useState<Task | null>(null);
@@ -136,22 +135,13 @@ export default function DashboardScreen() {
   return (
     <View className="flex-1 bg-background">
       {/* Header */}
-      <Header child={selectedChild} />
+      <Header child={selectedChild} allChildren={children} onSelectChild={selectChild} />
 
       <ScrollView
         className="flex-1"
         contentContainerClassName="pb-8"
         showsVerticalScrollIndicator={false}
       >
-        {/* Child selector */}
-        {children.length > 1 && (
-          <ChildSelector
-            children={children}
-            selectedChildId={selectedChildId!}
-            onSelectChild={selectChild}
-          />
-        )}
-
         {/* Routine cards */}
         <View className="px-4 mt-4">
           {routines.map((routine) => (

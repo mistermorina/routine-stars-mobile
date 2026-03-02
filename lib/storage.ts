@@ -7,6 +7,7 @@ const KEYS = {
   CUSTOM_ROUTINES: "customRoutines",
   CUSTOM_REWARDS: "customRewards",
   HAS_ONBOARDED: "hasOnboarded",
+  ROUTINE_PROGRESS: "routineProgress",
 } as const;
 
 export { KEYS };
