@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "Routine Stars",
+    "slug": "routine-stars",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "routinestars",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F8E9D7"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.routinestars.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F8E9D7"
+      },
+      "package": "com.routinestars.app"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-asset"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

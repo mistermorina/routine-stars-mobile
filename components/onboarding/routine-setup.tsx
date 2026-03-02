@@ -1,0 +1,308 @@
+import React, { useState, useCallback } from "react";
+import { View, Text, Pressable, ScrollView } from "react-native";
+import { GripVertical, Plus, Trash2, Check } from "lucide-react-native";
+import DraggableFlatList, {
+  ScaleDecorator,
+  RenderItemParams,
+} from "react-native-draggable-flatlist";
+import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { TemplateSelector } from "@/components/routine-templates/template-selector";
+import type { RoutineTemplate } from "@/lib/types";
+
+interface TaskItem {
+  id: string;
+  title: string;
+  iconName: string;
+  stars: number;
+}
+
+export interface SavedRoutine {
+  id: string;
+  name: string;
+  tasks: TaskItem[];
+  dailyRepeat: boolean;
+  color?: string;
+}
+
+interface RoutineSetupProps {
+  onNext: (data: { savedRoutines: SavedRoutine[] }) => void;
+  onBack: () => void;
+  formData: {
+    childName: string;
+    savedRoutines?: SavedRoutine[];
+  };
+}
+
+export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
+  // Saved routines list
+  const [savedRoutines, setSavedRoutines] = useState<SavedRoutine[]>(
+    formData.savedRoutines ?? []
+  );
+
+  // Current routine being edited
+  const [routineName, setRoutineName] = useState("Morgenroutine");
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>();
+  const [selectedTemplateColor, setSelectedTemplateColor] = useState<string | undefined>();
+  const [newTask, setNewTask] = useState("");
+  const [dailyRepeat, setDailyRepeat] = useState(true);
+
+  const handleSelectTemplate = useCallback((template: RoutineTemplate) => {
+    setSelectedTemplateId(template.id);
+    setSelectedTemplateColor(template.color);
+    setRoutineName(template.name);
+    setTasks(
+      template.tasks.map((t, i) => ({
+        id: `task-${Date.now()}-${i}`,
+        title: t.title,
+        iconName: t.iconName,
+        stars: t.stars,
+      }))
+    );
+  }, []);
+
+  const handleAddTask = () => {
+    const trimmed = newTask.trim();
+    if (trimmed) {
+      setTasks((prev) => [
+        ...prev,
+        {
+          id: `task-${Date.now()}`,
+          title: trimmed,
+          iconName: "circle-check",
+          stars: 1,
+        },
+      ]);
+      setNewTask("");
+    }
+  };
+
+  const handleRemoveTask = useCallback((idToRemove: string) => {
+    setTasks((prev) => prev.filter((task) => task.id !== idToRemove));
+  }, []);
+
+  const handleSaveRoutine = () => {
+    if (tasks.length === 0 || !routineName.trim()) return;
+    const routine: SavedRoutine = {
+      id: `routine-${Date.now()}`,
+      name: routineName.trim(),
+      tasks,
+      dailyRepeat,
+      color: selectedTemplateColor,
+    };
+    setSavedRoutines((prev) => [...prev, routine]);
+    // Reset form for next routine
+    setRoutineName("");
+    setTasks([]);
+    setSelectedTemplateId(undefined);
+    setSelectedTemplateColor(undefined);
+    setNewTask("");
+    setDailyRepeat(true);
+  };
+
+  const handleRemoveRoutine = useCallback((idToRemove: string) => {
+    setSavedRoutines((prev) => prev.filter((r) => r.id !== idToRemove));
+  }, []);
+
+  const handleSubmit = () => {
+    // If user has tasks in the form but hasn't saved yet, auto-save
+    let allRoutines = [...savedRoutines];
+    if (tasks.length > 0 && routineName.trim()) {
+      allRoutines.push({
+        id: `routine-${Date.now()}`,
+        name: routineName.trim(),
+        tasks,
+        dailyRepeat,
+        color: selectedTemplateColor,
+      });
+    }
+    onNext({ savedRoutines: allRoutines });
+  };
+
+  const hasUnsavedRoutine = tasks.length > 0 && routineName.trim().length > 0;
+  const canProceed = savedRoutines.length > 0 || hasUnsavedRoutine;
+
+  const renderItem = useCallback(
+    ({ item, drag, isActive }: RenderItemParams<TaskItem>) => (
+      <ScaleDecorator>
+        <View
+          className={cn(
+            "flex-row items-center gap-2 rounded-lg bg-secondary p-3 mb-2",
+            isActive && "opacity-80"
+          )}
+        >
+          <Pressable onLongPress={drag} hitSlop={8}>
+            <GripVertical size={20} color="#737373" />
+          </Pressable>
+          <Text className="flex-1 text-base font-body text-foreground">
+            {item.title}
+          </Text>
+          <Pressable onPress={() => handleRemoveTask(item.id)} hitSlop={8}>
+            <Trash2 size={18} color="#ef4444" />
+          </Pressable>
+        </View>
+      </ScaleDecorator>
+    ),
+    [handleRemoveTask]
+  );
+
+  return (
+    <ScrollView
+      className="flex-1"
+      showsVerticalScrollIndicator={false}
+      contentContainerClassName="pb-8"
+    >
+      {/* Saved routines */}
+      {savedRoutines.length > 0 && (
+        <View className="mb-4 gap-2">
+          <Label>Gespeicherte Routinen ({savedRoutines.length})</Label>
+          {savedRoutines.map((routine) => (
+            <View
+              key={routine.id}
+              className="flex-row items-center rounded-lg bg-[#87CEEB]/10 border border-[#87CEEB] p-3 gap-3"
+            >
+              <Check size={18} color="#87CEEB" />
+              <View className="flex-1">
+                <Text className="text-sm font-headline text-foreground">
+                  {routine.name}
+                </Text>
+                <Text className="text-xs font-body text-muted-foreground">
+                  {routine.tasks.length} Aufgaben
+                </Text>
+              </View>
+              <Pressable onPress={() => handleRemoveRoutine(routine.id)} hitSlop={8}>
+                <Trash2 size={16} color="#ef4444" />
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            {savedRoutines.length > 0 ? "Weitere Routine hinzufügen" : "Routine erstellen"}
+          </CardTitle>
+          <CardDescription>
+            Wähle eine Vorlage oder erstelle eine eigene Routine für {formData.childName || "dein Kind"}.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <View className="gap-5">
+            {/* Template selector */}
+            <View>
+              <Label>Vorlage wählen</Label>
+              <View className="mt-2">
+                <TemplateSelector
+                  onSelectTemplate={handleSelectTemplate}
+                  selectedTemplateId={selectedTemplateId}
+                />
+              </View>
+            </View>
+
+            {/* Routine name */}
+            <View className="gap-2">
+              <Label>Name der Routine</Label>
+              <Input
+                value={routineName}
+                onChangeText={setRoutineName}
+                placeholder="Name der Routine"
+              />
+            </View>
+
+            {/* Task list */}
+            <View className="gap-2">
+              <Label>Aufgaben ({tasks.length})</Label>
+              {tasks.length > 0 ? (
+                <DraggableFlatList
+                  data={tasks}
+                  keyExtractor={(item) => item.id}
+                  renderItem={renderItem}
+                  onDragEnd={({ data }) => setTasks(data)}
+                  scrollEnabled={false}
+                />
+              ) : (
+                <View className="py-4 items-center">
+                  <Text className="text-sm font-body text-muted-foreground">
+                    Wähle oben eine Vorlage oder füge Aufgaben hinzu
+                  </Text>
+                </View>
+              )}
+
+              {/* Add new task */}
+              <View className="flex-row gap-2 mt-1">
+                <View className="flex-1">
+                  <Input
+                    value={newTask}
+                    onChangeText={setNewTask}
+                    placeholder="Neue Aufgabe hinzufügen"
+                    returnKeyType="done"
+                    onSubmitEditing={handleAddTask}
+                  />
+                </View>
+                <Button
+                  size="icon"
+                  onPress={handleAddTask}
+                  disabled={!newTask.trim()}
+                >
+                  <Plus size={20} color="#1a1a2e" />
+                </Button>
+              </View>
+            </View>
+
+            {/* Daily repeat checkbox */}
+            <Pressable
+              onPress={() => setDailyRepeat(!dailyRepeat)}
+              className="flex-row items-center gap-3"
+            >
+              <Checkbox
+                checked={dailyRepeat}
+                onCheckedChange={setDailyRepeat}
+              />
+              <Label>Täglich wiederholen</Label>
+            </Pressable>
+
+            {/* Save routine button */}
+            {tasks.length > 0 && (
+              <Button
+                variant="outline"
+                onPress={handleSaveRoutine}
+                disabled={tasks.length === 0 || !routineName.trim()}
+                className="border-[#87CEEB]"
+              >
+                <Text className="text-sm font-body-semibold text-[#87CEEB]">
+                  Routine speichern & weitere hinzufügen
+                </Text>
+              </Button>
+            )}
+
+            {/* Navigation buttons */}
+            <View className="flex-row justify-between pt-2">
+              <Button variant="outline" onPress={onBack} className="min-w-[100px]">
+                Zurück
+              </Button>
+              <Button
+                onPress={handleSubmit}
+                disabled={!canProceed}
+                className="min-w-[100px]"
+              >
+                Weiter
+              </Button>
+            </View>
+          </View>
+        </CardContent>
+      </Card>
+    </ScrollView>
+  );
+}
