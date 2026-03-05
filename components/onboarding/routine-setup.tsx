@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
-import { GripVertical, Plus, Trash2, Check } from "lucide-react-native";
+import { GripVertical, Plus, Trash2, Check, ChevronDown, Sparkles } from "lucide-react-native";
 import DraggableFlatList, {
   ScaleDecorator,
   RenderItemParams,
@@ -16,15 +16,19 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { TemplateSelector } from "@/components/routine-templates/template-selector";
-import type { RoutineTemplate } from "@/lib/types";
+import { TemplateCard } from "@/components/routine-templates/template-card";
+import { getRecommendedRoutineTemplates } from "@/lib/routine-templates";
+import { getThemePalette } from "@/lib/theme";
+import type { RoutineTemplate, ChildProfile } from "@/lib/types";
 
 interface TaskItem {
   id: string;
   title: string;
   iconName: string;
   stars: number;
+  timerInMinutes?: number;
+  bonusStars?: number;
 }
 
 export interface SavedRoutine {
@@ -39,7 +43,7 @@ interface RoutineSetupProps {
   onNext: (data: { savedRoutines: SavedRoutine[] }) => void;
   onBack: () => void;
   formData: {
-    childName: string;
+    children: ChildProfile[];
     savedRoutines?: SavedRoutine[];
   };
 }
@@ -51,23 +55,32 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
   );
 
   // Current routine being edited
-  const [routineName, setRoutineName] = useState("Morgenroutine");
+  const [routineName, setRoutineName] = useState("");
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>();
   const [selectedTemplateColor, setSelectedTemplateColor] = useState<string | undefined>();
   const [newTask, setNewTask] = useState("");
-  const [dailyRepeat, setDailyRepeat] = useState(true);
+  const [dailyRepeat] = useState(true);
+  const [showAllTemplates, setShowAllTemplates] = useState(false);
+  const [showCustomizer, setShowCustomizer] = useState(false);
+
+  const primaryChild = formData.children[0];
+  const palette = getThemePalette(primaryChild?.theme);
+  const recommendedTemplates = getRecommendedRoutineTemplates(primaryChild?.ageGroup);
 
   const handleSelectTemplate = useCallback((template: RoutineTemplate) => {
     setSelectedTemplateId(template.id);
     setSelectedTemplateColor(template.color);
     setRoutineName(template.name);
+    setShowCustomizer(true);
     setTasks(
       template.tasks.map((t, i) => ({
         id: `task-${Date.now()}-${i}`,
         title: t.title,
         iconName: t.iconName,
         stars: t.stars,
+        timerInMinutes: t.timerInMinutes,
+        bonusStars: t.bonusStars,
       }))
     );
   }, []);
@@ -82,8 +95,11 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
           title: trimmed,
           iconName: "circle-check",
           stars: 1,
+          timerInMinutes: undefined,
+          bonusStars: undefined,
         },
       ]);
+      setShowCustomizer(true);
       setNewTask("");
     }
   };
@@ -108,7 +124,8 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
     setSelectedTemplateId(undefined);
     setSelectedTemplateColor(undefined);
     setNewTask("");
-    setDailyRepeat(true);
+    setShowCustomizer(false);
+    setShowAllTemplates(false);
   };
 
   const handleRemoveRoutine = useCallback((idToRemove: string) => {
@@ -192,100 +209,166 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
       <Card>
         <CardHeader>
           <CardTitle>
-            {savedRoutines.length > 0 ? "Weitere Routine hinzufügen" : "Routine erstellen"}
+            {savedRoutines.length > 0 ? "Weitere Routine hinzufügen" : "Starter-Routine wählen"}
           </CardTitle>
           <CardDescription>
-            Wähle eine Vorlage oder erstelle eine eigene Routine für {formData.childName || "dein Kind"}.
+            Wir schlagen passende Vorlagen für{" "}
+            {formData.children.length === 1 ? formData.children[0].name : "deine Familie"}{" "}
+            vor. Du kannst sie danach noch anpassen.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <View className="gap-5">
-            {/* Template selector */}
-            <View>
-              <Label>Vorlage wählen</Label>
-              <View className="mt-2">
-                <TemplateSelector
-                  onSelectTemplate={handleSelectTemplate}
-                  selectedTemplateId={selectedTemplateId}
-                />
-              </View>
-            </View>
-
-            {/* Routine name */}
-            <View className="gap-2">
-              <Label>Name der Routine</Label>
-              <Input
-                value={routineName}
-                onChangeText={setRoutineName}
-                placeholder="Name der Routine"
-              />
-            </View>
-
-            {/* Task list */}
-            <View className="gap-2">
-              <Label>Aufgaben ({tasks.length})</Label>
-              {tasks.length > 0 ? (
-                <DraggableFlatList
-                  data={tasks}
-                  keyExtractor={(item) => item.id}
-                  renderItem={renderItem}
-                  onDragEnd={({ data }) => setTasks(data)}
-                  scrollEnabled={false}
-                />
-              ) : (
-                <View className="py-4 items-center">
-                  <Text className="text-sm font-body text-muted-foreground">
-                    Wähle oben eine Vorlage oder füge Aufgaben hinzu
+            <View
+              className="rounded-2xl border px-4 py-4"
+              style={{
+                borderColor: palette.accentBorder,
+                backgroundColor: palette.accentSoft,
+              }}
+            >
+              <View className="flex-row items-center">
+                <View
+                  className="h-11 w-11 items-center justify-center rounded-full"
+                  style={{ backgroundColor: palette.surface }}
+                >
+                  <Sparkles size={20} color={palette.accentStrong} />
+                </View>
+                <View className="ml-3 flex-1">
+                  <Text className="text-base font-body-semibold text-foreground">
+                    Empfohlen für {primaryChild?.name || "dein Kind"}
+                  </Text>
+                  <Text className="text-xs font-body" style={{ color: palette.accentText }}>
+                    Alter {primaryChild?.ageGroup ?? "6-8"} • passend zur Tageszeit
                   </Text>
                 </View>
-              )}
-
-              {/* Add new task */}
-              <View className="flex-row gap-2 mt-1">
-                <View className="flex-1">
-                  <Input
-                    value={newTask}
-                    onChangeText={setNewTask}
-                    placeholder="Neue Aufgabe hinzufügen"
-                    returnKeyType="done"
-                    onSubmitEditing={handleAddTask}
-                  />
-                </View>
-                <Button
-                  size="icon"
-                  onPress={handleAddTask}
-                  disabled={!newTask.trim()}
-                >
-                  <Plus size={20} color="#1a1a2e" />
-                </Button>
               </View>
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerClassName="pt-4"
+              >
+                {recommendedTemplates.map((template) => (
+                  <TemplateCard
+                    key={template.id}
+                    template={template}
+                    onSelect={handleSelectTemplate}
+                    isSelected={template.id === selectedTemplateId}
+                  />
+                ))}
+              </ScrollView>
             </View>
 
-            {/* Daily repeat checkbox */}
             <Pressable
-              onPress={() => setDailyRepeat(!dailyRepeat)}
-              className="flex-row items-center gap-3"
+              onPress={() => setShowAllTemplates((previous) => !previous)}
+              className="flex-row items-center justify-between rounded-xl border border-border bg-card px-4 py-3"
             >
-              <Checkbox
-                checked={dailyRepeat}
-                onCheckedChange={setDailyRepeat}
+              <View>
+                <Text className="text-base font-body-semibold text-foreground">
+                  Alle Vorlagen ansehen
+                </Text>
+                <Text className="mt-0.5 text-xs font-body text-muted-foreground">
+                  Morgen, Abend, Schule, Haushalt und mehr
+                </Text>
+              </View>
+              <ChevronDown
+                size={18}
+                color="#737373"
+                style={{
+                  transform: [{ rotate: showAllTemplates ? "180deg" : "0deg" }],
+                }}
               />
-              <Label>Täglich wiederholen</Label>
             </Pressable>
 
-            {/* Save routine button */}
-            {tasks.length > 0 && (
+            {showAllTemplates ? (
+              <TemplateSelector
+                onSelectTemplate={handleSelectTemplate}
+                selectedTemplateId={selectedTemplateId}
+              />
+            ) : null}
+
+            {!showCustomizer && tasks.length === 0 ? (
               <Button
                 variant="outline"
-                onPress={handleSaveRoutine}
-                disabled={tasks.length === 0 || !routineName.trim()}
-                className="border-[#87CEEB]"
+                onPress={() => setShowCustomizer(true)}
+                style={{ borderColor: palette.accent }}
               >
-                <Text className="text-sm font-body-semibold text-[#87CEEB]">
-                  Routine speichern & weitere hinzufügen
+                <Text className="text-sm font-body-semibold" style={{ color: palette.accent }}>
+                  Eigene Routine anpassen
                 </Text>
               </Button>
-            )}
+            ) : null}
+
+            {showCustomizer ? (
+              <View className="gap-4">
+                {/* Routine name */}
+                <View className="gap-2">
+                  <Label>Name der Routine</Label>
+                  <Input
+                    value={routineName}
+                    onChangeText={setRoutineName}
+                    placeholder="Zum Beispiel Morgenroutine"
+                  />
+                </View>
+
+                {/* Task list */}
+                <View className="gap-2">
+                  <Label>Aufgaben ({tasks.length})</Label>
+                  {tasks.length > 0 ? (
+                    <DraggableFlatList
+                      data={tasks}
+                      keyExtractor={(item) => item.id}
+                      renderItem={renderItem}
+                      onDragEnd={({ data }) => setTasks(data)}
+                      scrollEnabled={false}
+                    />
+                  ) : (
+                    <View className="rounded-xl bg-secondary/50 py-4 items-center">
+                      <Text className="text-sm font-body text-muted-foreground">
+                        Wähle oben eine Vorlage oder füge eigene Aufgaben hinzu.
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Add new task */}
+                  <View className="flex-row gap-2 mt-1">
+                    <View className="flex-1">
+                      <Input
+                        value={newTask}
+                        onChangeText={setNewTask}
+                        placeholder="Neue Aufgabe hinzufügen"
+                        returnKeyType="done"
+                        onSubmitEditing={handleAddTask}
+                      />
+                    </View>
+                    <Button
+                      size="icon"
+                      onPress={handleAddTask}
+                      disabled={!newTask.trim()}
+                      style={{ backgroundColor: palette.button }}
+                    >
+                      <Plus size={20} color="#FFFFFF" />
+                    </Button>
+                  </View>
+                </View>
+
+                {/* Save routine button */}
+                {tasks.length > 0 ? (
+                  <Button
+                    variant="outline"
+                    onPress={handleSaveRoutine}
+                    disabled={tasks.length === 0 || !routineName.trim()}
+                    style={{ borderColor: palette.accent }}
+                  >
+                    <Text className="text-sm font-body-semibold" style={{ color: palette.accent }}>
+                      {savedRoutines.length > 0
+                        ? "Routine speichern und weitere hinzufügen"
+                        : "Starter-Routine speichern"}
+                    </Text>
+                  </Button>
+                ) : null}
+              </View>
+            ) : null}
 
             {/* Navigation buttons */}
             <View className="flex-row justify-between pt-2">
@@ -296,6 +379,7 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                 onPress={handleSubmit}
                 disabled={!canProceed}
                 className="min-w-[100px]"
+                style={{ backgroundColor: palette.button }}
               >
                 Weiter
               </Button>

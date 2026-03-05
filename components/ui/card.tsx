@@ -1,15 +1,19 @@
 import React from "react";
-import { View, Text, type TextStyle } from "react-native";
+import { View, Text, type TextStyle, type ViewStyle } from "react-native";
 import { cn } from "@/lib/utils";
 
 interface CardProps {
   className?: string;
   children: React.ReactNode;
+  style?: ViewStyle;
 }
 
-export function Card({ className, children }: CardProps) {
+export function Card({ className, children, style }: CardProps) {
   return (
-    <View className={cn("rounded-xl border border-border bg-card p-4 shadow-sm", className)}>
+    <View
+      className={cn("rounded-xl border border-border bg-card p-4 shadow-sm", className)}
+      style={style}
+    >
       {children}
     </View>
   );

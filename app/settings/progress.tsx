@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
+import { useRouter } from "expo-router";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react-native";
 import { useChildren } from "@/hooks/use-children";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const WEEKDAY_LABELS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
@@ -26,25 +28,8 @@ function formatMonth(year: number, month: number): string {
   return `${months[month]} ${year}`;
 }
 
-// Generate mock completed days for demo purposes
-function generateMockCompletedDays(year: number, month: number): Set<number> {
-  const days = new Set<number>();
-  const daysInMonth = getDaysInMonth(year, month);
-  const today = new Date();
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const date = new Date(year, month, d);
-    // Don't mark future days
-    if (date > today) break;
-    // Randomly mark ~60% of past days as completed
-    if (Math.random() > 0.4) {
-      days.add(d);
-    }
-  }
-  return days;
-}
-
 export default function ProgressSettings() {
+  const router = useRouter();
   const { children, selectedChild, selectedChildId, selectChild } = useChildren();
   const { getLogsForChild } = useActivityLogs();
 
@@ -52,7 +37,7 @@ export default function ProgressSettings() {
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
 
-  // Gather real completed days from logs, fallback to mock data for demo
+  // Gather real completed days from logs
   const completedDays = useMemo(() => {
     if (selectedChildId) {
       const logs = getLogsForChild(selectedChildId);
@@ -66,13 +51,9 @@ export default function ProgressSettings() {
           daysFromLogs.add(logDate.getDate());
         }
       });
-      // If no real logs, use mock data for demo
-      if (daysFromLogs.size === 0) {
-        return generateMockCompletedDays(currentYear, currentMonth);
-      }
       return daysFromLogs;
     }
-    return generateMockCompletedDays(currentYear, currentMonth);
+    return new Set<number>();
   }, [selectedChildId, currentYear, currentMonth, getLogsForChild]);
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
@@ -177,8 +158,22 @@ export default function ProgressSettings() {
         </Pressable>
       </View>
 
-      {/* Calendar grid */}
-      <Card className="mb-4">
+      {completedCount === 0 ? (
+        <Card className="mb-4 items-center py-8">
+          <Text className="text-lg font-headline text-foreground text-center">
+            Noch kein Fortschritt vorhanden
+          </Text>
+          <Text className="mt-2 text-sm font-body text-muted-foreground text-center">
+            Sobald Aufgaben erledigt werden, erscheint hier der echte Monatsverlauf.
+          </Text>
+          <Button className="mt-5" onPress={() => router.push("/(tabs)")}>
+            Zu den Routinen
+          </Button>
+        </Card>
+      ) : (
+        <>
+          {/* Calendar grid */}
+          <Card className="mb-4">
         {/* Weekday headers */}
         <View className="flex-row mb-2">
           {WEEKDAY_LABELS.map((day) => (
@@ -240,39 +235,41 @@ export default function ProgressSettings() {
             })}
           </View>
         ))}
-      </Card>
+          </Card>
 
-      {/* Stats summary */}
-      <Card>
-        <View className="flex-row items-center justify-around">
-          <View className="items-center">
-            <Text className="text-2xl font-headline text-foreground">
-              {completedCount}
-            </Text>
-            <Text className="text-xs font-body text-muted-foreground">
-              Tage erledigt
-            </Text>
-          </View>
-          <View className="h-10 w-px bg-border" />
-          <View className="items-center">
-            <Text className="text-2xl font-headline text-foreground">
-              {completionRate}%
-            </Text>
-            <Text className="text-xs font-body text-muted-foreground">
-              Abschlussrate
-            </Text>
-          </View>
-          <View className="h-10 w-px bg-border" />
-          <View className="items-center">
-            <Text className="text-2xl font-headline text-foreground">
-              {daysInMonth - completedCount}
-            </Text>
-            <Text className="text-xs font-body text-muted-foreground">
-              Tage übrig
-            </Text>
-          </View>
-        </View>
-      </Card>
+          {/* Stats summary */}
+          <Card>
+            <View className="flex-row items-center justify-around">
+              <View className="items-center">
+                <Text className="text-2xl font-headline text-foreground">
+                  {completedCount}
+                </Text>
+                <Text className="text-xs font-body text-muted-foreground">
+                  Tage erledigt
+                </Text>
+              </View>
+              <View className="h-10 w-px bg-border" />
+              <View className="items-center">
+                <Text className="text-2xl font-headline text-foreground">
+                  {completionRate}%
+                </Text>
+                <Text className="text-xs font-body text-muted-foreground">
+                  Abschlussrate
+                </Text>
+              </View>
+              <View className="h-10 w-px bg-border" />
+              <View className="items-center">
+                <Text className="text-2xl font-headline text-foreground">
+                  {Math.max(totalDaysUpToToday - completedCount, 0)}
+                </Text>
+                <Text className="text-xs font-body text-muted-foreground">
+                  Tage übrig
+                </Text>
+              </View>
+            </View>
+          </Card>
+        </>
+      )}
     </ScrollView>
   );
 }

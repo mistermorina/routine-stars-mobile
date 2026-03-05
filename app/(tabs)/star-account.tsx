@@ -1,6 +1,5 @@
 import React from "react";
 import { View, Text, ScrollView } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Animated, {
   useAnimatedStyle,
@@ -12,8 +11,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { Star } from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
+import { Header } from "@/components/routine-stars/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { getThemePalette } from "@/lib/theme";
 
 function getMotivationalMessage(stars: number): string {
   if (stars === 0) return "Sammle deine ersten Sterne!";
@@ -24,7 +25,7 @@ function getMotivationalMessage(stars: number): string {
   return "Unglaublich! Du bist ein Superstar!";
 }
 
-function PulsingStarIcon() {
+function PulsingStarIcon({ accentSoft }: { accentSoft: string }) {
   const scale = useSharedValue(1);
 
   React.useEffect(() => {
@@ -44,8 +45,8 @@ function PulsingStarIcon() {
 
   return (
     <Animated.View
-      style={animatedStyle}
-      className="h-32 w-32 rounded-full bg-[#FFD700]/20 items-center justify-center"
+      className="h-32 w-32 rounded-full items-center justify-center"
+      style={[animatedStyle, { backgroundColor: accentSoft }]}
     >
       <Star size={72} color="#FFD700" fill="#FFD700" />
     </Animated.View>
@@ -53,33 +54,37 @@ function PulsingStarIcon() {
 }
 
 export default function StarAccountScreen() {
-  const { selectedChild, isLoading } = useChildren();
+  const { children, selectedChild, selectChild, isLoading } = useChildren();
   const router = useRouter();
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-background">
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-muted-foreground font-body">Laden...</Text>
-        </View>
-      </SafeAreaView>
+      <View className="flex-1 bg-background items-center justify-center">
+        <Text className="text-muted-foreground font-body">Laden...</Text>
+      </View>
     );
   }
 
   const stars = selectedChild?.stars ?? 0;
   const childName = selectedChild?.name ?? "Kind";
+  const palette = getThemePalette(selectedChild?.theme);
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+    <View className="flex-1 bg-background">
+      {/* Header with child switcher */}
+      {selectedChild && (
+        <Header child={selectedChild} allChildren={children} onSelectChild={selectChild} />
+      )}
+
       <ScrollView
         className="flex-1"
         contentContainerClassName="flex-grow items-center justify-center px-5 pb-8"
         showsVerticalScrollIndicator={false}
       >
         <Card className="w-full items-center py-10 px-6">
-          <CardContent className="items-center">
+            <CardContent className="items-center">
             {/* Animated gold star */}
-            <PulsingStarIcon />
+            <PulsingStarIcon accentSoft={palette.accentSoft} />
 
             {/* Star count */}
             <Text className="text-6xl font-headline text-foreground mt-6">
@@ -87,21 +92,26 @@ export default function StarAccountScreen() {
             </Text>
 
             {/* Child name */}
-            <Text className="text-xl font-headline text-muted-foreground mt-2">
+            <Text className="text-xl font-headline mt-2" style={{ color: palette.accentText }}>
               {childName}s Sterne
             </Text>
 
             {/* Motivational message */}
-            <View className="mt-4 bg-[#F3E5AB]/40 rounded-full px-5 py-2">
-              <Text className="text-sm font-body-semibold text-[#B8860B] text-center">
+            <View
+              className="mt-4 rounded-full px-5 py-2"
+              style={{ backgroundColor: palette.surface }}
+            >
+              <Text className="text-sm font-body-semibold text-center" style={{ color: palette.accentText }}>
                 {getMotivationalMessage(stars)}
               </Text>
             </View>
 
             {/* Navigate to rewards */}
             <Button
-              className="mt-8 w-full bg-[#87CEEB] active:bg-[#6BB5D6]"
+              className="mt-8 w-full"
               onPress={() => router.push("/(tabs)/rewards")}
+              style={{ backgroundColor: palette.button }}
+              textClassName="text-white"
             >
               <Text className="text-base font-body-semibold text-white">
                 Belohnungen ansehen
@@ -117,6 +127,6 @@ export default function StarAccountScreen() {
           </Text>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

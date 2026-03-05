@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text } from "react-native";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { TaskItem } from "./task-item";
 import type { Routine, Task } from "@/lib/types";
@@ -23,20 +23,22 @@ export function RoutineCard({
   return (
     <Card className="mb-4">
       <CardHeader>
-        <View className="flex-row items-center justify-between">
-          <CardTitle
-            className="text-xl"
+        <View className="flex-row items-start justify-between gap-3">
+          <Text
+            className="flex-1 text-xl font-headline"
             style={{ color: routine.color }}
+            numberOfLines={2}
           >
             {routine.name}
-          </CardTitle>
-          <Text className="text-sm font-body text-muted-foreground">
+          </Text>
+          <Text className="shrink-0 pt-1 text-sm font-body text-muted-foreground">
             {completedTasks} / {totalTasks} Aufgaben
           </Text>
         </View>
         <Progress
           value={progressValue}
           className="mt-2 h-2"
+          indicatorColor={routine.color}
           indicatorClassName={routine.color ? undefined : "bg-gold"}
         />
       </CardHeader>

@@ -73,6 +73,14 @@ export const rewardSuggestions: RewardSuggestion[] = [
   { id: "sp-5", title: "Lieblingsrestaurant besuchen", category: "special", cost: 30, iconName: "utensils-crossed" },
 ];
 
+const starterRewardIds = ["ma-1", "ac-1", "pr-7", "ac-4"] as const;
+
 export function getRewardsByCategory(category: RewardCategory): RewardSuggestion[] {
   return rewardSuggestions.filter((r) => r.category === category);
+}
+
+export function getStarterRewardSuggestions(): RewardSuggestion[] {
+  return starterRewardIds
+    .map((rewardId) => rewardSuggestions.find((reward) => reward.id === rewardId))
+    .filter((reward): reward is RewardSuggestion => Boolean(reward));
 }

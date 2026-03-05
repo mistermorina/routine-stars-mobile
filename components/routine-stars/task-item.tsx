@@ -221,18 +221,21 @@ export function TaskItem({
                 </View>
 
                 {/* Title */}
-                <Text
-                  className={cn(
-                    "flex-1 text-base font-body-semibold text-foreground",
-                    isCompleted && "text-muted-foreground line-through"
-                  )}
-                >
-                  {task.title}
-                </Text>
+                <View className="flex-1 min-w-0 pr-3">
+                  <Text
+                    className={cn(
+                      "text-base font-body-semibold text-foreground",
+                      isCompleted && "text-muted-foreground line-through"
+                    )}
+                    numberOfLines={2}
+                  >
+                    {task.title}
+                  </Text>
+                </View>
 
                 {/* Timer button or star count */}
                 {hasTimer && !isCompleted ? (
-                  <View className="items-center">
+                  <View className="min-w-[92px] items-end gap-1">
                     <Pressable
                       onPress={(e) => {
                         e.stopPropagation?.();
@@ -245,12 +248,12 @@ export function TaskItem({
                         Timer
                       </Text>
                     </Pressable>
-                    <Text className="text-xs text-muted-foreground mt-1">
+                    <Text className="text-xs text-muted-foreground">
                       +{task.bonusStars} Bonus
                     </Text>
                   </View>
                 ) : (
-                  <View className="flex-row items-center gap-1">
+                  <View className="shrink-0 flex-row items-center gap-1">
                     <Text
                       className="text-sm font-body-bold"
                       style={{ color: starColor }}

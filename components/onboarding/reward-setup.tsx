@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
-import { Star, X } from "lucide-react-native";
+import { Gift, X } from "lucide-react-native";
 import { getIcon } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +11,9 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { RewardBrowser } from "@/components/rewards/reward-browser";
-import type { RewardSuggestion } from "@/lib/types";
+import { getStarterRewardSuggestions } from "@/lib/reward-suggestions";
+import { getThemePalette } from "@/lib/theme";
+import type { RewardSuggestion, ChildProfile } from "@/lib/types";
 
 interface RewardItem {
   id: string;
@@ -25,13 +27,24 @@ interface RewardSetupProps {
   onBack: () => void;
   formData: {
     rewards?: RewardItem[];
+    children?: ChildProfile[];
   };
 }
 
 export function RewardSetup({ onNext, onBack, formData }: RewardSetupProps) {
+  const starterRewards = getStarterRewardSuggestions().map((reward) => ({
+    id: reward.id,
+    title: reward.title,
+    cost: reward.cost,
+    iconName: reward.iconName,
+  }));
   const [selectedRewards, setSelectedRewards] = useState<RewardItem[]>(
     formData.rewards || []
   );
+  const [isManualMode, setIsManualMode] = useState(
+    (formData.rewards?.length ?? 0) > 0
+  );
+  const palette = getThemePalette(formData.children?.[0]?.theme);
 
   const handleAddReward = useCallback((suggestion: RewardSuggestion) => {
     setSelectedRewards((prev) => {
@@ -49,6 +62,10 @@ export function RewardSetup({ onNext, onBack, formData }: RewardSetupProps) {
     setSelectedRewards((prev) => prev.filter((r) => r.id !== id));
   }, []);
 
+  const handleStarterPack = () => {
+    onNext({ rewards: starterRewards });
+  };
+
   const handleSubmit = () => {
     if (selectedRewards.length === 0) return;
     onNext({ rewards: selectedRewards });
@@ -62,49 +79,138 @@ export function RewardSetup({ onNext, onBack, formData }: RewardSetupProps) {
     >
       <Card>
         <CardHeader>
-          <CardTitle>Belohnungen wählen</CardTitle>
+          <CardTitle>Belohnungen festlegen</CardTitle>
           <CardDescription>
-            Was kann sich dein Kind für gesammelte Sterne verdienen?
+            Du kannst direkt mit einem sinnvollen Starterpaket loslegen oder
+            Belohnungen selbst auswählen.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <View className="gap-5">
-            {/* Selected rewards chips */}
-            {selectedRewards.length > 0 && (
-              <View>
-                <Text className="text-sm font-body-semibold text-muted-foreground mb-2">
-                  Gewählt ({selectedRewards.length})
-                </Text>
-                <View className="flex-row flex-wrap gap-2">
-                  {selectedRewards.map((reward) => {
-                    const Icon = getIcon(reward.iconName);
-                    return (
-                      <View
-                        key={reward.id}
-                        className="flex-row items-center gap-1.5 bg-[#87CEEB]/15 border border-[#87CEEB]/30 rounded-full px-3 py-1.5"
-                      >
-                        <Icon size={14} color="#87CEEB" />
-                        <Text className="text-xs font-body-semibold text-foreground">
-                          {reward.title}
-                        </Text>
-                        <Text className="text-xs font-body text-muted-foreground">
-                          {reward.cost}⭐
-                        </Text>
-                        <Pressable onPress={() => handleRemoveReward(reward.id)} hitSlop={8}>
-                          <X size={14} color="#737373" />
-                        </Pressable>
-                      </View>
-                    );
-                  })}
+            <View
+              className="rounded-2xl border px-4 py-4"
+              style={{
+                borderColor: palette.accentBorder,
+                backgroundColor: palette.accentSoft,
+              }}
+            >
+              <View className="flex-row items-center">
+                <View
+                  className="h-11 w-11 items-center justify-center rounded-full"
+                  style={{ backgroundColor: palette.surface }}
+                >
+                  <Gift size={20} color={palette.accentStrong} />
+                </View>
+                <View className="ml-3 flex-1">
+                  <Text className="text-base font-body-semibold text-foreground">
+                    Starterpaket
+                  </Text>
+                  <Text className="mt-0.5 text-xs font-body" style={{ color: palette.accentText }}>
+                    Vier direkte Belohnungen für den schnellen Start
+                  </Text>
                 </View>
               </View>
-            )}
 
-            {/* Reward browser */}
-            <RewardBrowser
-              onAddReward={handleAddReward}
-              addedRewardIds={selectedRewards.map((r) => r.id)}
-            />
+              <View className="mt-4 flex-row flex-wrap gap-2">
+                {starterRewards.map((reward) => {
+                  const Icon = getIcon(reward.iconName);
+
+                  return (
+                    <View
+                      key={reward.id}
+                      className="flex-row items-center gap-1.5 rounded-full border px-3 py-1.5"
+                      style={{
+                        borderColor: palette.accentBorder,
+                        backgroundColor: "#FFFFFF",
+                      }}
+                    >
+                      <Icon size={14} color={palette.accentStrong} />
+                      <Text className="text-xs font-body-semibold text-foreground">
+                        {reward.title}
+                      </Text>
+                      <Text className="text-xs font-body text-muted-foreground">
+                        {reward.cost}⭐
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+
+              {!isManualMode ? (
+                <View className="mt-4 gap-3">
+                  <Button
+                    onPress={handleStarterPack}
+                    style={{ backgroundColor: palette.button }}
+                  >
+                    Mit Starterpaket fortfahren
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onPress={() => setIsManualMode(true)}
+                    style={{ borderColor: palette.accent }}
+                  >
+                    <Text className="text-sm font-body-semibold" style={{ color: palette.accent }}>
+                      Belohnungen selbst auswählen
+                    </Text>
+                  </Button>
+                </View>
+              ) : null}
+            </View>
+
+            {isManualMode ? (
+              <>
+                {/* Selected rewards chips */}
+                {selectedRewards.length > 0 && (
+                  <View>
+                    <Text className="text-sm font-body-semibold text-muted-foreground mb-2">
+                      Gewählt ({selectedRewards.length})
+                    </Text>
+                    <View className="flex-row flex-wrap gap-2">
+                      {selectedRewards.map((reward) => {
+                        const Icon = getIcon(reward.iconName);
+                        return (
+                          <View
+                            key={reward.id}
+                            className="flex-row items-center gap-1.5 rounded-full border px-3 py-1.5"
+                            style={{
+                              borderColor: palette.accentBorder,
+                              backgroundColor: palette.accentSoft,
+                            }}
+                          >
+                            <Icon size={14} color={palette.accentStrong} />
+                            <Text className="text-xs font-body-semibold text-foreground">
+                              {reward.title}
+                            </Text>
+                            <Text className="text-xs font-body text-muted-foreground">
+                              {reward.cost}⭐
+                            </Text>
+                            <Pressable onPress={() => handleRemoveReward(reward.id)} hitSlop={8}>
+                              <X size={14} color="#737373" />
+                            </Pressable>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
+                )}
+
+                {/* Reward browser */}
+                <RewardBrowser
+                  onAddReward={handleAddReward}
+                  addedRewardIds={selectedRewards.map((r) => r.id)}
+                />
+
+                <Button
+                  variant="outline"
+                  onPress={handleStarterPack}
+                  style={{ borderColor: palette.accent }}
+                >
+                  <Text className="text-sm font-body-semibold" style={{ color: palette.accent }}>
+                    Stattdessen Starterpaket verwenden
+                  </Text>
+                </Button>
+              </>
+            ) : null}
 
             {/* Navigation buttons */}
             <View className="flex-row justify-between pt-2">
@@ -116,12 +222,13 @@ export function RewardSetup({ onNext, onBack, formData }: RewardSetupProps) {
                 Zurück
               </Button>
               <Button
-                onPress={handleSubmit}
-                disabled={selectedRewards.length === 0}
+                onPress={isManualMode ? handleSubmit : handleStarterPack}
+                disabled={isManualMode && selectedRewards.length === 0}
                 className="min-w-[100px]"
+                style={{ backgroundColor: palette.button }}
               >
                 <Text className="text-base font-body-semibold text-primary-foreground">
-                  Fertig!
+                  Fertig
                 </Text>
               </Button>
             </View>

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Animated, {
@@ -8,16 +8,21 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { Star, Settings } from "lucide-react-native";
+import { cn } from "@/lib/utils";
+import { getThemePalette } from "@/lib/theme";
 import type { Child } from "@/lib/types";
 
 interface HeaderProps {
   child: Child;
+  allChildren?: Child[];
+  onSelectChild?: (id: string) => void;
 }
 
-export function Header({ child }: HeaderProps) {
+export function Header({ child, allChildren, onSelectChild }: HeaderProps) {
   const router = useRouter();
   const starScale = useSharedValue(1);
   const prevStars = useSharedValue(child.stars);
+  const palette = getThemePalette(child.theme);
 
   useEffect(() => {
     if (child.stars !== prevStars.value) {
@@ -56,11 +61,18 @@ export function Header({ child }: HeaderProps) {
           {/* Star counter */}
           <Pressable onPress={handleStarsPress}>
             <Animated.View
-              style={starAnimatedStyle}
-              className="flex-row items-center gap-1.5 rounded-full bg-primary/80 px-3.5 py-1.5"
+              className="flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5"
+              style={[
+                starAnimatedStyle,
+                {
+                  backgroundColor: palette.surface,
+                  borderColor: palette.accentBorder,
+                  borderWidth: 1,
+                },
+              ]}
             >
               <Star size={18} fill="#FFD700" color="#FFD700" />
-              <Text className="text-base font-body-bold text-primary-foreground">
+              <Text className="text-base font-body-bold" style={{ color: palette.accentText }}>
                 {child.stars}
               </Text>
             </Animated.View>
@@ -77,11 +89,52 @@ export function Header({ child }: HeaderProps) {
         </View>
       </View>
 
-      {/* Child name */}
+      {/* Child name / switcher */}
       <View className="px-4 pb-2">
-        <Text className="text-base font-body-semibold text-muted-foreground">
-          {child.name}
-        </Text>
+        {allChildren && allChildren.length > 1 && onSelectChild ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerClassName="gap-2"
+          >
+            {allChildren.map((c) => {
+              const isActive = c.id === child.id;
+              return (
+                <Pressable
+                  key={c.id}
+                  onPress={() => onSelectChild(c.id)}
+                  className={cn(
+                    "flex-row items-center gap-1.5 rounded-full border px-3 py-1.5",
+                    isActive ? "" : "bg-card border-border"
+                  )}
+                  style={
+                    isActive
+                      ? {
+                          backgroundColor: palette.accentSoft,
+                          borderColor: palette.accent,
+                        }
+                      : undefined
+                  }
+                >
+                  <Text className="text-sm">{c.avatar}</Text>
+                  <Text
+                    className={cn(
+                      "text-sm font-body-semibold",
+                      isActive ? "" : "text-muted-foreground"
+                    )}
+                    style={isActive ? { color: palette.accentText } : undefined}
+                  >
+                    {c.name}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        ) : (
+          <Text className="text-base font-body-semibold text-muted-foreground">
+            {child.name}
+          </Text>
+        )}
       </View>
     </SafeAreaView>
   );

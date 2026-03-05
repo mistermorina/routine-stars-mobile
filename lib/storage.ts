@@ -8,6 +8,8 @@ const KEYS = {
   CUSTOM_REWARDS: "customRewards",
   HAS_ONBOARDED: "hasOnboarded",
   ROUTINE_PROGRESS: "routineProgress",
+  PARENT_PIN_HASH: "parentPinHash",
+  NOTIFICATION_SETTINGS: "notificationSettings",
 } as const;
 
 export { KEYS };

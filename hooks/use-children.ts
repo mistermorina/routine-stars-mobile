@@ -1,6 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { storage, KEYS } from "@/lib/storage";
 import type { Child } from "@/lib/types";
+import { normalizeChildTheme } from "@/lib/theme";
+
+function normalizeChild(child: Child): Child {
+  return {
+    ...child,
+    theme: normalizeChildTheme(child.theme),
+  };
+}
 
 export function useChildren() {
   const [children, setChildren] = useState<Child[]>([]);
@@ -13,12 +21,16 @@ export function useChildren() {
       const lastSelectedId = await storage.getItem<string>(KEYS.LAST_SELECTED_CHILD_ID);
 
       if (storedChildren && storedChildren.length > 0) {
-        setChildren(storedChildren);
-        if (lastSelectedId && storedChildren.some((c) => c.id === lastSelectedId)) {
+        const normalizedChildren = storedChildren.map(normalizeChild);
+        setChildren(normalizedChildren);
+
+        if (lastSelectedId && normalizedChildren.some((c) => c.id === lastSelectedId)) {
           setSelectedChildId(lastSelectedId);
         } else {
-          setSelectedChildId(storedChildren[0].id);
+          setSelectedChildId(normalizedChildren[0].id);
         }
+
+        await storage.setItem(KEYS.CHILDREN, normalizedChildren);
       }
       setIsLoading(false);
     }
@@ -37,7 +49,7 @@ export function useChildren() {
 
   const addChild = useCallback(
     async (child: Child) => {
-      const updated = [...children, child];
+      const updated = [...children, normalizeChild(child)];
       setChildren(updated);
       setSelectedChildId(child.id);
       await storage.setItem(KEYS.CHILDREN, updated);
@@ -48,7 +60,9 @@ export function useChildren() {
 
   const updateChild = useCallback(
     async (id: string, updates: Partial<Child>) => {
-      const updated = children.map((c) => (c.id === id ? { ...c, ...updates } : c));
+      const updated = children.map((c) =>
+        c.id === id ? normalizeChild({ ...c, ...updates }) : c
+      );
       setChildren(updated);
       await storage.setItem(KEYS.CHILDREN, updated);
     },

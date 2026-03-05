@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { storage, KEYS } from "@/lib/storage";
 import type { Reward } from "@/lib/types";
-import { mockRewards } from "@/lib/data";
 
 export function useRewards() {
   const [rewards, setRewards] = useState<Reward[]>([]);
@@ -10,12 +9,8 @@ export function useRewards() {
   useEffect(() => {
     async function load() {
       const stored = await storage.getItem<Reward[]>(KEYS.CUSTOM_REWARDS);
-      if (stored && stored.length > 0) {
+      if (stored) {
         setRewards(stored);
-      } else {
-        const seeded = JSON.parse(JSON.stringify(mockRewards));
-        setRewards(seeded);
-        await storage.setItem(KEYS.CUSTOM_REWARDS, seeded);
       }
       setIsLoading(false);
     }

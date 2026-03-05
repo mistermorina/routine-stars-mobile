@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, type ViewStyle } from "react-native";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = {
@@ -21,6 +21,7 @@ export interface BadgeProps {
   className?: string;
   textClassName?: string;
   children: React.ReactNode;
+  style?: ViewStyle;
 }
 
 export function Badge({
@@ -28,6 +29,7 @@ export function Badge({
   className,
   textClassName,
   children,
+  style,
 }: BadgeProps) {
   return (
     <View
@@ -36,6 +38,7 @@ export function Badge({
         badgeVariants[variant],
         className
       )}
+      style={style}
     >
       {typeof children === "string" ? (
         <Text className={cn("text-xs font-body-semibold", textVariants[variant], textClassName)}>

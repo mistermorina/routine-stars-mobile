@@ -1,26 +1,33 @@
 import React, { useCallback } from "react";
-import { View, Text, ScrollView, Pressable } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { View, Text, ScrollView } from "react-native";
 import { Trophy, Star } from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
 import { useToast } from "@/hooks/use-toast";
 import { useRewards } from "@/hooks/use-rewards";
+import { Header } from "@/components/routine-stars/header";
 import { RewardsOverview } from "@/components/routine-stars/rewards-overview";
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { getThemePalette } from "@/lib/theme";
 import type { Reward } from "@/lib/types";
 
 export default function RewardsScreen() {
   const {
     children,
     selectedChild,
-    selectedChildId,
     selectChild,
     deductStars,
     isLoading,
   } = useChildren();
   const { toast } = useToast();
   const { rewards, isLoading: rewardsLoading } = useRewards();
+  const palette = getThemePalette(selectedChild?.theme);
+  const sortedRewards = [...rewards].sort((left, right) => left.cost - right.cost);
+  const nextReward = selectedChild
+    ? sortedRewards.find((reward) => reward.cost > selectedChild.stars)
+    : undefined;
+  const missingStars = nextReward && selectedChild
+    ? nextReward.cost - selectedChild.stars
+    : 0;
 
   const handleRedeem = useCallback(
     async (reward: Reward) => {
@@ -38,22 +45,25 @@ export default function RewardsScreen() {
 
   if (isLoading || rewardsLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-background">
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-muted-foreground font-body">Laden...</Text>
-        </View>
-      </SafeAreaView>
+      <View className="flex-1 bg-background items-center justify-center">
+        <Text className="text-muted-foreground font-body">Laden...</Text>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+    <View className="flex-1 bg-background">
+      {/* Header with child switcher */}
+      {selectedChild && (
+        <Header child={selectedChild} allChildren={children} onSelectChild={selectChild} />
+      )}
+
       <ScrollView
         className="flex-1"
         contentContainerClassName="px-5 pb-8"
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
+        {/* Screen title */}
         <View className="flex-row items-center mt-4 mb-6">
           <Trophy size={28} color="#FFD700" />
           <Text className="text-2xl font-headline text-foreground ml-3">
@@ -63,7 +73,13 @@ export default function RewardsScreen() {
 
         {/* Current star balance */}
         {selectedChild ? (
-          <Card className="mb-5 bg-[#F3E5AB]/40 border-[#F3E5AB]">
+          <Card
+            className="mb-5"
+            style={{
+              backgroundColor: palette.surface,
+              borderColor: palette.accentBorder,
+            }}
+          >
             <View className="flex-row items-center justify-between">
               <View>
                 <Text className="text-sm font-body text-muted-foreground">
@@ -76,7 +92,10 @@ export default function RewardsScreen() {
                   </Text>
                 </View>
               </View>
-              <View className="h-14 w-14 rounded-full bg-[#FFD700]/20 items-center justify-center">
+              <View
+                className="h-14 w-14 rounded-full items-center justify-center"
+                style={{ backgroundColor: palette.accentSoft }}
+              >
                 <Star size={30} color="#FFD700" fill="#FFD700" />
               </View>
             </View>
@@ -89,43 +108,38 @@ export default function RewardsScreen() {
           </Card>
         )}
 
-        {/* Child selector (only if multiple children) */}
-        {children.length > 1 && (
-          <View className="mb-5">
-            <Text className="text-sm font-body-semibold text-muted-foreground mb-2">
-              Kind auswählen
+        {selectedChild && rewards.length > 0 ? (
+          <Card
+            className="mb-5"
+            style={{
+              backgroundColor: palette.accentSoft,
+              borderColor: palette.accentBorder,
+            }}
+          >
+            <Text className="text-sm font-body text-muted-foreground">
+              Nächstes Ziel
             </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerClassName="gap-2"
-            >
-              {children.map((child) => (
-                <Pressable
-                  key={child.id}
-                  onPress={() => selectChild(child.id)}
-                  className={cn(
-                    "px-4 py-2 rounded-full border",
-                    child.id === selectedChildId
-                      ? "bg-[#87CEEB] border-[#87CEEB]"
-                      : "bg-card border-border"
-                  )}
-                >
-                  <Text
-                    className={cn(
-                      "text-sm font-body-semibold",
-                      child.id === selectedChildId
-                        ? "text-white"
-                        : "text-foreground"
-                    )}
-                  >
-                    {child.avatar} {child.name}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-        )}
+            {nextReward ? (
+              <>
+                <Text className="mt-1 text-xl font-headline text-foreground">
+                  {nextReward.title}
+                </Text>
+                <Text className="mt-1 text-sm font-body" style={{ color: palette.accentText }}>
+                  Noch {missingStars} Sterne bis zur nächsten Belohnung.
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text className="mt-1 text-xl font-headline text-foreground">
+                  Alle Belohnungen erreichbar
+                </Text>
+                <Text className="mt-1 text-sm font-body" style={{ color: palette.accentText }}>
+                  {selectedChild.name} hat genug Sterne für alle aktuellen Belohnungen.
+                </Text>
+              </>
+            )}
+          </Card>
+        ) : null}
 
         {/* Rewards list */}
         <Text className="text-lg font-headline text-foreground mb-3">
@@ -134,9 +148,10 @@ export default function RewardsScreen() {
         <RewardsOverview
           rewards={rewards}
           childStars={selectedChild?.stars ?? 0}
+          childTheme={selectedChild?.theme}
           onRedeem={handleRedeem}
         />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

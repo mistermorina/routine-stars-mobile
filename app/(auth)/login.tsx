@@ -20,35 +20,40 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const resolveNextRoute = async () => {
+    const children = await storage.getItem<unknown[]>(KEYS.CHILDREN);
+    return children && children.length > 0 ? "/(tabs)" : "/(auth)/onboarding";
+  };
+
   const handleSubmit = async () => {
     if (!email.trim() || !password.trim()) return;
 
-    // Mock authentication
+    // Optional local session until cloud accounts exist
     login();
 
     if (authMode === "signup") {
       await storage.setItem(KEYS.HAS_ONBOARDED, false);
       toast({
-        title: "Konto erstellt!",
-        description: "Du wirst weitergeleitet...",
+        title: "Lokaler Zugang aktiviert",
+        description: "Du richtest jetzt deine Familie ein.",
       });
-      router.replace("/(auth)/onboarding");
+      router.replace(await resolveNextRoute());
     } else {
       toast({
-        title: "Erfolgreich angemeldet!",
-        description: "Du wirst weitergeleitet...",
+        title: "Willkommen zurück",
+        description: "Cloud-Konten folgen später. Du nutzt die App lokal auf diesem Gerät.",
       });
-      router.replace("/(tabs)");
+      router.replace(await resolveNextRoute());
     }
   };
 
-  const handleSocialLogin = (provider: "google" | "apple") => {
+  const handleSocialLogin = async (provider: "google" | "apple") => {
     login();
     toast({
-      title: "Erfolgreich angemeldet!",
-      description: `Anmeldung mit ${provider === "google" ? "Google" : "Apple"}...`,
+      title: `${provider === "google" ? "Google" : "Apple"} ist vorbereitet`,
+      description: "Fürs Erste startest du lokal auf diesem Gerät.",
     });
-    router.replace("/(tabs)");
+    router.replace(await resolveNextRoute());
   };
 
   return (
@@ -73,10 +78,10 @@ export default function LoginScreen() {
               </Text>
             </View>
             <Text className="text-2xl font-headline text-foreground text-center">
-              Routinen mit Freude
+              Optionales Familienkonto
             </Text>
             <Text className="mt-2 text-sm font-body text-muted-foreground text-center">
-              Starte das neue Abenteuer fuer deine Familie!
+              Die Einrichtung läuft lokal. Cloud-Synchronisierung kommt später.
             </Text>
           </View>
 
@@ -151,7 +156,9 @@ export default function LoginScreen() {
               variant="outline"
               size="lg"
               className="w-full"
-              onPress={() => handleSocialLogin("google")}
+              onPress={() => {
+                void handleSocialLogin("google");
+              }}
             >
               <Text className="text-base font-body-semibold text-foreground">
                 Weiter mit Google
@@ -161,7 +168,9 @@ export default function LoginScreen() {
               variant="outline"
               size="lg"
               className="w-full bg-[#000000]"
-              onPress={() => handleSocialLogin("apple")}
+              onPress={() => {
+                void handleSocialLogin("apple");
+              }}
             >
               <Text className="text-base font-body-semibold text-white">
                 Weiter mit Apple
@@ -172,7 +181,7 @@ export default function LoginScreen() {
           {/* Terms / Privacy footer for signup */}
           {authMode === "signup" && (
             <Text className="mt-8 px-4 text-center text-xs font-body text-muted-foreground leading-5">
-              Mit der Erstellung eines Kontos stimmst du unseren{" "}
+              Mit der Aktivierung des lokalen Zugangs stimmst du unseren{" "}
               <Text className="text-primary font-body-semibold">
                 Nutzungsbedingungen
               </Text>{" "}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView } from "react-native";
 import { Bell, BellOff, Clock, Gift } from "lucide-react-native";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,24 +6,67 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { storage, KEYS } from "@/lib/storage";
+import type { NotificationSettings } from "@/lib/types";
+
+const defaultSettings: NotificationSettings = {
+  routineReminders: true,
+  pushNotifications: false,
+  rewardNotifications: true,
+  quietFrom: "20:00",
+  quietTo: "07:00",
+};
 
 export default function NotificationsSettings() {
   const { toast } = useToast();
-  const [routineReminders, setRoutineReminders] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(false);
-  const [rewardNotifications, setRewardNotifications] = useState(true);
-  const [quietFrom, setQuietFrom] = useState("20:00");
-  const [quietTo, setQuietTo] = useState("07:00");
+  const [settings, setSettings] = useState<NotificationSettings>(defaultSettings);
 
-  function handleToggle(
+  useEffect(() => {
+    async function loadSettings() {
+      const storedSettings = await storage.getItem<NotificationSettings>(
+        KEYS.NOTIFICATION_SETTINGS
+      );
+
+      if (storedSettings) {
+        setSettings(storedSettings);
+      }
+    }
+
+    loadSettings();
+  }, []);
+
+  async function persistSettings(nextSettings: NotificationSettings) {
+    setSettings(nextSettings);
+    await storage.setItem(KEYS.NOTIFICATION_SETTINGS, nextSettings);
+  }
+
+  async function handleToggle(
     label: string,
     value: boolean,
-    setter: (v: boolean) => void
+    key: keyof Pick<
+      NotificationSettings,
+      "routineReminders" | "pushNotifications" | "rewardNotifications"
+    >
   ) {
-    setter(value);
+    const updated = {
+      ...settings,
+      [key]: value,
+    };
+    await persistSettings(updated);
     toast({
       title: value ? `${label} aktiviert` : `${label} deaktiviert`,
     });
+  }
+
+  async function handleTimeChange(
+    key: keyof Pick<NotificationSettings, "quietFrom" | "quietTo">,
+    value: string
+  ) {
+    const updated = {
+      ...settings,
+      [key]: value,
+    };
+    await persistSettings(updated);
   }
 
   return (
@@ -44,14 +87,14 @@ export default function NotificationsSettings() {
                   Erinnerungen für Routinen
                 </Text>
                 <Text className="text-xs font-body text-muted-foreground">
-                  Erinnere an anstehende Routinen
+                  Lokal gespeicherte Erinnerungseinstellung für Routinen
                 </Text>
               </View>
             </View>
             <Switch
-              checked={routineReminders}
+              checked={settings.routineReminders}
               onCheckedChange={(v) =>
-                handleToggle("Routinen-Erinnerungen", v, setRoutineReminders)
+                handleToggle("Routinen-Erinnerungen", v, "routineReminders")
               }
             />
           </View>
@@ -67,14 +110,14 @@ export default function NotificationsSettings() {
                   Push-Benachrichtigungen
                 </Text>
                 <Text className="text-xs font-body text-muted-foreground">
-                  Allgemeine Push-Nachrichten erhalten
+                  Wird lokal gespeichert. Eine echte Push-Integration folgt später.
                 </Text>
               </View>
             </View>
             <Switch
-              checked={pushNotifications}
+              checked={settings.pushNotifications}
               onCheckedChange={(v) =>
-                handleToggle("Push-Benachrichtigungen", v, setPushNotifications)
+                handleToggle("Push-Benachrichtigungen", v, "pushNotifications")
               }
             />
           </View>
@@ -90,14 +133,14 @@ export default function NotificationsSettings() {
                   Belohnung erreicht
                 </Text>
                 <Text className="text-xs font-body text-muted-foreground">
-                  Benachrichtigen, wenn genug Sterne gesammelt sind
+                  Lokale Einstellung für den Hinweis auf erreichbare Belohnungen
                 </Text>
               </View>
             </View>
             <Switch
-              checked={rewardNotifications}
+              checked={settings.rewardNotifications}
               onCheckedChange={(v) =>
-                handleToggle("Belohnungs-Benachrichtigung", v, setRewardNotifications)
+                handleToggle("Belohnungs-Benachrichtigung", v, "rewardNotifications")
               }
             />
           </View>
@@ -121,8 +164,10 @@ export default function NotificationsSettings() {
             <View className="flex-row items-center">
               <Clock size={16} color="#737373" />
               <Input
-                value={quietFrom}
-                onChangeText={setQuietFrom}
+                value={settings.quietFrom}
+                onChangeText={(value) => {
+                  void handleTimeChange("quietFrom", value);
+                }}
                 placeholder="20:00"
                 keyboardType="numbers-and-punctuation"
                 className="ml-2 flex-1"
@@ -137,8 +182,10 @@ export default function NotificationsSettings() {
             <View className="flex-row items-center">
               <Clock size={16} color="#737373" />
               <Input
-                value={quietTo}
-                onChangeText={setQuietTo}
+                value={settings.quietTo}
+                onChangeText={(value) => {
+                  void handleTimeChange("quietTo", value);
+                }}
                 placeholder="07:00"
                 keyboardType="numbers-and-punctuation"
                 className="ml-2 flex-1"

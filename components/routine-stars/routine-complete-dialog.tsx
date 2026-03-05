@@ -18,17 +18,22 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { getThemePalette } from "@/lib/theme";
+import type { ChildTheme } from "@/lib/types";
 
 interface RoutineCompleteDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  childTheme?: ChildTheme;
 }
 
 export function RoutineCompleteDialog({
   isOpen,
   onClose,
+  childTheme,
 }: RoutineCompleteDialogProps) {
   const router = useRouter();
+  const palette = getThemePalette(childTheme);
 
   // Star emoji bounce animation
   const starScale = useSharedValue(1);
@@ -88,22 +93,25 @@ export function RoutineCompleteDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <View className="flex-row gap-3 mt-6 w-full">
+        <View className="mt-6 w-full gap-3">
           <Button
-            variant="outline"
-            onPress={onClose}
-            className="flex-1"
+            onPress={handleViewRewards}
+            className="w-full"
+            style={{ backgroundColor: palette.button }}
+            textClassName="text-white"
           >
-            <Text className="text-sm font-body-semibold text-foreground">
-              Sterne sichern
+            <Text className="text-base font-body-semibold text-center text-white">
+              Belohnungen ansehen
             </Text>
           </Button>
           <Button
-            onPress={handleViewRewards}
-            className="flex-1"
+            variant="outline"
+            onPress={onClose}
+            className="w-full"
+            style={{ borderColor: palette.accent }}
           >
-            <Text className="text-sm font-body-semibold text-primary-foreground">
-              Belohnungen ansehen
+            <Text className="text-base font-body-semibold text-center" style={{ color: palette.accent }}>
+              Sterne sichern
             </Text>
           </Button>
         </View>

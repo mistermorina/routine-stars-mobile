@@ -1,7 +1,27 @@
+import React, { useEffect } from "react";
 import { Stack } from "expo-router";
-import { ChevronLeft } from "lucide-react-native";
+import { View, ActivityIndicator } from "react-native";
+import { useRouter } from "expo-router";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function SettingsLayout() {
+  const router = useRouter();
+  const { isParentAuthorized } = useAuth();
+
+  useEffect(() => {
+    if (!isParentAuthorized) {
+      router.replace("/parent-login");
+    }
+  }, [isParentAuthorized, router]);
+
+  if (!isParentAuthorized) {
+    return (
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator size="large" color="#FFD700" />
+      </View>
+    );
+  }
+
   return (
     <Stack
       screenOptions={{

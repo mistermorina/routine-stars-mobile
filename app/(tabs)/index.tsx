@@ -1,19 +1,18 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { RefreshCcw } from "lucide-react-native";
+import { ArrowRight } from "lucide-react-native";
 import { useChildren } from "@/hooks/use-children";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
-import { useToast } from "@/hooks/use-toast";
 import { useRoutines } from "@/hooks/use-routines";
 import type { Routine, Task } from "@/lib/types";
+import { getThemePalette } from "@/lib/theme";
 import { Header } from "@/components/routine-stars/header";
 import { RoutineCard } from "@/components/routine-stars/routine-card";
 import { TaskTimerModal } from "@/components/routine-stars/task-timer-modal";
 import { RoutineCompleteDialog } from "@/components/routine-stars/routine-complete-dialog";
 import { Confetti } from "@/components/routine-stars/confetti";
-import { Button } from "@/components/ui/button";
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -26,8 +25,7 @@ export default function DashboardScreen() {
     addStars,
   } = useChildren();
   const { logActivity } = useActivityLogs();
-  const { toast } = useToast();
-  const { routines, toggleTaskCompletion, resetDailyProgress, isLoading: routinesLoading } = useRoutines(selectedChildId);
+  const { routines, toggleTaskCompletion, isLoading: routinesLoading } = useRoutines(selectedChildId);
 
   // Timer modal state
   const [timerTask, setTimerTask] = useState<Task | null>(null);
@@ -37,11 +35,32 @@ export default function DashboardScreen() {
 
   // Confetti state
   const [showConfetti, setShowConfetti] = useState(false);
+  const palette = getThemePalette(selectedChild?.theme);
+  const displayRoutines = useMemo(
+    () =>
+      [...routines].sort((left, right) => {
+        const leftRemaining = left.tasks.filter((task) => !task.completed).length;
+        const rightRemaining = right.tasks.filter((task) => !task.completed).length;
+        return leftRemaining - rightRemaining;
+      }),
+    [routines]
+  );
+  const remainingTasks = displayRoutines.reduce(
+    (count, routine) => count + routine.tasks.filter((task) => !task.completed).length,
+    0
+  );
+  const firstOpenTask = displayRoutines
+    .flatMap((routine) =>
+      routine.tasks
+        .filter((task) => !task.completed)
+        .map((task) => ({ task, routineName: routine.name }))
+    )
+    .at(0);
 
   // Redirect to auth if no children
   useEffect(() => {
     if (!isLoading && children.length === 0) {
-      router.replace("/(auth)/login");
+      router.replace("/(auth)/onboarding");
     }
   }, [isLoading, children.length, router]);
 
@@ -97,14 +116,6 @@ export default function DashboardScreen() {
     [timerTask, handleTaskComplete]
   );
 
-  const handleResetRoutines = useCallback(() => {
-    resetDailyProgress();
-    toast({
-      title: "Routinen zurueckgesetzt",
-      description: "Alle Aufgaben wurden zurueckgesetzt.",
-    });
-  }, [resetDailyProgress, toast]);
-
   const handleCloseCompleteDialog = useCallback(() => {
     setShowCompleteDialog(false);
   }, []);
@@ -123,7 +134,7 @@ export default function DashboardScreen() {
     return (
       <SafeAreaView className="flex-1 bg-background items-center justify-center p-6">
         <Text className="text-xl font-headline text-foreground text-center">
-          Kein Kind ausgewaehlt
+          Kein Kind ausgewählt
         </Text>
         <Text className="mt-2 text-muted-foreground font-body text-center">
           Bitte erstelle zuerst ein Kinderprofil.
@@ -142,32 +153,57 @@ export default function DashboardScreen() {
         contentContainerClassName="pb-8"
         showsVerticalScrollIndicator={false}
       >
-        {/* Routine cards */}
-        <View className="px-4 mt-4">
-          {routines.map((routine) => (
-            <RoutineCard
-              key={routine.id}
-              routine={routine}
-              onTaskComplete={handleTaskComplete}
-              onStartTimer={handleStartTimer}
-            />
-          ))}
+        <View
+          className="mx-4 mt-4 rounded-2xl border px-4 py-4"
+          style={{
+            borderColor: palette.accentBorder,
+            backgroundColor: palette.accentSoft,
+          }}
+        >
+          <Text className="text-sm font-body text-muted-foreground">Heute zuerst</Text>
+          <Text className="mt-1 text-2xl font-headline text-foreground">
+            {remainingTasks === 0
+              ? "Alles geschafft!"
+              : `${remainingTasks} Aufgaben warten noch`}
+          </Text>
+          {firstOpenTask ? (
+            <View className="mt-3 flex-row items-center">
+              <View className="flex-1">
+                <Text className="text-sm font-body" style={{ color: palette.accentText }}>
+                  Starte am besten mit „{firstOpenTask.task.title}“ aus {firstOpenTask.routineName}.
+                </Text>
+              </View>
+              <ArrowRight size={18} color={palette.accentStrong} />
+            </View>
+          ) : (
+            <Text className="mt-3 text-sm font-body" style={{ color: palette.accentText }}>
+              Belohnungen oder Sternenkonto ansehen und den Erfolg feiern.
+            </Text>
+          )}
         </View>
 
-        {/* Reset button (Demo) */}
-        <View className="px-4 mt-4 mb-4">
-          <Button
-            variant="ghost"
-            onPress={handleResetRoutines}
-            className="self-center"
-          >
-            <View className="flex-row items-center gap-2">
-              <RefreshCcw size={16} color="#737373" />
-              <Text className="text-sm font-body text-muted-foreground">
-                Routinen zuruecksetzen (Demo)
+        {/* Routine cards */}
+        <View className="px-4 mt-4">
+          {displayRoutines.length > 0 ? (
+            displayRoutines.map((routine) => (
+              <RoutineCard
+                key={routine.id}
+                routine={routine}
+                onTaskComplete={handleTaskComplete}
+                onStartTimer={handleStartTimer}
+              />
+            ))
+          ) : (
+            <View className="rounded-2xl bg-card px-5 py-8">
+              <Text className="text-lg font-headline text-foreground text-center">
+                Noch keine Routinen angelegt
+              </Text>
+              <Text className="mt-2 text-sm font-body text-muted-foreground text-center">
+                Bitte öffne im Eltern-Bereich das Onboarding erneut, um eine Starter-Routine
+                anzulegen.
               </Text>
             </View>
-          </Button>
+          )}
         </View>
       </ScrollView>
 
@@ -175,6 +211,7 @@ export default function DashboardScreen() {
       <TaskTimerModal
         task={timerTask}
         childName={selectedChild.name}
+        childTheme={selectedChild.theme}
         onClose={handleTimerClose}
       />
 
@@ -182,6 +219,7 @@ export default function DashboardScreen() {
       <RoutineCompleteDialog
         isOpen={showCompleteDialog}
         onClose={handleCloseCompleteDialog}
+        childTheme={selectedChild.theme}
       />
 
       {/* Confetti overlay - rendered last so it appears in front */}

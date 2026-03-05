@@ -3,6 +3,15 @@ export interface Child {
   name: string;
   avatar: string;
   stars: number;
+  theme: ChildTheme;
+  ageGroup?: AgeGroup;
+}
+
+export interface ChildProfile {
+  name: string;
+  avatar: string;
+  theme: ChildTheme;
+  ageGroup: AgeGroup;
 }
 
 export interface Task {
@@ -41,6 +50,14 @@ export interface Reward {
   iconName: string;
 }
 
+export interface NotificationSettings {
+  routineReminders: boolean;
+  pushNotifications: boolean;
+  rewardNotifications: boolean;
+  quietFrom: string;
+  quietTo: string;
+}
+
 export interface ActivityLog {
   id: string;
   childId: string;
@@ -54,6 +71,7 @@ export interface ActivityLog {
 export type AgeGroup = '3-5' | '6-8' | '9-12';
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'flexible';
 export type RoutineCategory = 'hygiene' | 'school' | 'household' | 'meals' | 'sport' | 'evening' | 'weekend' | 'special';
+export type ChildTheme = 'sterne' | 'tiere' | 'galaxy';
 
 export interface TaskTemplate {
   title: string;

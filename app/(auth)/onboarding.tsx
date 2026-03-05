@@ -16,12 +16,11 @@ import type { SavedRoutine } from "@/components/onboarding/routine-setup";
 import { RewardSetup } from "@/components/onboarding/reward-setup";
 import { storage, KEYS } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
-import type { Child, Routine, Reward } from "@/lib/types";
+import { getThemePalette } from "@/lib/theme";
+import type { Child, ChildProfile, Routine, Reward } from "@/lib/types";
 
 interface OnboardingFormData {
-  childName: string;
-  avatar: string;
-  theme: string;
+  children: ChildProfile[];
   savedRoutines: SavedRoutine[];
   rewards: Array<{
     id: string;
@@ -29,9 +28,6 @@ interface OnboardingFormData {
     cost: number;
     iconName: string;
   }>;
-  // Keep legacy fields for backward compat with step data merging
-  reward?: string;
-  rewardCost?: number;
 }
 
 const TOTAL_STEPS = 3;
@@ -42,14 +38,13 @@ export default function OnboardingScreen() {
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const [formData, setFormData] = useState<OnboardingFormData>({
-    childName: "",
-    avatar: "",
-    theme: "sterne",
+    children: [],
     savedRoutines: [],
     rewards: [],
   });
 
   const progressValue = ((currentStep + 1) / TOTAL_STEPS) * 100;
+  const onboardingTheme = getThemePalette(formData.children[0]?.theme);
 
   const handleNext = useCallback(
     async (data: Partial<OnboardingFormData>) => {
@@ -60,13 +55,15 @@ export default function OnboardingScreen() {
         setDirection("forward");
         setCurrentStep((prev) => prev + 1);
       } else {
-        // Onboarding complete - create and save the child
-        const newChild: Child = {
-          id: `child-${Date.now()}`,
-          name: newFormData.childName,
-          avatar: newFormData.avatar,
+        // Onboarding complete - create children from profiles
+        const newChildren: Child[] = newFormData.children.map((profile, i) => ({
+          id: `child-${Date.now()}-${i}`,
+          name: profile.name,
+          avatar: profile.avatar,
           stars: 0,
-        };
+          theme: profile.theme,
+          ageGroup: profile.ageGroup,
+        }));
 
         // Create routines from savedRoutines array
         const newRoutines: Routine[] = (newFormData.savedRoutines || []).map((sr) => ({
@@ -87,26 +84,18 @@ export default function OnboardingScreen() {
           iconName: r.iconName,
         }));
 
-        // Fallback: if rewards is empty but we have legacy single reward
-        if (newRewards.length === 0 && newFormData.reward) {
-          newRewards.push({
-            id: `reward-${Date.now()}`,
-            title: newFormData.reward,
-            cost: newFormData.rewardCost || 5,
-            iconName: "gift",
-          });
-        }
-
         // Save everything to AsyncStorage
-        await storage.setItem(KEYS.CHILDREN, [newChild]);
-        await storage.setItem(KEYS.LAST_SELECTED_CHILD_ID, newChild.id);
+        await storage.setItem(KEYS.CHILDREN, newChildren);
+        await storage.setItem(KEYS.LAST_SELECTED_CHILD_ID, newChildren[0].id);
         await storage.setItem(KEYS.CUSTOM_ROUTINES, newRoutines);
         await storage.setItem(KEYS.CUSTOM_REWARDS, newRewards);
         await storage.setItem(KEYS.HAS_ONBOARDED, true);
 
+        const names = newChildren.map((c) => c.name).join(" & ");
+        const verb = newChildren.length === 1 ? "kann" : "können";
         toast({
           title: "Alles eingerichtet!",
-          description: `${newFormData.childName} kann jetzt loslegen.`,
+          description: `${names} ${verb} jetzt loslegen.`,
         });
 
         // Navigate to the main app
@@ -145,6 +134,7 @@ export default function OnboardingScreen() {
           value={progressValue}
           className="mb-6"
           indicatorClassName="bg-[#FFD700]"
+          indicatorColor={onboardingTheme.progress}
         />
 
         {/* Step content with animated transitions */}

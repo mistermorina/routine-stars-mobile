@@ -87,6 +87,8 @@ export default function ChildrenSettings() {
       name: newChildName.trim(),
       avatar: newChildAvatar,
       stars: 0,
+      theme: "sterne",
+      ageGroup: "6-8",
     };
     await addChild(newChild);
     toast({ title: `${newChild.name} wurde hinzugefügt` });

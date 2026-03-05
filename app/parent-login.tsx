@@ -1,10 +1,9 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { View, Text, TextInput, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Animated, {
   useSharedValue,
-  useAnimatedStyle,
   withSequence,
   withSpring,
 } from "react-native-reanimated";
@@ -13,43 +12,91 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { hasParentPin, saveParentPin, verifyParentPin } from "@/lib/parent-access";
 
-const CORRECT_PIN = "1234";
+type ParentLoginMode = "loading" | "setup" | "confirm" | "unlock";
 
 export default function ParentLoginScreen() {
   const router = useRouter();
   const auth = useAuth();
   const { toast } = useToast();
   const [pin, setPin] = useState("");
+  const [firstPin, setFirstPin] = useState("");
   const [error, setError] = useState(false);
+  const [mode, setMode] = useState<ParentLoginMode>("loading");
   const inputRef = useRef<TextInput>(null);
 
   const shakeX = useSharedValue(0);
 
-  const shakeStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: shakeX.value }],
-  }));
-
-  function handleSubmit() {
-    if (pin.length !== 4) return;
-
-    if (pin === CORRECT_PIN) {
-      setError(false);
-      auth.authorizeParent();
-      toast({ title: "Willkommen im Eltern-Bereich" });
-      router.replace("/settings");
-    } else {
-      setError(true);
-      setPin("");
-      shakeX.value = withSequence(
-        withSpring(12, { damping: 2, stiffness: 500 }),
-        withSpring(-12, { damping: 2, stiffness: 500 }),
-        withSpring(8, { damping: 2, stiffness: 500 }),
-        withSpring(-8, { damping: 2, stiffness: 500 }),
-        withSpring(0, { damping: 4, stiffness: 400 })
-      );
-      inputRef.current?.focus();
+  useEffect(() => {
+    async function loadMode() {
+      const pinExists = await hasParentPin();
+      setMode(pinExists ? "unlock" : "setup");
     }
+
+    loadMode();
+  }, []);
+
+  function triggerError() {
+    setError(true);
+    setPin("");
+    shakeX.value = withSequence(
+      withSpring(12, { damping: 2, stiffness: 500 }),
+      withSpring(-12, { damping: 2, stiffness: 500 }),
+      withSpring(8, { damping: 2, stiffness: 500 }),
+      withSpring(-8, { damping: 2, stiffness: 500 }),
+      withSpring(0, { damping: 4, stiffness: 400 })
+    );
+    inputRef.current?.focus();
+  }
+
+  async function handleCompletedPin(digits: string) {
+    if (mode === "setup") {
+      setFirstPin(digits);
+      setPin("");
+      setError(false);
+      setMode("confirm");
+      return;
+    }
+
+    if (mode === "confirm") {
+      if (digits !== firstPin) {
+        triggerError();
+        setFirstPin("");
+        setMode("setup");
+        toast({
+          title: "PIN stimmt nicht überein",
+          description: "Bitte lege den Eltern-PIN noch einmal fest.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await saveParentPin(digits);
+      auth.authorizeParent();
+      toast({
+        title: "Eltern-PIN gespeichert",
+        description: "Der Eltern-Bereich ist jetzt geschützt.",
+      });
+      router.replace("/settings");
+      return;
+    }
+
+    const isValid = await verifyParentPin(digits);
+    if (!isValid) {
+      triggerError();
+      return;
+    }
+
+    setError(false);
+    auth.authorizeParent();
+    toast({ title: "Eltern-Bereich entsperrt" });
+    router.replace("/settings");
+  }
+
+  async function handleSubmit() {
+    if (pin.length !== 4) return;
+    await handleCompletedPin(pin);
   }
 
   function handlePinChange(text: string) {
@@ -60,25 +107,24 @@ export default function ParentLoginScreen() {
     if (digits.length === 4) {
       // Auto-submit when 4 digits entered
       setTimeout(() => {
-        if (digits === CORRECT_PIN) {
-          auth.authorizeParent();
-          toast({ title: "Willkommen im Eltern-Bereich" });
-          router.replace("/settings");
-        } else {
-          setError(true);
-          setPin("");
-          shakeX.value = withSequence(
-            withSpring(12, { damping: 2, stiffness: 500 }),
-            withSpring(-12, { damping: 2, stiffness: 500 }),
-            withSpring(8, { damping: 2, stiffness: 500 }),
-            withSpring(-8, { damping: 2, stiffness: 500 }),
-            withSpring(0, { damping: 4, stiffness: 400 })
-          );
-          inputRef.current?.focus();
-        }
+        void handleCompletedPin(digits);
       }, 100);
     }
   }
+
+  const isSetupMode = mode === "setup" || mode === "confirm";
+  const title =
+    mode === "confirm"
+      ? "PIN bestätigen"
+      : isSetupMode
+        ? "Eltern-PIN festlegen"
+        : "Eltern-Bereich";
+  const description =
+    mode === "confirm"
+      ? "Bitte gib den neuen PIN noch einmal ein."
+      : isSetupMode
+        ? "Lege einen vierstelligen PIN fest, um die Einstellungen zu schützen."
+        : "Bitte gib deinen vierstelligen Eltern-PIN ein.";
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -90,12 +136,12 @@ export default function ParentLoginScreen() {
 
         {/* Title */}
         <Text className="text-2xl font-headline text-foreground">
-          Eltern-Bereich
+          {title}
         </Text>
 
         {/* Description */}
         <Text className="mt-2 text-base text-muted-foreground font-body text-center">
-          Bitte PIN eingeben
+          {mode === "loading" ? "Einen Moment …" : description}
         </Text>
 
         {/* PIN Input */}
@@ -113,15 +159,17 @@ export default function ParentLoginScreen() {
               "w-full rounded-xl border-2 bg-card font-headline text-foreground",
               error ? "border-destructive" : "border-input"
             )}
+            selectionColor="#FFD700"
             placeholderTextColor="#737373"
             placeholder="----"
+            editable={mode !== "loading"}
           />
         </View>
 
         {/* Error message */}
         {error && (
           <Text className="mt-3 text-sm font-body text-destructive">
-            Falscher PIN
+            {mode === "confirm" ? "PIN stimmt nicht überein" : "Falscher PIN"}
           </Text>
         )}
 
@@ -142,10 +190,10 @@ export default function ParentLoginScreen() {
         <View className="mt-8 w-full max-w-[200px]">
           <Button
             onPress={handleSubmit}
-            disabled={pin.length !== 4}
+            disabled={pin.length !== 4 || mode === "loading"}
             className="w-full rounded-xl"
           >
-            Entsperren
+            {isSetupMode ? "Speichern" : "Entsperren"}
           </Button>
         </View>
 

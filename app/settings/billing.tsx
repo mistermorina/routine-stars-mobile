@@ -32,7 +32,7 @@ export default function BillingSettings() {
               Kostenlos
             </Text>
             <Text className="text-sm font-body text-muted-foreground">
-              Grundfunktionen für den Einstieg
+              Lokale Grundfunktionen für den Einstieg
             </Text>
           </View>
         </View>
@@ -46,10 +46,10 @@ export default function BillingSettings() {
           </View>
           <View className="ml-3 flex-1">
             <Text className="text-xl font-headline text-foreground">
-              Routine Stars Premium
+              Premium ist geplant
             </Text>
             <Text className="text-sm font-body text-muted-foreground">
-              Alle Funktionen freischalten
+              Dieses Abo ist noch nicht live
             </Text>
           </View>
         </View>
@@ -78,16 +78,16 @@ export default function BillingSettings() {
         {/* Price info */}
         <View className="items-center mb-4">
           <Text className="text-3xl font-headline text-foreground">
-            4,99 €
+            Demnächst
           </Text>
           <Text className="text-sm font-body text-muted-foreground">
-            pro Monat
+            Wir informieren dich, sobald Premium startet.
           </Text>
         </View>
 
         {/* CTA button */}
         <Button
-          onPress={() => toast({ title: "Kommt bald! Premium ist noch nicht verfügbar." })}
+          onPress={() => toast({ title: "Premium ist noch nicht verfügbar." })}
           className="w-full"
         >
           <View className="flex-row items-center gap-2">
@@ -108,8 +108,8 @@ export default function BillingSettings() {
               Wusstest du?
             </Text>
             <Text className="text-xs font-body text-muted-foreground mt-1">
-              Im kostenlosen Plan kannst du bis zu 2 Kinder und 3 Routinen verwalten.
-              Upgrade auf Premium für unbegrenzte Möglichkeiten.
+              Der aktuelle Fokus liegt auf einem starken lokalen Familien-Setup.
+              Premium-Funktionen folgen später.
             </Text>
           </View>
         </View>

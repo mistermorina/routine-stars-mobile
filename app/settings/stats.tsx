@@ -1,10 +1,12 @@
 import React, { useMemo } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
+import { useRouter } from "expo-router";
 import { Star, Clock, BarChart3 } from "lucide-react-native";
 import { useChildren } from "@/hooks/use-children";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ActivityLog } from "@/lib/types";
 
@@ -28,45 +30,6 @@ function formatDateLabel(dateStr: string): string {
   return `${dayNames[date.getDay()]}, ${date.getDate()}. ${monthNames[date.getMonth()]}`;
 }
 
-// Generate mock activity logs for demonstration
-function generateMockLogs(childId: string): ActivityLog[] {
-  const tasks = [
-    { id: "m1", title: "Bett machen", stars: 1 },
-    { id: "m2", title: "Zähne putzen", stars: 1 },
-    { id: "m3", title: "Anziehen", stars: 1 },
-    { id: "m4", title: "Frühstücken", stars: 1 },
-    { id: "e1", title: "Spielzeug aufräumen", stars: 2 },
-    { id: "e2", title: "Zähne putzen", stars: 1 },
-    { id: "e3", title: "Gute-Nacht-Geschichte", stars: 1 },
-  ];
-
-  const logs: ActivityLog[] = [];
-  const today = new Date();
-
-  for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - dayOffset);
-    const dateStr = date.toISOString().split("T")[0];
-
-    // Randomly select 3-5 tasks for each day
-    const numTasks = 3 + Math.floor(Math.random() * 3);
-    const shuffled = [...tasks].sort(() => Math.random() - 0.5);
-
-    for (let i = 0; i < numTasks && i < shuffled.length; i++) {
-      logs.push({
-        id: `mock-${dayOffset}-${i}`,
-        childId,
-        taskId: shuffled[i].id,
-        taskTitle: shuffled[i].title,
-        date: dateStr,
-        stars: shuffled[i].stars,
-      });
-    }
-  }
-
-  return logs;
-}
-
 interface GroupedLogs {
   date: string;
   label: string;
@@ -75,18 +38,14 @@ interface GroupedLogs {
 }
 
 export default function StatsSettings() {
+  const router = useRouter();
   const { children, selectedChild, selectedChildId, selectChild } = useChildren();
   const { getLogsForChild } = useActivityLogs();
 
   const groupedLogs = useMemo<GroupedLogs[]>(() => {
     if (!selectedChildId) return [];
 
-    let logs = getLogsForChild(selectedChildId);
-
-    // If no real logs, use mock data for demo
-    if (logs.length === 0) {
-      logs = generateMockLogs(selectedChildId);
-    }
+    const logs = getLogsForChild(selectedChildId);
 
     // Sort logs by date descending
     const sorted = [...logs].sort(
@@ -150,7 +109,7 @@ export default function StatsSettings() {
       )}
 
       {/* Summary card */}
-      {selectedChild && (
+      {selectedChild && groupedLogs.length > 0 && (
         <Card className="mb-4">
           <View className="flex-row items-center justify-around">
             <View className="items-center">
@@ -200,8 +159,11 @@ export default function StatsSettings() {
             Noch keine Aktivitäten
           </Text>
           <Text className="mt-2 text-sm font-body text-muted-foreground text-center">
-            Sobald Aufgaben erledigt werden, erscheinen sie hier.
+            Sobald Aufgaben erledigt werden, erscheinen hier die echten Einträge.
           </Text>
+          <Button className="mt-5" onPress={() => router.push("/(tabs)")}>
+            Zu den Routinen
+          </Button>
         </View>
       ) : (
         groupedLogs.map((group) => (

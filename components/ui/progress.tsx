@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View } from "react-native";
+import { View, type ViewStyle } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -11,12 +11,16 @@ interface ProgressProps {
   value: number; // 0–100
   className?: string;
   indicatorClassName?: string;
+  indicatorColor?: string;
+  trackStyle?: ViewStyle;
 }
 
 export function Progress({
   value,
   className,
   indicatorClassName,
+  indicatorColor,
+  trackStyle,
 }: ProgressProps) {
   const width = useSharedValue(0);
 
@@ -33,10 +37,11 @@ export function Progress({
   return (
     <View
       className={cn("h-3 w-full overflow-hidden rounded-full bg-secondary", className)}
+      style={trackStyle}
     >
       <Animated.View
         className={cn("h-full rounded-full bg-primary", indicatorClassName)}
-        style={animatedStyle}
+        style={[animatedStyle, indicatorColor ? { backgroundColor: indicatorColor } : undefined]}
       />
     </View>
   );

@@ -8,27 +8,32 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getIcon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
-import type { Reward } from "@/lib/types";
+import { getThemePalette } from "@/lib/theme";
+import type { ChildTheme, Reward } from "@/lib/types";
 
 interface RewardsOverviewProps {
   rewards: Reward[];
   childStars: number;
+  childTheme?: ChildTheme;
   onRedeem: (reward: Reward) => void;
 }
 
 function RewardItem({
   reward,
   childStars,
+  childTheme,
   onRedeem,
   index,
 }: {
   reward: Reward;
   childStars: number;
+  childTheme?: ChildTheme;
   onRedeem: (reward: Reward) => void;
   index: number;
 }) {
   const canAfford = childStars >= reward.cost;
   const IconComponent = getIcon(reward.iconName);
+  const palette = getThemePalette(childTheme);
 
   return (
     <Animated.View
@@ -45,12 +50,13 @@ function RewardItem({
           <View
             className={cn(
               "h-12 w-12 rounded-full items-center justify-center mr-3",
-              canAfford ? "bg-[#F3E5AB]" : "bg-secondary"
+              canAfford ? "" : "bg-secondary"
             )}
+            style={canAfford ? { backgroundColor: palette.surface } : undefined}
           >
             <IconComponent
               size={24}
-              color={canAfford ? "#B8860B" : "#737373"}
+              color={canAfford ? palette.accentStrong : "#737373"}
             />
           </View>
 
@@ -69,14 +75,16 @@ function RewardItem({
                 variant={canAfford ? "default" : "secondary"}
                 className={cn(
                   "self-start",
-                  canAfford && "bg-[#FFD700]"
+                  canAfford && ""
                 )}
+                style={canAfford ? { backgroundColor: palette.surface } : undefined}
               >
                 <Text
                   className={cn(
                     "text-xs font-body-semibold",
-                    canAfford ? "text-[#5C4800]" : "text-muted-foreground"
+                    canAfford ? "" : "text-muted-foreground"
                   )}
+                  style={canAfford ? { color: palette.accentText } : undefined}
                 >
                   {reward.cost} ⭐
                 </Text>
@@ -90,7 +98,12 @@ function RewardItem({
             size="sm"
             disabled={!canAfford}
             onPress={() => onRedeem(reward)}
-            className={cn(canAfford && "bg-[#87CEEB] active:bg-[#6BB5D6]")}
+            className={cn()}
+            style={
+              canAfford
+                ? { backgroundColor: palette.button }
+                : undefined
+            }
           >
             <Text
               className={cn(
@@ -110,6 +123,7 @@ function RewardItem({
 export function RewardsOverview({
   rewards,
   childStars,
+  childTheme,
   onRedeem,
 }: RewardsOverviewProps) {
   const renderItem = useCallback(
@@ -117,11 +131,12 @@ export function RewardsOverview({
       <RewardItem
         reward={item}
         childStars={childStars}
+        childTheme={childTheme}
         onRedeem={onRedeem}
         index={index}
       />
     ),
-    [childStars, onRedeem]
+    [childStars, childTheme, onRedeem]
   );
 
   const keyExtractor = useCallback((item: Reward) => item.id, []);

@@ -275,6 +275,69 @@ export const routineTemplates: RoutineTemplate[] = [
   },
 ];
 
+function getPreferredTimeOfDay(): TimeOfDay {
+  const currentHour = new Date().getHours();
+
+  if (currentHour < 11) {
+    return "morning";
+  }
+
+  if (currentHour < 17) {
+    return "afternoon";
+  }
+
+  return "evening";
+}
+
+export function getRecommendedRoutineTemplates(
+  ageGroup?: AgeGroup,
+  limit = 3
+): RoutineTemplate[] {
+  const preferredTime = getPreferredTimeOfDay();
+  const filteredTemplates = ageGroup
+    ? routineTemplates.filter((template) => template.ageGroups.includes(ageGroup))
+    : routineTemplates;
+
+  const scoredTemplates = filteredTemplates.map((template, index) => {
+    let score = 0;
+
+    if (template.timeOfDay === preferredTime) {
+      score += 4;
+    } else if (template.timeOfDay === "flexible") {
+      score += 2;
+    }
+
+    if (
+      (preferredTime === "morning" && template.category === "hygiene") ||
+      (preferredTime === "afternoon" && template.category === "school") ||
+      (preferredTime === "evening" && template.category === "evening")
+    ) {
+      score += 3;
+    }
+
+    if (template.ageGroups.includes("3-5")) {
+      score += 0.2;
+    }
+
+    return {
+      template,
+      score,
+      index,
+    };
+  });
+
+  return scoredTemplates
+    .sort((left, right) => {
+      if (right.score !== left.score) {
+        return right.score - left.score;
+      }
+
+      return left.index - right.index;
+    })
+    .slice(0, limit)
+    .map((entry) => entry.template);
+}
+
 export function getTemplatesByCategory(category: RoutineCategory): RoutineTemplate[] {
   return routineTemplates.filter((t) => t.category === category);
 }

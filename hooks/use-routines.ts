@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { storage, KEYS } from "@/lib/storage";
 import type { Routine } from "@/lib/types";
-import { mockRoutines } from "@/lib/data";
 
 // Progress structure: Record<childId, Record<taskId, boolean>>
 type RoutineProgress = Record<string, Record<string, boolean>>;
@@ -20,13 +19,7 @@ export function useRoutines(selectedChildId?: string) {
         storage.getItem<RoutineProgress>(KEYS.ROUTINE_PROGRESS),
       ]);
 
-      let templates: Routine[];
-      if (storedRoutines && storedRoutines.length > 0) {
-        templates = storedRoutines;
-      } else {
-        templates = JSON.parse(JSON.stringify(mockRoutines));
-        await storage.setItem(KEYS.CUSTOM_ROUTINES, templates);
-      }
+      let templates: Routine[] = storedRoutines ?? [];
 
       // Migration: if no progress exists yet but routines have completed tasks,
       // migrate existing completion state as progress for the current child
