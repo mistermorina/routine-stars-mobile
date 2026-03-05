@@ -7,6 +7,7 @@ import {
   type ModalProps,
   KeyboardAvoidingView,
   Platform,
+  type ViewStyle,
 } from "react-native";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react-native";
@@ -51,9 +52,11 @@ export function Dialog({
 export function DialogContent({
   className,
   children,
+  style,
 }: {
   className?: string;
   children: React.ReactNode;
+  style?: ViewStyle;
 }) {
   return (
     <View
@@ -61,6 +64,7 @@ export function DialogContent({
         "mx-6 w-[340px] max-w-[90%] rounded-2xl bg-card p-6 shadow-lg",
         className
       )}
+      style={style}
     >
       {children}
     </View>

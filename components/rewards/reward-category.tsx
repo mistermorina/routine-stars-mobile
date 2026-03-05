@@ -1,9 +1,16 @@
 import React, { useState } from "react";
 import { View, Text, Pressable } from "react-native";
-import Animated, { FadeInDown, FadeOutUp } from "react-native-reanimated";
+import Animated, {
+  FadeInDown,
+  FadeOutUp,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { ChevronRight, Plus, Check } from "lucide-react-native";
 import { getIcon } from "@/lib/icons";
-import type { RewardSuggestion, RewardCategoryInfo } from "@/lib/types";
+import { getThemePalette } from "@/lib/theme";
+import type { ChildTheme, RewardSuggestion, RewardCategoryInfo } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface RewardCategorySectionProps {
@@ -11,32 +18,49 @@ interface RewardCategorySectionProps {
   rewards: RewardSuggestion[];
   onAdd: (reward: RewardSuggestion) => void;
   addedIds: Set<string>;
+  theme?: ChildTheme;
 }
 
-export function RewardCategorySection({ category, rewards, onAdd, addedIds }: RewardCategorySectionProps) {
+export function RewardCategorySection({
+  category,
+  rewards,
+  onAdd,
+  addedIds,
+  theme,
+}: RewardCategorySectionProps) {
   const [expanded, setExpanded] = useState(false);
+  const chevronRotation = useSharedValue(0);
+  const palette = getThemePalette(theme);
 
   const addedCount = rewards.filter((r) => addedIds.has(r.id)).length;
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${chevronRotation.value}deg` }],
+  }));
+
+  const handleToggle = () => {
+    const next = !expanded;
+    setExpanded(next);
+    chevronRotation.value = withTiming(next ? 90 : 0, { duration: 180 });
+  };
 
   return (
     <View className="mb-3">
       <Pressable
-        onPress={() => setExpanded(!expanded)}
-        className="flex-row items-center justify-between bg-card rounded-xl p-3 border border-border"
+        onPress={handleToggle}
+        className="flex-row items-center justify-between rounded-[24px] border p-4"
+        style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
       >
         <View className="flex-row items-center gap-2">
           <Text className="text-lg">{category.emoji}</Text>
           <Text className="text-base font-headline text-foreground">{category.label}</Text>
           {addedCount > 0 && (
-            <View className="bg-[#87CEEB] px-2 py-0.5 rounded-full">
+            <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: palette.button }}>
               <Text className="text-xs font-body-semibold text-white">{addedCount}</Text>
             </View>
           )}
         </View>
-        <Animated.View
-          style={{ transform: [{ rotate: expanded ? "90deg" : "0deg" }] }}
-        >
-          <ChevronRight size={18} color="#737373" />
+        <Animated.View style={chevronStyle}>
+          <ChevronRight size={18} color={palette.accentStrong} />
         </Animated.View>
       </Pressable>
 
@@ -54,22 +78,32 @@ export function RewardCategorySection({ category, rewards, onAdd, addedIds }: Re
                 key={reward.id}
                 onPress={() => !isAdded && onAdd(reward)}
                 className={cn(
-                  "flex-row items-center px-3 py-2.5 rounded-lg ml-2 mt-1",
-                  isAdded ? "bg-[#87CEEB]/10" : "bg-secondary/50 active:bg-secondary"
+                  "ml-2 mt-1 flex-row items-center rounded-[18px] px-3 py-3",
+                  isAdded ? "" : ""
                 )}
+                style={{
+                  backgroundColor: isAdded ? palette.accentSoft : "rgba(255,255,255,0.74)",
+                  borderColor: isAdded ? palette.accentBorder : "rgba(255,255,255,0.2)",
+                  borderWidth: 1,
+                }}
               >
-                <Icon size={18} color={isAdded ? "#87CEEB" : "#737373"} />
-                <Text className={cn(
-                  "flex-1 ml-2.5 text-sm font-body",
-                  isAdded ? "text-[#87CEEB]" : "text-foreground"
-                )}>
+                <View
+                  className="h-10 w-10 items-center justify-center rounded-[14px]"
+                  style={{ backgroundColor: isAdded ? "#FFFFFF" : palette.heroSurface }}
+                >
+                  <Icon size={18} color={isAdded ? palette.accentStrong : "#737373"} />
+                </View>
+                <Text
+                  className={cn("ml-2.5 flex-1 text-sm font-body", isAdded ? "" : "text-foreground")}
+                  style={isAdded ? { color: palette.accentText } : undefined}
+                >
                   {reward.title}
                 </Text>
                 <Text className="text-xs font-body text-muted-foreground mr-2">
                   {reward.cost} ⭐
                 </Text>
                 {isAdded ? (
-                  <Check size={16} color="#87CEEB" />
+                  <Check size={16} color={palette.accentStrong} />
                 ) : (
                   <Plus size={16} color="#737373" />
                 )}

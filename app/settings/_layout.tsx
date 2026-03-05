@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Stack } from "expo-router";
-import { View, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator, Pressable, Text } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -35,6 +35,24 @@ export default function SettingsLayout() {
         headerShadowVisible: false,
         contentStyle: { backgroundColor: "#F8E9D7" },
         animation: "slide_from_right",
+        headerRight: () => (
+          <Pressable
+            onPress={() => router.replace("/(tabs)")}
+            hitSlop={8}
+            className="rounded-full px-3 py-1.5"
+            style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
+          >
+            <Text
+              style={{
+                color: "#1a1a2e",
+                fontFamily: "Poppins_600SemiBold",
+                fontSize: 13,
+              }}
+            >
+              Zur App
+            </Text>
+          </Pressable>
+        ),
       }}
     >
       <Stack.Screen

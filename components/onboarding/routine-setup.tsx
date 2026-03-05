@@ -254,6 +254,7 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                     template={template}
                     onSelect={handleSelectTemplate}
                     isSelected={template.id === selectedTemplateId}
+                    theme={primaryChild?.theme}
                   />
                 ))}
               </ScrollView>
@@ -284,6 +285,7 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
               <TemplateSelector
                 onSelectTemplate={handleSelectTemplate}
                 selectedTemplateId={selectedTemplateId}
+                theme={primaryChild?.theme}
               />
             ) : null}
 

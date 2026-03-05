@@ -10,6 +10,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { Progress } from "@/components/ui/progress";
 import { ToastOverlay } from "@/components/ui/toast";
+import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { ChildSetup } from "@/components/onboarding/child-setup";
 import { RoutineSetup } from "@/components/onboarding/routine-setup";
 import type { SavedRoutine } from "@/components/onboarding/routine-setup";
@@ -127,64 +128,92 @@ export default function OnboardingScreen() {
       : SlideOutRight.duration(300);
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-1 min-h-0 px-4 pt-4">
-        {/* Progress bar */}
-        <Progress
-          value={progressValue}
-          className="mb-6"
-          indicatorClassName="bg-[#FFD700]"
-          indicatorColor={onboardingTheme.progress}
-        />
+    <SafeAreaView className="flex-1">
+      <ThemedScreenBackground theme={formData.children[0]?.theme}>
+        <View className="flex-1 min-h-0 px-4 pt-4">
+          <View
+            className="mb-6 rounded-[26px] border px-4 py-4"
+            style={{
+              backgroundColor: onboardingTheme.cardTint,
+              borderColor: onboardingTheme.accentBorder,
+            }}
+          >
+            <View className="flex-row items-center justify-between">
+              <View>
+                <Progress
+                  value={progressValue}
+                  className="h-3 w-48"
+                  indicatorClassName="bg-[#FFD700]"
+                  indicatorColor={onboardingTheme.progress}
+                />
+                <View className="mt-3">
+                  <Animated.Text className="text-sm font-body text-muted-foreground">
+                    Schritt {currentStep + 1} von {TOTAL_STEPS}
+                  </Animated.Text>
+                </View>
+              </View>
+              <View
+                className="rounded-full px-3 py-1.5"
+                style={{ backgroundColor: onboardingTheme.heroSurface }}
+              >
+                <Animated.Text
+                  className="text-xs font-body-semibold"
+                  style={{ color: onboardingTheme.accentText }}
+                >
+                  Storyworld
+                </Animated.Text>
+              </View>
+            </View>
+          </View>
 
-        {/* Step content with animated transitions */}
-        <View className="flex-1 min-h-0">
-          {currentStep === 0 && (
-            <Animated.View
-              key="step-0"
-              entering={enteringAnimation}
-              exiting={exitingAnimation}
-              style={{ flex: 1, minHeight: 0 }}
-            >
-              <ChildSetup
-                onNext={(data) => handleNext(data)}
-                onBack={handleBack}
-                formData={formData}
-              />
-            </Animated.View>
-          )}
+          <View className="flex-1 min-h-0">
+            {currentStep === 0 && (
+              <Animated.View
+                key="step-0"
+                entering={enteringAnimation}
+                exiting={exitingAnimation}
+                style={{ flex: 1, minHeight: 0 }}
+              >
+                <ChildSetup
+                  onNext={(data) => handleNext(data)}
+                  onBack={handleBack}
+                  formData={formData}
+                />
+              </Animated.View>
+            )}
 
-          {currentStep === 1 && (
-            <Animated.View
-              key="step-1"
-              entering={enteringAnimation}
-              exiting={exitingAnimation}
-              style={{ flex: 1, minHeight: 0 }}
-            >
-              <RoutineSetup
-                onNext={(data) => handleNext(data)}
-                onBack={handleBack}
-                formData={formData}
-              />
-            </Animated.View>
-          )}
+            {currentStep === 1 && (
+              <Animated.View
+                key="step-1"
+                entering={enteringAnimation}
+                exiting={exitingAnimation}
+                style={{ flex: 1, minHeight: 0 }}
+              >
+                <RoutineSetup
+                  onNext={(data) => handleNext(data)}
+                  onBack={handleBack}
+                  formData={formData}
+                />
+              </Animated.View>
+            )}
 
-          {currentStep === 2 && (
-            <Animated.View
-              key="step-2"
-              entering={enteringAnimation}
-              exiting={exitingAnimation}
-              style={{ flex: 1, minHeight: 0 }}
-            >
-              <RewardSetup
-                onNext={(data) => handleNext(data)}
-                onBack={handleBack}
-                formData={formData}
-              />
-            </Animated.View>
-          )}
+            {currentStep === 2 && (
+              <Animated.View
+                key="step-2"
+                entering={enteringAnimation}
+                exiting={exitingAnimation}
+                style={{ flex: 1, minHeight: 0 }}
+              >
+                <RewardSetup
+                  onNext={(data) => handleNext(data)}
+                  onBack={handleBack}
+                  formData={formData}
+                />
+              </Animated.View>
+            )}
+          </View>
         </View>
-      </View>
+      </ThemedScreenBackground>
 
       {/* Toast overlay */}
       <ToastOverlay toasts={toasts} onDismiss={dismiss} />

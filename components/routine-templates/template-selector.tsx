@@ -2,12 +2,14 @@ import React, { useState, useMemo } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
 import { routineTemplates } from "@/lib/routine-templates";
 import { TemplateCard } from "./template-card";
-import type { RoutineTemplate, RoutineCategory } from "@/lib/types";
+import { getThemePalette } from "@/lib/theme";
+import type { ChildTheme, RoutineTemplate, RoutineCategory } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface TemplateSelectorProps {
   onSelectTemplate: (template: RoutineTemplate) => void;
   selectedTemplateId?: string;
+  theme?: ChildTheme;
 }
 
 const categoryFilters: { id: RoutineCategory | "all"; label: string }[] = [
@@ -22,8 +24,13 @@ const categoryFilters: { id: RoutineCategory | "all"; label: string }[] = [
   { id: "special", label: "Besonders" },
 ];
 
-export function TemplateSelector({ onSelectTemplate, selectedTemplateId }: TemplateSelectorProps) {
+export function TemplateSelector({
+  onSelectTemplate,
+  selectedTemplateId,
+  theme,
+}: TemplateSelectorProps) {
   const [category, setCategory] = useState<RoutineCategory | "all">("all");
+  const palette = getThemePalette(theme);
 
   const filtered = useMemo(() => {
     if (category === "all") return routineTemplates;
@@ -45,14 +52,24 @@ export function TemplateSelector({ onSelectTemplate, selectedTemplateId }: Templ
             key={f.id}
             onPress={() => setCategory(f.id)}
             className={cn(
-              "px-3 py-1.5 rounded-full",
-              category === f.id ? "bg-[#87CEEB]" : "bg-secondary"
+              "rounded-full border px-3 py-1.5",
+              category === f.id ? "" : "border-transparent"
             )}
+            style={
+              category === f.id
+                ? {
+                    backgroundColor: palette.tabActiveBg,
+                    borderColor: palette.accent,
+                  }
+                : {
+                    backgroundColor: "rgba(255,255,255,0.74)",
+                  }
+            }
           >
-            <Text className={cn(
-              "text-xs font-body-semibold",
-              category === f.id ? "text-white" : "text-muted-foreground"
-            )}>
+            <Text
+              className={cn("text-xs font-body-semibold", category === f.id ? "" : "text-muted-foreground")}
+              style={category === f.id ? { color: palette.accentText } : undefined}
+            >
               {f.label}
             </Text>
           </Pressable>
@@ -72,6 +89,7 @@ export function TemplateSelector({ onSelectTemplate, selectedTemplateId }: Templ
             template={template}
             onSelect={onSelectTemplate}
             isSelected={template.id === selectedTemplateId}
+            theme={theme}
           />
         ))}
       </ScrollView>

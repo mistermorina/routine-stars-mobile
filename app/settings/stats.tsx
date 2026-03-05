@@ -1,209 +1,234 @@
 import React, { useMemo } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
-import { useRouter } from "expo-router";
-import { Star, Clock, BarChart3 } from "lucide-react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import { BarChart3, Star } from "lucide-react-native";
 import { useChildren } from "@/hooks/use-children";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
+import { InsightCard } from "@/components/profile/insight-card";
 import { Card } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
+import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
+import { formatFriendlyDate, getActivityInsights } from "@/lib/activity-insights";
+import { getThemePalette } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import type { ActivityLog } from "@/lib/types";
-
-function formatDateLabel(dateStr: string): string {
-  const date = new Date(dateStr + "T00:00:00");
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  if (date.getTime() === today.getTime()) return "Heute";
-  if (date.getTime() === yesterday.getTime()) return "Gestern";
-
-  const dayNames = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
-  const monthNames = [
-    "Jan", "Feb", "Mär", "Apr", "Mai", "Jun",
-    "Jul", "Aug", "Sep", "Okt", "Nov", "Dez",
-  ];
-
-  return `${dayNames[date.getDay()]}, ${date.getDate()}. ${monthNames[date.getMonth()]}`;
-}
-
-interface GroupedLogs {
-  date: string;
-  label: string;
-  entries: ActivityLog[];
-  totalStars: number;
-}
 
 export default function StatsSettings() {
-  const router = useRouter();
   const { children, selectedChild, selectedChildId, selectChild } = useChildren();
   const { getLogsForChild } = useActivityLogs();
-
-  const groupedLogs = useMemo<GroupedLogs[]>(() => {
-    if (!selectedChildId) return [];
-
-    const logs = getLogsForChild(selectedChildId);
-
-    // Sort logs by date descending
-    const sorted = [...logs].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-
-    // Group by date
-    const groups: Map<string, ActivityLog[]> = new Map();
-    sorted.forEach((log) => {
-      const existing = groups.get(log.date) || [];
-      existing.push(log);
-      groups.set(log.date, existing);
-    });
-
-    return Array.from(groups.entries()).map(([date, entries]) => ({
-      date,
-      label: formatDateLabel(date),
-      entries,
-      totalStars: entries.reduce((sum, e) => sum + e.stars, 0),
-    }));
-  }, [selectedChildId, getLogsForChild]);
-
-  const totalStarsAllTime = groupedLogs.reduce((s, g) => s + g.totalStars, 0);
-  const totalActivities = groupedLogs.reduce((s, g) => s + g.entries.length, 0);
+  const palette = getThemePalette(selectedChild?.theme);
+  const childLogs = useMemo(
+    () => (selectedChildId ? getLogsForChild(selectedChildId) : []),
+    [getLogsForChild, selectedChildId]
+  );
+  const insights = useMemo(() => getActivityInsights(childLogs), [childLogs]);
+  const recentSummaries = insights.summaries.slice(-7);
+  const maxRecentStars = Math.max(...recentSummaries.map((item) => item.totalStars), 1);
+  const groupedLogs = useMemo(
+    () =>
+      [...insights.summaries]
+        .slice()
+        .reverse()
+        .slice(0, 6)
+        .map((summary) => ({
+          ...summary,
+          entries: childLogs.filter((entry) => entry.date === summary.date),
+        })),
+    [childLogs, insights.summaries]
+  );
 
   return (
-    <ScrollView className="flex-1 bg-background" contentContainerClassName="p-4 pb-8">
-      {/* Child selector */}
-      {children.length > 1 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="mb-4"
-          contentContainerClassName="gap-2"
-        >
-          {children.map((child) => (
-            <Pressable
-              key={child.id}
-              onPress={() => selectChild(child.id)}
-              className={cn(
-                "flex-row items-center rounded-full px-4 py-2",
-                selectedChildId === child.id
-                  ? "bg-primary"
-                  : "bg-card border border-border"
-              )}
-            >
-              <Text className="text-lg mr-1.5">{child.avatar}</Text>
-              <Text
+    <ThemedScreenBackground theme={selectedChild?.theme}>
+      <ScrollView className="flex-1" contentContainerClassName="p-4 pb-8">
+        {children.length > 1 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="mb-4"
+            contentContainerClassName="gap-2"
+          >
+            {children.map((child) => (
+              <Pressable
+                key={child.id}
+                onPress={() => selectChild(child.id)}
                 className={cn(
-                  "text-sm font-body-semibold",
-                  selectedChildId === child.id
-                    ? "text-primary-foreground"
-                    : "text-foreground"
+                  "flex-row items-center rounded-full border px-4 py-2",
+                  selectedChildId === child.id ? "" : "border-border"
                 )}
+                style={
+                  selectedChildId === child.id
+                    ? {
+                        backgroundColor: palette.tabActiveBg,
+                        borderColor: palette.accent,
+                      }
+                    : { backgroundColor: "rgba(255,255,255,0.78)" }
+                }
               >
-                {child.name}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-      )}
+                <Text className="mr-1.5 text-lg">{child.avatar}</Text>
+                <Text
+                  className="text-sm font-body-semibold"
+                  style={{
+                    color: selectedChildId === child.id ? palette.accentText : "#1a1a2e",
+                  }}
+                >
+                  {child.name}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
 
-      {/* Summary card */}
-      {selectedChild && groupedLogs.length > 0 && (
-        <Card className="mb-4">
-          <View className="flex-row items-center justify-around">
-            <View className="items-center">
-              <View className="flex-row items-center gap-1">
-                <Star size={18} color="#FFD700" fill="#FFD700" />
-                <Text className="text-xl font-headline text-foreground">
-                  {totalStarsAllTime}
-                </Text>
-              </View>
-              <Text className="text-xs font-body text-muted-foreground">
-                Sterne verdient
-              </Text>
-            </View>
-            <View className="h-10 w-px bg-border" />
-            <View className="items-center">
-              <View className="flex-row items-center gap-1">
-                <BarChart3 size={18} color="#87CEEB" />
-                <Text className="text-xl font-headline text-foreground">
-                  {totalActivities}
-                </Text>
-              </View>
-              <Text className="text-xs font-body text-muted-foreground">
-                Aktivitäten
-              </Text>
-            </View>
-            <View className="h-10 w-px bg-border" />
-            <View className="items-center">
-              <View className="flex-row items-center gap-1">
-                <Clock size={18} color="#737373" />
-                <Text className="text-xl font-headline text-foreground">
-                  {groupedLogs.length}
-                </Text>
-              </View>
-              <Text className="text-xs font-body text-muted-foreground">
-                Tage aktiv
-              </Text>
-            </View>
-          </View>
+        <Card
+          className="rounded-[28px]"
+          style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+        >
+          <Text className="text-sm font-body text-muted-foreground">Eltern-Detailansicht</Text>
+          <Text className="mt-1 text-2xl font-headline text-foreground">Statistiken & Trends</Text>
+          <Text className="mt-2 text-sm font-body" style={{ color: palette.accentText }}>
+            Die letzten Aktivitätstage, Tageshöhen und gesammelten Sterne im Überblick.
+          </Text>
         </Card>
-      )}
 
-      {/* Activity log list */}
-      {groupedLogs.length === 0 ? (
-        <View className="items-center justify-center py-16">
-          <BarChart3 size={48} color="#D4D4D4" />
-          <Text className="mt-4 text-lg font-headline text-foreground text-center">
-            Noch keine Aktivitäten
-          </Text>
-          <Text className="mt-2 text-sm font-body text-muted-foreground text-center">
-            Sobald Aufgaben erledigt werden, erscheinen hier die echten Einträge.
-          </Text>
-          <Button className="mt-5" onPress={() => router.push("/(tabs)")}>
-            Zu den Routinen
-          </Button>
+        <View className="mt-4 flex-row gap-3">
+          <InsightCard
+            label="Verdiente Sterne"
+            value={`${insights.totalStars}`}
+            caption="Alle Sterne aus gespeicherten Aktivitäten"
+            accentColor={palette.chartPrimary}
+            backgroundColor={palette.cardTint}
+          />
+          <InsightCard
+            label="Aktivitäten"
+            value={`${insights.totalActivities}`}
+            caption="So viele Aufgaben wurden insgesamt geloggt"
+            accentColor={palette.chartSecondary}
+            backgroundColor={palette.cardTint}
+          />
         </View>
-      ) : (
-        groupedLogs.map((group) => (
-          <View key={group.date} className="mb-4">
-            {/* Date header */}
-            <View className="flex-row items-center justify-between mb-2 px-1">
-              <Text className="text-sm font-headline text-foreground">
-                {group.label}
+
+        <View className="mt-3 flex-row gap-3">
+          <InsightCard
+            label="Aktive Tage"
+            value={`${insights.activeDays}`}
+            caption="Tage mit mindestens einer erledigten Aufgabe"
+            accentColor={palette.accentStrong}
+            backgroundColor={palette.cardTint}
+          />
+          <InsightCard
+            label="Beste Serie"
+            value={`${insights.currentStreak}`}
+            caption="Aktuelle Serie zusammenhängender Aktivitätstage"
+            accentColor={palette.accentText}
+            backgroundColor={palette.cardTint}
+          />
+        </View>
+
+        <Animated.View entering={FadeInDown.delay(90).duration(320)} className="mt-4">
+          <Card
+            className="rounded-[28px]"
+            style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+          >
+            <View className="flex-row items-center gap-3">
+              <View
+                className="h-11 w-11 items-center justify-center rounded-[18px]"
+                style={{ backgroundColor: palette.heroSurface }}
+              >
+                <BarChart3 size={20} color={palette.accentStrong} />
+              </View>
+              <View>
+                <Text className="text-lg font-headline text-foreground">Letzte 7 Tage</Text>
+                <Text className="text-sm font-body text-muted-foreground">
+                  Tageshöhen anhand verdienter Sterne
+                </Text>
+              </View>
+            </View>
+
+            {recentSummaries.length > 0 ? (
+              <View className="mt-6 flex-row items-end gap-3">
+                {recentSummaries.map((summary) => {
+                  const height = Math.max(36, (summary.totalStars / maxRecentStars) * 120);
+                  const date = new Date(`${summary.date}T12:00:00`);
+
+                  return (
+                    <View key={summary.date} className="flex-1 items-center">
+                      <View
+                        className="w-full rounded-full"
+                        style={{
+                          height,
+                          backgroundColor: palette.chartPrimary,
+                          opacity: 0.85,
+                        }}
+                      />
+                      <Text className="mt-2 text-xs font-body-semibold text-muted-foreground">
+                        {date.getDate()}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : (
+              <Text className="mt-5 text-sm font-body text-muted-foreground">
+                Noch keine Daten vorhanden.
               </Text>
+            )}
+          </Card>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(130).duration(320)} className="mt-4">
+          <Card
+            className="rounded-[28px]"
+            style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+          >
+            <View className="flex-row items-center justify-between">
+              <Text className="text-lg font-headline text-foreground">Letzte Einträge</Text>
               <View className="flex-row items-center gap-1">
                 <Star size={14} color="#FFD700" fill="#FFD700" />
                 <Text className="text-sm font-body-semibold text-muted-foreground">
-                  {group.totalStars}
+                  {insights.totalStars}
                 </Text>
               </View>
             </View>
 
-            <Card className="p-0 overflow-hidden">
-              {group.entries.map((entry, idx) => (
-                <View key={entry.id}>
-                  <View className="flex-row items-center px-4 py-3">
-                    <View className="flex-1">
-                      <Text className="text-base font-body text-foreground">
-                        {entry.taskTitle}
+            {groupedLogs.length === 0 ? (
+              <Text className="mt-4 text-sm font-body text-muted-foreground">
+                Sobald Aufgaben erledigt werden, erscheinen hier die Tagesgruppen.
+              </Text>
+            ) : (
+              <View className="mt-4 gap-3">
+                {groupedLogs.map((group) => (
+                  <View
+                    key={group.date}
+                    className="rounded-[22px] border px-4 py-4"
+                    style={{
+                      backgroundColor: "rgba(255,255,255,0.76)",
+                      borderColor: palette.accentBorder,
+                    }}
+                  >
+                    <View className="flex-row items-center justify-between">
+                      <Text className="text-base font-headline text-foreground">
+                        {formatFriendlyDate(group.date)}
+                      </Text>
+                      <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>
+                        {group.totalStars} Sterne
                       </Text>
                     </View>
-                    <View className="flex-row items-center gap-1">
-                      <Star size={14} color="#FFD700" fill="#FFD700" />
-                      <Text className="text-sm font-body-semibold text-foreground">
-                        +{entry.stars}
-                      </Text>
+                    <View className="mt-3 gap-2">
+                      {group.entries.slice(0, 3).map((entry) => (
+                        <View key={entry.id} className="flex-row items-center justify-between">
+                          <Text className="flex-1 pr-3 text-sm font-body text-foreground">
+                            {entry.taskTitle}
+                          </Text>
+                          <Text className="text-sm font-body-semibold text-muted-foreground">
+                            +{entry.stars}
+                          </Text>
+                        </View>
+                      ))}
                     </View>
                   </View>
-                  {idx < group.entries.length - 1 && <Separator />}
-                </View>
-              ))}
-            </Card>
-          </View>
-        ))
-      )}
-    </ScrollView>
+                ))}
+              </View>
+            )}
+          </Card>
+        </Animated.View>
+      </ScrollView>
+    </ThemedScreenBackground>
   );
 }

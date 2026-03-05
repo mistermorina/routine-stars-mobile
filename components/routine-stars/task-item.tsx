@@ -6,6 +6,7 @@ import Animated, {
   withSpring,
   withTiming,
   withSequence,
+  withRepeat,
   runOnJS,
   Easing,
 } from "react-native-reanimated";
@@ -13,13 +14,17 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { Star, Check, Clock } from "lucide-react-native";
 import { cn } from "@/lib/utils";
 import { getIcon } from "@/lib/icons";
-import type { Task } from "@/lib/types";
+import { getThemePalette } from "@/lib/theme";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import type { ChildTheme, Task } from "@/lib/types";
 
 const SWIPE_THRESHOLD = -80;
 
 interface TaskItemProps {
   task: Task;
   routineColor?: string;
+  childTheme?: ChildTheme;
+  isSuggested?: boolean;
   onComplete: (bonusStars?: number) => void;
   onStartTimer: (task: Task) => void;
 }
@@ -27,11 +32,15 @@ interface TaskItemProps {
 export function TaskItem({
   task,
   routineColor,
+  childTheme,
+  isSuggested = false,
   onComplete,
   onStartTimer,
 }: TaskItemProps) {
   const [isCompleted, setIsCompleted] = useState(task.completed);
   const [isAnimating, setIsAnimating] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const palette = getThemePalette(childTheme);
 
   // Star flight animation values
   const starTranslateY = useSharedValue(0);
@@ -40,6 +49,7 @@ export function TaskItem({
 
   // Row press animation
   const rowScale = useSharedValue(1);
+  const attentionScale = useSharedValue(1);
 
   // Swipe animation
   const translateX = useSharedValue(0);
@@ -51,6 +61,22 @@ export function TaskItem({
       translateX.value = withTiming(0, { duration: 300 });
     }
   }, [task.completed]);
+
+  useEffect(() => {
+    if (reduceMotion || !isSuggested || isCompleted || isAnimating) {
+      attentionScale.value = 1;
+      return;
+    }
+
+    attentionScale.value = withRepeat(
+      withSequence(
+        withTiming(1.015, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      false
+    );
+  }, [attentionScale, isAnimating, isCompleted, isSuggested, reduceMotion]);
 
   const finishAnimation = () => {
     setIsCompleted(true);
@@ -130,7 +156,7 @@ export function TaskItem({
   }));
 
   const rowAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: rowScale.value }],
+    transform: [{ scale: rowScale.value * attentionScale.value }],
   }));
 
   const swipeAnimatedStyle = useAnimatedStyle(() => ({
@@ -142,6 +168,11 @@ export function TaskItem({
 
   // Star color: use routineColor, fall back to gold (completed) or gray (incomplete)
   const starColor = routineColor || (isCompleted ? "#FFD700" : "#737373");
+  const taskSurface = isCompleted
+    ? "rgba(255,255,255,0.58)"
+    : isSuggested
+      ? palette.heroSurface
+      : "rgba(255,255,255,0.78)";
 
   return (
     <View className="relative">
@@ -200,22 +231,27 @@ export function TaskItem({
               disabled={isCompleted || isAnimating}
             >
               <Animated.View
-                style={[
+            style={[
                   rowAnimatedStyle,
                   {
                     flexDirection: "row",
                     alignItems: "center",
-                    borderRadius: 12,
-                    backgroundColor: "#f5f5f5",
+                    borderRadius: 18,
+                    backgroundColor: taskSurface,
+                    borderWidth: 1,
+                    borderColor: isSuggested ? palette.accentBorder : "rgba(255,255,255,0.2)",
                     padding: 16,
                     opacity: isCompleted ? 0.5 : 1,
                   },
                 ]}
               >
                 {/* Icon */}
-                <View className="mr-3">
+                <View
+                  className="mr-3 h-12 w-12 items-center justify-center rounded-[16px]"
+                  style={{ backgroundColor: isSuggested ? "#FFFFFF" : palette.surface }}
+                >
                   <Icon
-                    size={28}
+                    size={24}
                     color={isCompleted ? "#737373" : routineColor || "#737373"}
                   />
                 </View>
@@ -241,19 +277,23 @@ export function TaskItem({
                         e.stopPropagation?.();
                         onStartTimer(task);
                       }}
-                      className="flex-row items-center gap-1.5 rounded-lg bg-primary/90 px-3 py-1.5"
+                      className="flex-row items-center gap-1.5 rounded-full px-3 py-1.5"
+                      style={{ backgroundColor: palette.button }}
                     >
-                      <Clock size={14} color="#1a1a2e" />
-                      <Text className="text-sm font-body-semibold text-primary-foreground">
+                      <Clock size={14} color="#FFFFFF" />
+                      <Text className="text-sm font-body-semibold text-white">
                         Timer
                       </Text>
                     </Pressable>
-                    <Text className="text-xs text-muted-foreground">
+                    <Text className="text-xs font-body text-muted-foreground">
                       +{task.bonusStars} Bonus
                     </Text>
                   </View>
                 ) : (
-                  <View className="shrink-0 flex-row items-center gap-1">
+                  <View
+                    className="shrink-0 flex-row items-center gap-1 rounded-full px-2.5 py-1"
+                    style={{ backgroundColor: isCompleted ? palette.surface : "rgba(255,255,255,0.82)" }}
+                  >
                     <Text
                       className="text-sm font-body-bold"
                       style={{ color: starColor }}

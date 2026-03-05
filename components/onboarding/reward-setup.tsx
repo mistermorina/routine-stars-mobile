@@ -198,6 +198,7 @@ export function RewardSetup({ onNext, onBack, formData }: RewardSetupProps) {
                 <RewardBrowser
                   onAddReward={handleAddReward}
                   addedRewardIds={selectedRewards.map((r) => r.id)}
+                  theme={formData.children?.[0]?.theme}
                 />
 
                 <Button

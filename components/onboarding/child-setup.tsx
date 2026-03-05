@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
 import { Star, PawPrint, Rocket, Trash2, Check } from "lucide-react-native";
 import { cn } from "@/lib/utils";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { avatarCategories } from "@/lib/data";
+import { triggerFeedback } from "@/lib/feedback";
 import { getThemePalette } from "@/lib/theme";
 import type { AgeGroup, ChildProfile, ChildTheme } from "@/lib/types";
 
@@ -23,18 +24,21 @@ const themes = [
     id: "sterne",
     name: "Sterne",
     description: "Freundlich, hell und klassisch verspielt.",
+    badge: "Warm",
     IconComponent: Star,
   },
   {
     id: "tiere",
     name: "Tiere",
     description: "Natürlich, warm und ruhig motivierend.",
+    badge: "Natur",
     IconComponent: PawPrint,
   },
   {
     id: "galaxy",
     name: "Galaxy",
     description: "Etwas mutiger mit kühlen Weltraum-Akzenten.",
+    badge: "Weltraum",
     IconComponent: Rocket,
   },
 ] as const;
@@ -46,6 +50,32 @@ const ageGroupOptions: Array<{ id: AgeGroup; label: string; hint: string }> = [
 ];
 
 const defaultAvatar = avatarCategories.Tiere[0].emoji;
+const avatarCategoryNames = Object.keys(avatarCategories) as Array<keyof typeof avatarCategories>;
+
+function ThemePreview({
+  themeId,
+}: {
+  themeId: ChildTheme;
+}) {
+  const previewPalette = getThemePalette(themeId);
+
+  return (
+    <View className="mt-3 flex-row gap-1.5">
+      <View
+        className="h-8 flex-1 rounded-full"
+        style={{ backgroundColor: previewPalette.screenGradient[0] }}
+      />
+      <View
+        className="h-8 w-8 rounded-full"
+        style={{ backgroundColor: previewPalette.motifPrimary }}
+      />
+      <View
+        className="h-8 w-12 rounded-full"
+        style={{ backgroundColor: previewPalette.motifSecondary }}
+      />
+    </View>
+  );
+}
 
 export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
   const [childProfiles, setChildProfiles] = useState<ChildProfile[]>(
@@ -57,14 +87,22 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
   const [selectedAgeGroup, setSelectedAgeGroup] = useState<AgeGroup>(
     formData.children[0]?.ageGroup ?? "6-8"
   );
+  const [selectedAvatarCategory, setSelectedAvatarCategory] =
+    useState<keyof typeof avatarCategories>("Tiere");
 
   const palette = getThemePalette(selectedTheme);
+  const avatarOptions = useMemo(
+    () => avatarCategories[selectedAvatarCategory],
+    [selectedAvatarCategory]
+  );
+  const isFirstChildFlow = childProfiles.length === 0;
 
   const resetForm = () => {
     setChildName("");
     setSelectedAvatar(defaultAvatar);
     setSelectedTheme("sterne");
     setSelectedAgeGroup("6-8");
+    setSelectedAvatarCategory("Tiere");
   };
 
   const handleAddChild = () => {
@@ -111,13 +149,27 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
       showsVerticalScrollIndicator={false}
       contentContainerClassName="pb-8"
     >
-      <View className="mb-4 rounded-2xl bg-card px-4 py-4">
-        <Text className="text-lg font-headline text-foreground">
-          In zwei Minuten startklar
+      <View
+        className="mb-4 overflow-hidden rounded-[28px] border px-4 py-4"
+        style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+      >
+        <View
+          className="absolute right-[-24px] top-[-18px] h-24 w-24 rounded-full"
+          style={{ backgroundColor: palette.motifSecondary, opacity: 0.3 }}
+        />
+        <View
+          className="mb-3 self-start rounded-full px-3 py-1.5"
+          style={{ backgroundColor: palette.heroSurface }}
+        >
+          <Text className="text-xs font-body-semibold uppercase tracking-[0.8px]" style={{ color: palette.accentText }}>
+            Erster Start
+          </Text>
+        </View>
+        <Text className="text-xl font-headline text-foreground">
+          Wir richten kurz eure Welt ein
         </Text>
-        <Text className="mt-1 text-sm font-body text-muted-foreground">
-          Lege zuerst ein Kinderprofil an. Danach bekommst du eine passende
-          Starter-Routine und ein sinnvolles Belohnungspaket.
+        <Text className="mt-2 text-sm font-body text-muted-foreground">
+          Erst ein Kinderprofil, dann direkt zur passenden Starter-Routine.
         </Text>
       </View>
 
@@ -128,7 +180,8 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
           {childProfiles.map((profile, index) => (
             <View
               key={`${profile.name}-${index}`}
-              className="flex-row items-center rounded-lg bg-[#87CEEB]/10 border border-[#87CEEB] p-3 gap-3"
+              className="flex-row items-center rounded-[20px] border p-3 gap-3"
+              style={{ backgroundColor: palette.accentSoft, borderColor: palette.accentBorder }}
             >
               <Text className="text-2xl">{profile.avatar}</Text>
               <View className="flex-1">
@@ -150,16 +203,16 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
       <Card>
         <CardHeader>
           <CardTitle>
-            {childProfiles.length > 0 ? "Noch ein Kind hinzufügen" : "Dein erstes Kind"}
+            {childProfiles.length > 0 ? "Noch ein Kind? Optional." : "Dein erstes Kind"}
           </CardTitle>
           <CardDescription>
             {childProfiles.length > 0
-              ? "Du kannst weitere Kinder ergänzen oder direkt weitermachen."
-              : "Wähle Name, Alter, Theme und einen Avatar."}
+              ? "Du kannst direkt weitermachen oder noch ein Profil ergänzen."
+              : "Nur Name, Alter, Theme und ein Avatar, dann geht es weiter."}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <View className="gap-6">
+          <View className="gap-5">
             {/* Child name input */}
             <View className="gap-2">
               <Label>Name deines Kindes</Label>
@@ -175,128 +228,164 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
             {/* Age group selection */}
             <View className="gap-3">
               <Label>Alter</Label>
-              {ageGroupOptions.map((option) => {
-                const isSelected = selectedAgeGroup === option.id;
+              <Text className="text-xs font-body text-muted-foreground">
+                Damit die erste Routine gut passt.
+              </Text>
+              <View className="flex-row gap-2">
+                {ageGroupOptions.map((option) => {
+                  const isSelected = selectedAgeGroup === option.id;
 
-                return (
-                  <Pressable
-                    key={option.id}
-                    onPress={() => setSelectedAgeGroup(option.id)}
-                    className={cn(
-                      "rounded-xl border px-4 py-3",
-                      isSelected ? "bg-card" : "bg-secondary/40 border-border"
-                    )}
-                    style={
-                      isSelected
-                        ? {
-                            borderColor: palette.accent,
-                            backgroundColor: palette.accentSoft,
-                          }
-                        : undefined
-                    }
-                  >
-                    <View className="flex-row items-center justify-between">
-                      <View className="flex-1 pr-3">
-                        <Text className="text-base font-body-semibold text-foreground">
-                          {option.label}
-                        </Text>
-                        <Text className="mt-0.5 text-xs font-body text-muted-foreground">
-                          {option.hint}
-                        </Text>
-                      </View>
-                      {isSelected ? (
-                        <View
-                          className="h-8 w-8 items-center justify-center rounded-full"
-                          style={{ backgroundColor: palette.accent }}
-                        >
-                          <Check size={16} color="#FFFFFF" />
-                        </View>
-                      ) : null}
-                    </View>
-                  </Pressable>
-                );
-              })}
+                  return (
+                    <Pressable
+                      key={option.id}
+                      onPress={() => setSelectedAgeGroup(option.id)}
+                      className="flex-1 rounded-[20px] border px-3 py-3"
+                      style={
+                        isSelected
+                          ? {
+                              borderColor: palette.accent,
+                              backgroundColor: palette.accentSoft,
+                            }
+                          : {
+                              borderColor: "rgba(255,255,255,0.2)",
+                              backgroundColor: "rgba(255,255,255,0.7)",
+                            }
+                      }
+                    >
+                      <Text className="text-center text-base font-body-bold text-foreground">
+                        {option.id}
+                      </Text>
+                      <Text className="mt-1 text-center text-[11px] font-body text-muted-foreground">
+                        {option.hint}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
             </View>
 
             {/* Theme selection */}
             <View className="gap-3">
               <Label>Look & Feel</Label>
-              {themes.map((theme) => {
-                const isSelected = selectedTheme === theme.id;
-                const themePalette = getThemePalette(theme.id);
+              <Text className="text-xs font-body text-muted-foreground">
+                Jede Welt färbt die App später etwas anders ein.
+              </Text>
+              <View className="flex-row gap-2">
+                {themes.map((theme) => {
+                  const isSelected = selectedTheme === theme.id;
+                  const themePalette = getThemePalette(theme.id);
 
-                return (
-                  <Pressable
-                    key={theme.id}
-                    onPress={() => setSelectedTheme(theme.id)}
-                    className={cn(
-                      "rounded-xl border bg-card px-4 py-3",
-                      isSelected ? "" : "border-border"
-                    )}
-                    style={
-                      isSelected
-                        ? {
-                            borderColor: themePalette.accent,
-                            backgroundColor: themePalette.accentSoft,
-                          }
-                        : undefined
-                    }
-                  >
-                    <View className="flex-row items-center">
-                      <View
-                        className="h-11 w-11 items-center justify-center rounded-full"
-                        style={{ backgroundColor: themePalette.surface }}
-                      >
-                        <theme.IconComponent size={22} color={themePalette.accentStrong} />
-                      </View>
-                      <View className="ml-3 flex-1">
-                        <Text className="text-base font-body-semibold text-foreground">
+                  return (
+                    <Pressable
+                      key={theme.id}
+                      onPress={() => {
+                        setSelectedTheme(theme.id);
+                        void triggerFeedback("theme_preview");
+                      }}
+                      className="flex-1 rounded-[22px] border px-3 py-3"
+                      style={
+                        isSelected
+                          ? {
+                              borderColor: themePalette.accent,
+                              backgroundColor: themePalette.accentSoft,
+                            }
+                          : {
+                              borderColor: "rgba(255,255,255,0.2)",
+                              backgroundColor: "rgba(255,255,255,0.72)",
+                            }
+                      }
+                    >
+                      <View className="items-center">
+                        <View
+                          className="h-11 w-11 items-center justify-center rounded-full"
+                          style={{ backgroundColor: themePalette.surface }}
+                        >
+                          <theme.IconComponent size={20} color={themePalette.accentStrong} />
+                        </View>
+                        <Text className="mt-2 text-center text-sm font-body-bold text-foreground">
                           {theme.name}
                         </Text>
-                        <Text className="mt-0.5 text-xs font-body text-muted-foreground">
-                          {theme.description}
-                        </Text>
+                        <View
+                          className="mt-1 rounded-full px-2 py-0.5"
+                          style={{ backgroundColor: "rgba(255,255,255,0.74)" }}
+                        >
+                          <Text className="text-[10px] font-body-semibold uppercase tracking-[0.6px]" style={{ color: themePalette.accentText }}>
+                            {theme.badge}
+                          </Text>
+                        </View>
+                        <ThemePreview themeId={theme.id} />
                       </View>
-                    </View>
-                  </Pressable>
-                );
-              })}
+                    </Pressable>
+                  );
+                })}
+              </View>
             </View>
 
             {/* Avatar selection */}
-            <View className="gap-4">
+            <View className="gap-3">
               <Label>Avatar auswählen</Label>
-              {Object.entries(avatarCategories).map(([category, avatars]) => (
-                <View key={category} className="gap-2">
-                  <Text className="text-sm font-body text-muted-foreground">
-                    {category}
-                  </Text>
-                  <View className="flex-row flex-wrap justify-center gap-3">
-                    {avatars.map((avatar) => (
-                      <Pressable
-                        key={avatar.id}
-                        onPress={() => setSelectedAvatar(avatar.emoji)}
-                        className={cn(
-                          "h-[72px] w-[72px] items-center justify-center rounded-full border-4 bg-secondary",
-                          selectedAvatar === avatar.emoji ? "" : "border-transparent"
-                        )}
-                        style={
-                          selectedAvatar === avatar.emoji
-                            ? { borderColor: palette.accent }
-                            : undefined
-                        }
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerClassName="gap-2"
+              >
+                {avatarCategoryNames.map((category) => {
+                  const isSelected = category === selectedAvatarCategory;
+                  return (
+                    <Pressable
+                      key={category}
+                      onPress={() => setSelectedAvatarCategory(category)}
+                      className="rounded-full border px-3 py-1.5"
+                      style={
+                        isSelected
+                          ? {
+                              backgroundColor: palette.tabActiveBg,
+                              borderColor: palette.accent,
+                            }
+                          : {
+                              backgroundColor: "rgba(255,255,255,0.74)",
+                              borderColor: "rgba(255,255,255,0.2)",
+                            }
+                      }
+                    >
+                      <Text
+                        className="text-xs font-body-semibold"
+                        style={isSelected ? { color: palette.accentText } : undefined}
                       >
-                        <Text className="text-3xl">{avatar.emoji}</Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
-              ))}
+                        {category}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+
+              <View className="flex-row flex-wrap justify-between gap-y-3">
+                {avatarOptions.map((avatar) => (
+                  <Pressable
+                    key={avatar.id}
+                    onPress={() => setSelectedAvatar(avatar.emoji)}
+                    className="h-14 w-14 items-center justify-center rounded-full border-2"
+                    style={
+                      selectedAvatar === avatar.emoji
+                        ? {
+                            borderColor: palette.accent,
+                            backgroundColor: palette.accentSoft,
+                          }
+                        : {
+                            borderColor: "rgba(255,255,255,0.2)",
+                            backgroundColor: "rgba(255,255,255,0.72)",
+                          }
+                    }
+                  >
+                    <Text className="text-2xl">{avatar.emoji}</Text>
+                  </Pressable>
+                ))}
+              </View>
             </View>
 
             {/* Live preview */}
             <View
-              className="rounded-2xl border px-4 py-4"
+              className="rounded-[24px] border px-4 py-4"
               style={{
                 borderColor: palette.accentBorder,
                 backgroundColor: palette.accentSoft,
@@ -313,14 +402,14 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
                   <Text className="text-3xl">{selectedAvatar}</Text>
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-lg font-headline text-foreground">
-                    {childName.trim() || "Dein Kind"}
-                  </Text>
-                  <Text className="text-sm font-body" style={{ color: palette.accentText }}>
-                    {selectedAgeGroup} • {themes.find((theme) => theme.id === selectedTheme)?.name}
-                  </Text>
-                </View>
+                <Text className="text-lg font-headline text-foreground">
+                  {childName.trim() || "Dein Kind"}
+                </Text>
+                <Text className="text-sm font-body" style={{ color: palette.accentText }}>
+                  {selectedAgeGroup} • {themes.find((theme) => theme.id === selectedTheme)?.name}
+                </Text>
               </View>
+            </View>
               <View
                 className="mt-4 rounded-xl px-3 py-3"
                 style={{ backgroundColor: "#FFFFFF" }}
@@ -332,30 +421,39 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
               </View>
             </View>
 
-            {/* Add child button */}
-            <Button
-              variant="outline"
-              onPress={handleAddChild}
-              disabled={!childName.trim()}
-              className="border-[#87CEEB]"
-              style={{ borderColor: palette.accent }}
-            >
-              <Text className="text-sm font-body-semibold" style={{ color: palette.accent }}>
-                {childProfiles.length > 0
-                  ? "Weiteres Kind hinzufügen"
-                  : "Kind hinzufügen"}
-              </Text>
-            </Button>
+            {!canProceed ? (
+              <View
+                className="rounded-[18px] px-4 py-3"
+                style={{ backgroundColor: "rgba(255,255,255,0.74)" }}
+              >
+                <Text className="text-sm font-body" style={{ color: palette.accentText }}>
+                  Bitte gib einen Namen ein, damit wir mit der ersten Routine weitermachen können.
+                </Text>
+              </View>
+            ) : null}
+
+            {!isFirstChildFlow ? (
+              <Button
+                variant="outline"
+                onPress={handleAddChild}
+                disabled={!childName.trim()}
+                style={{ borderColor: palette.accent }}
+              >
+                <Text className="text-sm font-body-semibold" style={{ color: palette.accent }}>
+                  Dieses Kind speichern
+                </Text>
+              </Button>
+            ) : null}
 
             {/* Navigation buttons */}
-            <View className="flex-row justify-end pt-2">
+            <View className="pt-2">
               <Button
                 onPress={handleSubmit}
                 disabled={!canProceed}
                 className="min-w-[120px]"
                 style={{ backgroundColor: palette.button }}
               >
-                Weiter
+                {isFirstChildFlow ? "Weiter zu Routinen" : "Weiter zu Routinen"}
               </Button>
             </View>
           </View>

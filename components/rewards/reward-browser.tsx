@@ -1,24 +1,27 @@
 import React, { useMemo } from "react";
-import { View, Text, ScrollView } from "react-native";
-import { rewardCategories, rewardSuggestions, getRewardsByCategory } from "@/lib/reward-suggestions";
+import { View, Text } from "react-native";
+import { rewardCategories, getRewardsByCategory } from "@/lib/reward-suggestions";
 import { RewardCategorySection } from "./reward-category";
-import type { RewardSuggestion } from "@/lib/types";
+import { getThemePalette } from "@/lib/theme";
+import type { ChildTheme, RewardSuggestion } from "@/lib/types";
 
 interface RewardBrowserProps {
   onAddReward: (reward: RewardSuggestion) => void;
   addedRewardIds: string[];
+  theme?: ChildTheme;
 }
 
-export function RewardBrowser({ onAddReward, addedRewardIds }: RewardBrowserProps) {
+export function RewardBrowser({ onAddReward, addedRewardIds, theme }: RewardBrowserProps) {
   const addedSet = useMemo(() => new Set(addedRewardIds), [addedRewardIds]);
+  const palette = getThemePalette(theme);
 
   return (
     <View>
-      <View className="flex-row items-center justify-between mb-3">
+      <View className="mb-3 flex-row items-center justify-between">
         <Text className="text-sm font-body-semibold text-muted-foreground">
           Vorschläge
         </Text>
-        <Text className="text-sm font-body text-[#87CEEB]">
+        <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>
           {addedRewardIds.length} gewählt
         </Text>
       </View>
@@ -31,6 +34,7 @@ export function RewardBrowser({ onAddReward, addedRewardIds }: RewardBrowserProp
             rewards={rewards}
             onAdd={onAddReward}
             addedIds={addedSet}
+            theme={theme}
           />
         );
       })}

@@ -84,7 +84,7 @@ function ConfettiStar({ particle }: { particle: StarParticle }) {
   );
 }
 
-export function Confetti() {
+export function Confetti({ colors = COLORS }: { colors?: string[] }) {
   const particles = useMemo<StarParticle[]>(() => {
     return Array.from({ length: NUM_STARS }, (_, i) => ({
       id: i,
@@ -93,9 +93,9 @@ export function Confetti() {
       duration: 3000 + Math.random() * 2000,
       rotation: -360 + Math.random() * 720,
       size: 12 + Math.random() * 16,
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      color: colors[Math.floor(Math.random() * colors.length)],
     }));
-  }, []);
+  }, [colors]);
 
   return (
     <View

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useFocusEffect } from "expo-router";
 import { storage, KEYS } from "@/lib/storage";
 import type { Child } from "@/lib/types";
 import { normalizeChildTheme } from "@/lib/theme";
@@ -15,27 +16,39 @@ export function useChildren() {
   const [selectedChildId, setSelectedChildId] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function load() {
-      const storedChildren = await storage.getItem<Child[]>(KEYS.CHILDREN);
-      const lastSelectedId = await storage.getItem<string>(KEYS.LAST_SELECTED_CHILD_ID);
+  const loadChildren = useCallback(async () => {
+    const storedChildren = await storage.getItem<Child[]>(KEYS.CHILDREN);
+    const lastSelectedId = await storage.getItem<string>(KEYS.LAST_SELECTED_CHILD_ID);
 
-      if (storedChildren && storedChildren.length > 0) {
-        const normalizedChildren = storedChildren.map(normalizeChild);
-        setChildren(normalizedChildren);
+    if (storedChildren && storedChildren.length > 0) {
+      const normalizedChildren = storedChildren.map(normalizeChild);
+      setChildren(normalizedChildren);
 
-        if (lastSelectedId && normalizedChildren.some((c) => c.id === lastSelectedId)) {
-          setSelectedChildId(lastSelectedId);
-        } else {
-          setSelectedChildId(normalizedChildren[0].id);
-        }
-
-        await storage.setItem(KEYS.CHILDREN, normalizedChildren);
+      if (lastSelectedId && normalizedChildren.some((c) => c.id === lastSelectedId)) {
+        setSelectedChildId(lastSelectedId);
+      } else {
+        setSelectedChildId(normalizedChildren[0].id);
+        await storage.setItem(KEYS.LAST_SELECTED_CHILD_ID, normalizedChildren[0].id);
       }
-      setIsLoading(false);
+
+      await storage.setItem(KEYS.CHILDREN, normalizedChildren);
+    } else {
+      setChildren([]);
+      setSelectedChildId(undefined);
     }
-    load();
+
+    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    void loadChildren();
+  }, [loadChildren]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadChildren();
+    }, [loadChildren])
+  );
 
   const selectedChild = children.find((c) => c.id === selectedChildId);
 

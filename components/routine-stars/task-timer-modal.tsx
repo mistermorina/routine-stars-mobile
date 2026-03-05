@@ -12,6 +12,7 @@ import Svg, { Circle } from "react-native-svg";
 import { X, Check, Award, ThumbsUp, ThumbsDown } from "lucide-react-native";
 import { Button } from "@/components/ui/button";
 import { Confetti } from "./confetti";
+import { triggerFeedback } from "@/lib/feedback";
 import { getThemePalette } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { ChildTheme, Task } from "@/lib/types";
@@ -43,8 +44,6 @@ export function TaskTimerModal({
   const contentScale = useSharedValue(0.8);
   const contentOpacity = useSharedValue(0);
 
-  const CIRCLE_RADIUS = 90;
-  const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
   const palette = getThemePalette(childTheme);
 
   useEffect(() => {
@@ -89,7 +88,7 @@ export function TaskTimerModal({
   }, [timeLeft, task, circleProgress]);
 
   const circleAnimatedProps = useAnimatedProps(() => ({
-    strokeDashoffset: CIRCUMFERENCE * (1 - circleProgress.value),
+    strokeDashoffset: circumference * (1 - circleProgress.value),
   }));
 
   const contentAnimatedStyle = useAnimatedStyle(() => ({
@@ -107,6 +106,7 @@ export function TaskTimerModal({
       if (success) {
         setTimerState("success");
         setShowConfetti(true);
+        void triggerFeedback("stars_added");
         contentScale.value = withSpring(1.1, { damping: 10, stiffness: 200 }, () => {
           contentScale.value = withSpring(1, { damping: 15, stiffness: 200 });
         });
@@ -132,12 +132,14 @@ export function TaskTimerModal({
 
   const isCompactLayout = screenHeight < 760;
   const circleSize = Math.min(
-    screenWidth * 0.64,
-    isCompactLayout ? screenHeight * 0.34 : screenHeight * 0.4,
-    isCompactLayout ? 220 : 260
+    screenWidth * 0.62,
+    isCompactLayout ? screenHeight * 0.3 : screenHeight * 0.36,
+    isCompactLayout ? 210 : 250
   );
-  const viewBox = `0 0 ${CIRCLE_RADIUS * 2 + 24} ${CIRCLE_RADIUS * 2 + 24}`;
-  const center = CIRCLE_RADIUS + 12;
+  const circleRadius = Math.max(72, Math.min(90, circleSize / 2 - 18));
+  const circumference = 2 * Math.PI * circleRadius;
+  const viewBox = `0 0 ${circleRadius * 2 + 24} ${circleRadius * 2 + 24}`;
+  const center = circleRadius + 12;
 
   return (
     <Modal
@@ -147,11 +149,11 @@ export function TaskTimerModal({
       onRequestClose={() => onClose(false)}
     >
       <View className="flex-1 bg-black/85 px-5 py-8">
-        {showConfetti && <Confetti />}
+        {showConfetti && <Confetti colors={palette.celebrationColors} />}
 
         <Pressable
           onPress={() => onClose(false)}
-          className="absolute right-6 top-16 z-50 h-12 w-12 items-center justify-center rounded-full"
+          className="absolute right-6 top-12 z-50 h-12 w-12 items-center justify-center rounded-full"
           hitSlop={12}
         >
           <X size={28} color="rgba(255,255,255,0.7)" />
@@ -160,27 +162,52 @@ export function TaskTimerModal({
         <View className="flex-1 items-center justify-center">
           <Animated.View
             style={contentAnimatedStyle}
-            className="w-full max-w-[360px] items-center justify-center self-center"
+            className={cn(
+              "w-full max-w-[360px] items-center justify-center self-center overflow-hidden rounded-[34px] border",
+              isCompactLayout ? "px-5 pb-7 pt-10" : "px-6 pb-8 pt-12"
+            )}
           >
+            <View
+              className="absolute inset-0 rounded-[34px]"
+              style={{ backgroundColor: "rgba(18,18,34,0.42)", borderColor: "rgba(255,255,255,0.14)", borderWidth: 1 }}
+            />
+            <View
+              className="absolute right-[-14px] top-[-10px] h-24 w-24 rounded-full"
+              style={{ backgroundColor: palette.button, opacity: 0.18 }}
+            />
+            <View
+              className="absolute bottom-6 left-[-10px] h-20 w-20 rounded-full"
+              style={{ backgroundColor: palette.chartSecondary, opacity: 0.12 }}
+            />
             {timerState === "running" && (
               <>
-                <Text
-                  className={cn(
-                    "font-headline text-center text-white",
-                    isCompactLayout ? "mb-2 text-[28px] leading-[34px]" : "mb-2 text-3xl"
-                  )}
-                  numberOfLines={2}
+                <View
+                  className="mb-4 rounded-full px-3 py-1.5"
+                  style={{ backgroundColor: "rgba(255,255,255,0.12)" }}
                 >
-                  {task.title}
-                </Text>
-                <Text
-                  className={cn(
-                    "font-body text-center text-white/70",
-                    isCompactLayout ? "mb-6 text-sm" : "mb-8 text-base"
-                  )}
-                >
-                  Schaffst du es rechtzeitig?
-                </Text>
+                  <Text className="text-xs font-body-semibold uppercase tracking-[0.8px] text-white/80">
+                    Bonus-Challenge
+                  </Text>
+                </View>
+                <View className="items-center">
+                  <Text
+                    className={cn(
+                      "max-w-[280px] font-headline text-center text-white",
+                      isCompactLayout ? "mb-2 text-[24px] leading-[29px]" : "mb-2 text-[28px] leading-[34px]"
+                    )}
+                    numberOfLines={2}
+                  >
+                    {task.title}
+                  </Text>
+                  <Text
+                    className={cn(
+                      "max-w-[260px] font-body text-center text-white/70",
+                      isCompactLayout ? "mb-5 text-sm leading-5" : "mb-7 text-base"
+                    )}
+                  >
+                    Schaffst du es rechtzeitig?
+                  </Text>
+                </View>
 
                 <View
                   style={{ width: circleSize, height: circleSize }}
@@ -201,7 +228,7 @@ export function TaskTimerModal({
                     <Circle
                       cx={center}
                       cy={center}
-                      r={CIRCLE_RADIUS}
+                      r={circleRadius}
                       fill="none"
                       stroke="rgba(255,255,255,0.15)"
                       strokeWidth={10}
@@ -209,12 +236,12 @@ export function TaskTimerModal({
                     <AnimatedCircle
                       cx={center}
                       cy={center}
-                      r={CIRCLE_RADIUS}
+                      r={circleRadius}
                       fill="none"
-                      stroke={palette.button}
+                      stroke={palette.chartPrimary}
                       strokeWidth={10}
                       strokeLinecap="round"
-                      strokeDasharray={CIRCUMFERENCE}
+                      strokeDasharray={circumference}
                       animatedProps={circleAnimatedProps}
                     />
                   </Svg>
@@ -247,7 +274,7 @@ export function TaskTimerModal({
                 </Button>
 
                 <View className="flex-row items-center gap-2">
-                  <Award size={20} color="#FFD700" />
+                  <Award size={20} color={palette.chartPrimary} />
                   <Text className="text-base font-body-semibold text-white/80">
                     +{task.bonusStars} Bonus-Sterne
                   </Text>
@@ -257,10 +284,10 @@ export function TaskTimerModal({
 
             {timerState === "confirming" && (
               <>
-                <Text className="mb-4 text-center text-3xl font-headline text-white">
+                <Text className="mb-4 max-w-[280px] text-center text-[28px] font-headline leading-[34px] text-white">
                   Hat {childName} die Aufgabe geschafft?
                 </Text>
-                <Text className="mb-8 text-center text-base font-body text-white/70">
+                <Text className="mb-7 max-w-[270px] text-center text-base font-body leading-6 text-white/70">
                   Bestätige, ob die Aufgabe rechtzeitig erledigt wurde.
                 </Text>
                 <View
@@ -272,9 +299,10 @@ export function TaskTimerModal({
                   <Pressable
                     onPress={() => handleParentConfirmation(true)}
                     className={cn(
-                      "items-center justify-center rounded-xl bg-green-500 active:bg-green-600",
+                      "items-center justify-center rounded-[22px]",
                       isCompactLayout ? "h-14 w-full" : "h-20 flex-1"
                     )}
+                    style={{ backgroundColor: palette.button }}
                   >
                     <View className="flex-row items-center gap-2">
                       <ThumbsUp size={24} color="#FFFFFF" />
@@ -286,9 +314,10 @@ export function TaskTimerModal({
                   <Pressable
                     onPress={() => handleParentConfirmation(false)}
                     className={cn(
-                      "items-center justify-center rounded-xl bg-red-500 active:bg-red-600",
+                      "items-center justify-center rounded-[22px] border",
                       isCompactLayout ? "h-14 w-full" : "h-20 flex-1"
                     )}
+                    style={{ backgroundColor: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.16)" }}
                   >
                     <View className="flex-row items-center gap-2">
                       <ThumbsDown size={24} color="#FFFFFF" />
@@ -303,12 +332,12 @@ export function TaskTimerModal({
 
             {timerState === "success" && (
               <>
-                <Text className="mb-6 text-center text-5xl font-headline text-white">
+                <Text className="mb-5 text-center text-4xl font-headline text-white">
                   Super!
                 </Text>
                 <View className="flex-row items-center gap-3">
-                  <Award size={36} color="#FFD700" />
-                  <Text className="text-2xl font-body-bold" style={{ color: palette.button }}>
+                  <Award size={36} color={palette.chartPrimary} />
+                  <Text className="text-center text-[22px] font-body-bold" style={{ color: palette.chartPrimary }}>
                     +{task.bonusStars} Bonus-Sterne!
                   </Text>
                 </View>
