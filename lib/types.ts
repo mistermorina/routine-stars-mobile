@@ -67,6 +67,44 @@ export interface ActivityLog {
   stars: number;
 }
 
+export type DailyMissionKind =
+  | "complete_3_tasks"
+  | "earn_5_stars"
+  | "complete_1_routine";
+
+export interface DailyMission {
+  id: string;
+  date: string;
+  kind: DailyMissionKind;
+  title: string;
+  description: string;
+  target: number;
+}
+
+export type StickerId =
+  | "first_task"
+  | "first_routine"
+  | "daily_mission_1"
+  | "daily_mission_3"
+  | "streak_3"
+  | "streak_7"
+  | "stars_25"
+  | "stars_50"
+  | "active_days_10";
+
+export interface StickerDefinition {
+  id: StickerId;
+  title: string;
+  description: string;
+  shortLabel: string;
+}
+
+export interface ChildProgressState {
+  unlockedStickerIds: StickerId[];
+  claimedMissionDates: string[];
+  lastSeenUnlockIds?: StickerId[];
+}
+
 // --- Template Types ---
 export type AgeGroup = '3-5' | '6-8' | '9-12';
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'flexible';

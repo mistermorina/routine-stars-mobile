@@ -9,6 +9,7 @@ const KEYS = {
   HAS_ONBOARDED: "hasOnboarded",
   HAS_SEEN_WELCOME: "hasSeenWelcome",
   ROUTINE_PROGRESS: "routineProgress",
+  CHILD_PROGRESS_STATE: "childProgressState",
   PARENT_PIN_HASH: "parentPinHash",
   NOTIFICATION_SETTINGS: "notificationSettings",
   LEGAL_PREFERENCES: "legalPreferences",

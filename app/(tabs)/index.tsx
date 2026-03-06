@@ -3,12 +3,14 @@ import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { ArrowRight, Flame, Sparkles, Trophy } from "lucide-react-native";
+import { Flame, Sparkles, Trophy } from "lucide-react-native";
 import { useChildren } from "@/hooks/use-children";
+import { useChildProgression } from "@/hooks/use-child-progression";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
 import { useRoutines } from "@/hooks/use-routines";
 import { useRewards } from "@/hooks/use-rewards";
 import { Header } from "@/components/routine-stars/header";
+import { DailyMissionCard } from "@/components/routine-stars/daily-mission-card";
 import { RoutineCard } from "@/components/routine-stars/routine-card";
 import { TaskTimerModal } from "@/components/routine-stars/task-timer-modal";
 import { RoutineCompleteDialog } from "@/components/routine-stars/routine-complete-dialog";
@@ -42,6 +44,14 @@ export default function DashboardScreen() {
   const { getLogsForChild, logActivity } = useActivityLogs();
   const { rewards } = useRewards();
   const { routines, toggleTaskCompletion, isLoading: routinesLoading } = useRoutines(selectedChildId);
+  const {
+    todayMission,
+    missionProgress,
+    isMissionComplete,
+    recentUnlocks,
+    evaluateProgressAfterTaskCompletion,
+    clearRecentUnlocks,
+  } = useChildProgression(selectedChildId);
   const [timerTask, setTimerTask] = useState<Task | null>(null);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -98,9 +108,21 @@ export default function DashboardScreen() {
     }
   }, [children.length, isLoading, router]);
 
+  useEffect(() => {
+    if (recentUnlocks.length === 0) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      void clearRecentUnlocks();
+    }, 4800);
+
+    return () => clearTimeout(timeout);
+  }, [clearRecentUnlocks, recentUnlocks]);
+
   const handleTaskComplete = useCallback(
     async (taskId: string, bonusStars?: number) => {
-      if (!selectedChildId) return;
+      if (!selectedChildId || !selectedChild) return;
 
       let parentRoutine: Routine | undefined;
       for (const routine of routines) {
@@ -122,11 +144,30 @@ export default function DashboardScreen() {
       await addStars(selectedChildId, totalStarsEarned);
 
       const newLog = await logActivity(selectedChildId, { ...task, completed: true }, bonusStars);
-      const nextInsights = getActivityInsights([...getLogsForChild(selectedChildId), newLog]);
+      const nextLogs = [...getLogsForChild(selectedChildId), newLog];
+      const nextInsights = getActivityInsights(nextLogs);
+      const progressionResult = await evaluateProgressAfterTaskCompletion({
+        childId: selectedChildId,
+        child: {
+          ...selectedChild,
+          stars: selectedChild.stars + totalStarsEarned,
+        },
+        childStars: selectedChild.stars + totalStarsEarned,
+        logs: nextLogs,
+        routines,
+      });
 
       const allCompleted = parentRoutine.tasks.every((entry) =>
         entry.id === taskId ? true : entry.completed
       );
+
+      if (progressionResult.unlockedStickerIds.length > 0) {
+        void triggerFeedback("sticker_unlocked");
+      }
+
+      if (progressionResult.missionCompleted) {
+        void triggerFeedback("mission_complete");
+      }
 
       if (allCompleted) {
         setShowConfetti(true);
@@ -143,7 +184,16 @@ export default function DashboardScreen() {
 
       void triggerFeedback("task_complete");
     },
-    [addStars, getLogsForChild, logActivity, routines, selectedChildId, toggleTaskCompletion]
+    [
+      addStars,
+      evaluateProgressAfterTaskCompletion,
+      getLogsForChild,
+      logActivity,
+      routines,
+      selectedChild,
+      selectedChildId,
+      toggleTaskCompletion,
+    ]
   );
 
   const handleStartTimer = useCallback((task: Task) => {
@@ -284,6 +334,14 @@ export default function DashboardScreen() {
                     </View>
                   </View>
                 </View>
+
+                <DailyMissionCard
+                  mission={todayMission}
+                  missionProgress={missionProgress}
+                  isMissionComplete={isMissionComplete}
+                  recentUnlocks={recentUnlocks}
+                  palette={palette}
+                />
 
                 <View
                   className="mt-4 rounded-[24px] px-4 py-4"

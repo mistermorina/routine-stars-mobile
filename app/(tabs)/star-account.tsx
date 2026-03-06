@@ -1,12 +1,15 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { View, Text, ScrollView } from "react-native";
+import { useRouter } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Sparkles } from "lucide-react-native";
 import { useChildren } from "@/hooks/use-children";
+import { useChildProgression } from "@/hooks/use-child-progression";
 import { useRewards } from "@/hooks/use-rewards";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
 import { Header } from "@/components/routine-stars/header";
 import { Card } from "@/components/ui/card";
+import { StickerAlbum } from "@/components/profile/sticker-album";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { InsightCard } from "@/components/profile/insight-card";
 import { MonthlyCompletionCalendar } from "@/components/profile/monthly-completion-calendar";
@@ -19,9 +22,11 @@ import { getThemePalette } from "@/lib/theme";
 const STAR_MILESTONES = [5, 10, 25, 50, 100];
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const { children, selectedChild, selectChild, selectedChildId, isLoading } = useChildren();
   const { rewards } = useRewards();
   const { getLogsForChild } = useActivityLogs();
+  const { albumStickers, nextSticker } = useChildProgression(selectedChildId);
   const palette = getThemePalette(selectedChild?.theme);
   const previousStarsRef = useRef(0);
   const previousStreakRef = useRef(0);
@@ -140,6 +145,14 @@ export default function ProfileScreen() {
               monthlyStars={insights.monthlyStars}
             />
           </Animated.View>
+
+          <StickerAlbum
+            albumStickers={albumStickers}
+            nextSticker={nextSticker}
+            palette={palette}
+            childTheme={selectedChild.theme}
+            onOpenAlbum={() => router.push("/sticker-album")}
+          />
 
           {childLogs.length === 0 ? (
             <Animated.View entering={FadeInDown.delay(160).duration(320)} className="mt-4">

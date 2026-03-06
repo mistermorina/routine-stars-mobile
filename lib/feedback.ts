@@ -6,6 +6,8 @@ export type FeedbackEvent =
   | "stars_added"
   | "routine_complete"
   | "reward_redeemed"
+  | "mission_complete"
+  | "sticker_unlocked"
   | "streak_up"
   | "tab_focus"
   | "theme_preview"
@@ -26,6 +28,8 @@ const FEEDBACK_THROTTLE_MS: Record<FeedbackEvent, number> = {
   stars_added: 140,
   routine_complete: 800,
   reward_redeemed: 400,
+  mission_complete: 900,
+  sticker_unlocked: 1100,
   streak_up: 1200,
   tab_focus: 250,
   theme_preview: 180,
@@ -51,8 +55,10 @@ async function runHaptic(event: FeedbackEvent) {
       await Haptics.selectionAsync();
       return;
     case "reward_redeemed":
+    case "mission_complete":
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       return;
+    case "sticker_unlocked":
     case "routine_complete":
     case "streak_up":
     case "profile_milestone":
