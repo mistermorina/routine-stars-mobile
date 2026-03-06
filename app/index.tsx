@@ -1,27 +1,21 @@
 import { useEffect } from "react";
-import { useRouter } from "expo-router";
+import { useRouter, useRootNavigationState } from "expo-router";
 import { View, ActivityIndicator } from "react-native";
-import { storage, KEYS } from "@/lib/storage";
+import { getInitialAuthRoute } from "@/lib/auth-flow";
 
 export default function Index() {
   const router = useRouter();
+  const rootNavigationState = useRootNavigationState();
 
   useEffect(() => {
-    async function checkOnboarding() {
-      const hasOnboarded = await storage.getItem<boolean>(KEYS.HAS_ONBOARDED);
-      const children = await storage.getItem<unknown[]>(KEYS.CHILDREN);
+    if (!rootNavigationState?.key) return;
 
-      if (children && children.length > 0) {
-        router.replace("/(tabs)");
-      } else if (hasOnboarded) {
-        router.replace("/(auth)/onboarding");
-      } else {
-        router.replace("/(auth)/onboarding");
-      }
+    async function checkOnboarding() {
+      router.replace(await getInitialAuthRoute());
     }
 
-    checkOnboarding();
-  }, [router]);
+    void checkOnboarding();
+  }, [rootNavigationState?.key, router]);
 
   return (
     <View className="flex-1 items-center justify-center bg-background">

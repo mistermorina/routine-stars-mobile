@@ -32,10 +32,11 @@ export function useChildren() {
       }
 
       await storage.setItem(KEYS.CHILDREN, normalizedChildren);
-    } else {
-      setChildren([]);
-      setSelectedChildId(undefined);
-    }
+	    } else {
+	      setChildren([]);
+	      setSelectedChildId(undefined);
+	      await storage.removeItem(KEYS.LAST_SELECTED_CHILD_ID);
+	    }
 
     setIsLoading(false);
   }, []);
@@ -90,6 +91,9 @@ export function useChildren() {
       if (selectedChildId === id && updated.length > 0) {
         setSelectedChildId(updated[0].id);
         await storage.setItem(KEYS.LAST_SELECTED_CHILD_ID, updated[0].id);
+      } else if (updated.length === 0) {
+        setSelectedChildId(undefined);
+        await storage.removeItem(KEYS.LAST_SELECTED_CHILD_ID);
       }
     },
     [children, selectedChildId]

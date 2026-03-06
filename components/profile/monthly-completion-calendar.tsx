@@ -12,18 +12,26 @@ interface MonthlyCompletionCalendarProps {
   monthLabel: string;
   rows: CalendarCell[][];
   palette: ThemePalette;
+  monthlyActiveDays: number;
+  monthlyStars: number;
 }
 
 export function MonthlyCompletionCalendar({
   monthLabel,
   rows,
   palette,
+  monthlyActiveDays,
+  monthlyStars,
 }: MonthlyCompletionCalendarProps) {
   return (
     <Card
-      className="overflow-hidden"
+      className="overflow-hidden rounded-[30px]"
       style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
     >
+      <View
+        className="absolute left-[-10px] top-10 h-20 w-20 rounded-full"
+        style={{ backgroundColor: palette.motifPrimary, opacity: 0.16 }}
+      />
       <View className="flex-row items-center justify-between">
         <View>
           <Text className="text-sm font-body text-muted-foreground">Monatsblick</Text>
@@ -35,6 +43,31 @@ export function MonthlyCompletionCalendar({
         >
           <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>
             Aktivität
+          </Text>
+        </View>
+      </View>
+
+      <View className="mt-4 flex-row gap-3">
+        <View
+          className="flex-1 rounded-[22px] px-4 py-3.5"
+          style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
+        >
+          <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+            Aktive Tage
+          </Text>
+          <Text className="mt-2 text-2xl font-headline text-foreground">
+            {monthlyActiveDays}
+          </Text>
+        </View>
+        <View
+          className="flex-1 rounded-[22px] px-4 py-3.5"
+          style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
+        >
+          <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+            Monatssterne
+          </Text>
+          <Text className="mt-2 text-2xl font-headline text-foreground">
+            {monthlyStars}
           </Text>
         </View>
       </View>
@@ -62,7 +95,7 @@ export function MonthlyCompletionCalendar({
               return (
                 <View key={cell.key} className="flex-1 items-center py-1.5">
                   <View
-                    className="h-11 w-11 items-center justify-center rounded-2xl border"
+                    className="h-12 w-12 items-center justify-center rounded-[20px] border"
                     style={{
                       backgroundColor: cell.isActive
                         ? palette.heroSurface
@@ -94,7 +127,7 @@ export function MonthlyCompletionCalendar({
                       className="mt-1 text-[11px] font-body-semibold"
                       style={{ color: palette.accentText }}
                     >
-                      {cell.stars}
+                      {cell.stars}⭐
                     </Text>
                   ) : (
                     <Text className="mt-1 text-[11px] font-body text-muted-foreground">

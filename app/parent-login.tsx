@@ -78,7 +78,7 @@ export default function ParentLoginScreen() {
         title: "Eltern-PIN gespeichert",
         description: "Der Eltern-Bereich ist jetzt geschützt.",
       });
-      router.replace("/settings");
+      router.push("/settings");
       return;
     }
 
@@ -91,7 +91,7 @@ export default function ParentLoginScreen() {
     setError(false);
     auth.authorizeParent();
     toast({ title: "Eltern-Bereich entsperrt" });
-    router.replace("/settings");
+    router.push("/settings");
   }
 
   async function handleSubmit() {
@@ -198,11 +198,11 @@ export default function ParentLoginScreen() {
         </View>
 
         {/* Cancel button */}
-        <Pressable onPress={() => router.back()} className="mt-4 py-2">
-          <Text className="text-base font-body text-muted-foreground">
-            Abbrechen
-          </Text>
-        </Pressable>
+	        <Pressable onPress={() => router.replace("/(tabs)")} className="mt-4 py-2">
+	          <Text className="text-base font-body text-muted-foreground">
+	            Abbrechen
+	          </Text>
+	        </Pressable>
       </View>
     </SafeAreaView>
   );

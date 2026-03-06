@@ -14,8 +14,17 @@ export function WeeklyActivityStrip({
   items,
   palette,
 }: WeeklyActivityStripProps) {
+  const activeCount = items.filter((item) => item.isActive).length;
+
   return (
-    <Card style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}>
+    <Card
+      className="overflow-hidden rounded-[30px]"
+      style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+    >
+      <View
+        className="absolute right-[-12px] top-[-10px] h-20 w-20 rounded-full"
+        style={{ backgroundColor: palette.motifSecondary, opacity: 0.2 }}
+      />
       <View className="flex-row items-center justify-between">
         <View>
           <Text className="text-sm font-body text-muted-foreground">Diese Woche</Text>
@@ -28,7 +37,7 @@ export function WeeklyActivityStrip({
           style={{ backgroundColor: palette.heroSurface }}
         >
           <Text className="text-xs font-body-semibold" style={{ color: palette.accentText }}>
-            7 Tage
+            {activeCount}/7 aktiv
           </Text>
         </View>
       </View>
@@ -40,10 +49,16 @@ export function WeeklyActivityStrip({
             entering={FadeInDown.delay(index * 40).duration(260)}
             className="items-center"
           >
+            <Text
+              className="mb-2 text-xs font-body-semibold"
+              style={{ color: item.isToday ? palette.accentText : "#6b7280" }}
+            >
+              {item.label}
+            </Text>
             <View
-              className="h-12 w-12 items-center justify-center rounded-2xl border"
+              className="h-14 w-14 items-center justify-center rounded-[22px] border"
               style={{
-                backgroundColor: item.isActive ? palette.heroSurface : "rgba(255,255,255,0.72)",
+                backgroundColor: item.isActive ? palette.heroSurface : "rgba(255,255,255,0.76)",
                 borderColor: item.isToday ? palette.accent : "rgba(255,255,255,0.72)",
               }}
             >
@@ -54,8 +69,8 @@ export function WeeklyActivityStrip({
                 {item.isActive ? item.stars : item.dateLabel}
               </Text>
             </View>
-            <Text className="mt-2 text-xs font-body-semibold text-muted-foreground">
-              {item.label}
+            <Text className="mt-2 text-[11px] font-body text-muted-foreground">
+              {item.isActive ? `${item.taskCount} Aufg.` : `Tag ${item.dateLabel}`}
             </Text>
           </Animated.View>
         ))}

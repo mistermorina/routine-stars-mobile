@@ -1,19 +1,28 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, Pressable, Linking } from "react-native";
 import {
-  ChevronRight,
-  FileText,
-  Scale,
   Building2,
-  MessageCircle,
+  ChevronRight,
   Download,
+  FileText,
+  MessageCircle,
+  Scale,
   Shield,
 } from "lucide-react-native";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { useChildren } from "@/hooks/use-children";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { useToast } from "@/hooks/use-toast";
+import { storage, KEYS } from "@/lib/storage";
+import { getThemePalette } from "@/lib/theme";
+
+interface LegalPreferences {
+  analyticsConsent: boolean;
+  personalizedContent: boolean;
+}
 
 const legalItems = [
   {
@@ -39,9 +48,29 @@ const legalItems = [
 ];
 
 export default function LegalSettings() {
+  const { selectedChild } = useChildren();
   const { toast } = useToast();
   const [analyticsConsent, setAnalyticsConsent] = useState(false);
   const [personalizedContent, setPersonalizedContent] = useState(false);
+  const palette = getThemePalette(selectedChild?.theme);
+
+  useEffect(() => {
+    async function loadPreferences() {
+      const stored = await storage.getItem<LegalPreferences>(KEYS.LEGAL_PREFERENCES);
+      if (stored) {
+        setAnalyticsConsent(stored.analyticsConsent);
+        setPersonalizedContent(stored.personalizedContent);
+      }
+    }
+
+    void loadPreferences();
+  }, []);
+
+  async function persistPreferences(next: LegalPreferences) {
+    setAnalyticsConsent(next.analyticsConsent);
+    setPersonalizedContent(next.personalizedContent);
+    await storage.setItem(KEYS.LEGAL_PREFERENCES, next);
+  }
 
   function handleOpenLink(url: string, label: string) {
     Linking.openURL(url).catch(() => {
@@ -50,121 +79,192 @@ export default function LegalSettings() {
   }
 
   function handleExportData() {
-    toast({ title: "Datenexport wird vorbereitet..." });
-    // Placeholder for actual export functionality
-    setTimeout(() => {
-      toast({ title: "Daten wurden exportiert" });
-    }, 2000);
+    toast({
+      title: "Datenexport folgt später",
+      description: "In dieser Version gibt es noch keinen lokalen Export als Datei.",
+    });
   }
 
   return (
-    <ScrollView className="flex-1 bg-background" contentContainerClassName="p-4 pb-8">
-      {/* Legal links */}
-      <Card className="mb-4 p-0 overflow-hidden">
-        {legalItems.map((item, index) => {
-          const Icon = item.icon;
-          return (
-            <View key={item.label}>
-              <Pressable
-                onPress={() => handleOpenLink(item.url, item.label)}
-                className="flex-row items-center px-4 py-4 active:bg-secondary/50"
-              >
-                <Icon size={20} color="#737373" />
-                <Text className="flex-1 ml-3 text-base font-body text-foreground">
-                  {item.label}
-                </Text>
-                <ChevronRight size={18} color="#737373" />
-              </Pressable>
-              {index < legalItems.length - 1 && <Separator />}
-            </View>
-          );
-        })}
-      </Card>
-
-      {/* DSGVO section */}
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle className="text-base">DSGVO</CardTitle>
-        </CardHeader>
-        <Text className="text-xs font-body text-muted-foreground mb-4">
-          Gemäß der Datenschutz-Grundverordnung (DSGVO) hast du das Recht,
-          deine gespeicherten Daten zu exportieren.
-        </Text>
-        <Button
-          variant="outline"
-          onPress={handleExportData}
-          className="w-full"
+    <ThemedScreenBackground theme={selectedChild?.theme}>
+      <ScrollView className="flex-1" contentContainerClassName="p-4 pb-8">
+        <Card
+          className="mb-4 overflow-hidden rounded-[30px]"
+          style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
         >
-          <View className="flex-row items-center gap-2">
-            <Download size={18} color="#1a1a2e" />
-            <Text className="text-base font-body-semibold text-foreground">
-              Daten exportieren
-            </Text>
-          </View>
-        </Button>
-      </Card>
-
-      {/* Cookie / Tracking consent */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Einwilligungen</CardTitle>
-        </CardHeader>
-
-        <View className="gap-0">
-          <View className="flex-row items-center justify-between py-3">
-            <View className="flex-1 mr-3">
-              <Text className="text-base font-body text-foreground">
-                Analyse & Statistiken
+          <View
+            className="absolute inset-x-0 top-0 h-32"
+            style={{ backgroundColor: palette.heroSurface }}
+          />
+          <View
+            className="absolute right-[-16px] top-[-10px] h-24 w-24 rounded-full"
+            style={{ backgroundColor: palette.motifPrimary, opacity: 0.18 }}
+          />
+          <View className="flex-row items-start justify-between gap-3">
+            <View className="flex-1">
+              <View
+                className="self-start rounded-full px-3 py-1.5"
+                style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
+              >
+                <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+                  Transparenz
+                </Text>
+              </View>
+              <Text className="mt-3 text-[30px] font-headline text-foreground">
+                Rechtliches & Einwilligungen
               </Text>
-              <Text className="text-xs font-body text-muted-foreground">
-                Hilft uns, die App zu verbessern
-              </Text>
-            </View>
-            <Switch
-              checked={analyticsConsent}
-              onCheckedChange={(v) => {
-                setAnalyticsConsent(v);
-                toast({
-                  title: v
-                    ? "Analyse-Tracking aktiviert"
-                    : "Analyse-Tracking deaktiviert",
-                });
-              }}
-            />
-          </View>
-
-          <Separator />
-
-          <View className="flex-row items-center justify-between py-3">
-            <View className="flex-1 mr-3">
-              <Text className="text-base font-body text-foreground">
-                Personalisierte Inhalte
-              </Text>
-              <Text className="text-xs font-body text-muted-foreground">
-                Vorschläge basierend auf Nutzung
+              <Text className="mt-2 text-sm font-body leading-6" style={{ color: palette.accentText }}>
+                Links funktionieren direkt. Einwilligungen werden lokal gespeichert. Der Datenexport ist in dieser Version noch nicht verfügbar.
               </Text>
             </View>
-            <Switch
-              checked={personalizedContent}
-              onCheckedChange={(v) => {
-                setPersonalizedContent(v);
-                toast({
-                  title: v
-                    ? "Personalisierung aktiviert"
-                    : "Personalisierung deaktiviert",
-                });
-              }}
-            />
+            <View
+              className="rounded-[22px] px-3.5 py-3"
+              style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
+            >
+              <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+                Status
+              </Text>
+              <Text className="mt-1 text-base font-headline" style={{ color: palette.accentText }}>
+                lokal
+              </Text>
+            </View>
           </View>
+        </Card>
+
+        <Card
+          className="mb-4 overflow-hidden rounded-[28px] p-0"
+          style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+        >
+          {legalItems.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <View key={item.label}>
+                <Pressable
+                  onPress={() => handleOpenLink(item.url, item.label)}
+                  className="flex-row items-center px-4 py-4 active:bg-secondary/50"
+                >
+                  <View
+                    className="h-11 w-11 items-center justify-center rounded-[18px]"
+                    style={{ backgroundColor: palette.heroSurface }}
+                  >
+                    <Icon size={20} color={palette.accentStrong} />
+                  </View>
+                  <Text className="ml-3 flex-1 text-base font-body text-foreground">
+                    {item.label}
+                  </Text>
+                  <ChevronRight size={18} color={palette.accentText} />
+                </Pressable>
+                {index < legalItems.length - 1 && <Separator />}
+              </View>
+            );
+          })}
+        </Card>
+
+        <Card
+          className="mb-4 rounded-[28px]"
+          style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+        >
+          <View className="flex-row items-center gap-3">
+            <View
+              className="h-11 w-11 items-center justify-center rounded-[18px]"
+              style={{ backgroundColor: palette.heroSurface }}
+            >
+              <Scale size={20} color={palette.accentStrong} />
+            </View>
+            <View className="flex-1">
+              <Text className="text-lg font-headline text-foreground">DSGVO</Text>
+              <Text className="text-sm font-body text-muted-foreground">
+                Exportrecht ist vorgesehen, der lokale Dateiexport folgt später.
+              </Text>
+            </View>
+          </View>
+          <Button
+            variant="outline"
+            onPress={handleExportData}
+            className="mt-4 w-full rounded-[22px] border"
+            style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.82)" }}
+          >
+            <View className="flex-row items-center gap-2">
+              <Download size={18} color={palette.accentText} />
+              <Text className="text-base font-body-semibold" style={{ color: palette.accentText }}>
+                Datenexport folgt später
+              </Text>
+            </View>
+          </Button>
+        </Card>
+
+        <Card
+          className="rounded-[28px]"
+          style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+        >
+          <Text className="text-lg font-headline text-foreground">Einwilligungen</Text>
+          <Text className="mt-1 text-sm font-body text-muted-foreground">
+            Diese Präferenzen werden lokal auf diesem Gerät gespeichert.
+          </Text>
+
+          <View className="mt-4 gap-0">
+            <View className="flex-row items-center justify-between py-3">
+              <View className="mr-3 flex-1">
+                <Text className="text-base font-body text-foreground">
+                  Analyse & Statistiken
+                </Text>
+                <Text className="text-xs font-body text-muted-foreground">
+                  Hilft uns, die App zu verbessern
+                </Text>
+              </View>
+              <Switch
+                checked={analyticsConsent}
+                onCheckedChange={(value) => {
+                  const next = {
+                    analyticsConsent: value,
+                    personalizedContent,
+                  };
+                  void persistPreferences(next);
+                  toast({
+                    title: value
+                      ? "Analyse-Präferenz gespeichert"
+                      : "Analyse-Präferenz entfernt",
+                  });
+                }}
+              />
+            </View>
+
+            <Separator />
+
+            <View className="flex-row items-center justify-between py-3">
+              <View className="mr-3 flex-1">
+                <Text className="text-base font-body text-foreground">
+                  Personalisierte Inhalte
+                </Text>
+                <Text className="text-xs font-body text-muted-foreground">
+                  Vorschläge basierend auf Nutzung
+                </Text>
+              </View>
+              <Switch
+                checked={personalizedContent}
+                onCheckedChange={(value) => {
+                  const next = {
+                    analyticsConsent,
+                    personalizedContent: value,
+                  };
+                  void persistPreferences(next);
+                  toast({
+                    title: value
+                      ? "Personalisierung lokal gespeichert"
+                      : "Personalisierung entfernt",
+                  });
+                }}
+              />
+            </View>
+          </View>
+        </Card>
+
+        <View className="mt-6 items-center">
+          <Text className="text-xs font-body text-muted-foreground">
+            Routine Stars v0.1.0
+          </Text>
         </View>
-      </Card>
-
-      {/* App version */}
-      <View className="mt-6 items-center">
-        <Text className="text-xs font-body text-muted-foreground">
-          Routine Stars v0.1.0
-        </Text>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </ThemedScreenBackground>
   );
 }

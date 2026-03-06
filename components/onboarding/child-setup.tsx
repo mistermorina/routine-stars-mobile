@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { FamilyHeroArt } from "@/components/ui/family-hero-art";
 import { avatarCategories } from "@/lib/data";
 import { triggerFeedback } from "@/lib/feedback";
 import { getThemePalette } from "@/lib/theme";
@@ -171,6 +172,7 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
         <Text className="mt-2 text-sm font-body text-muted-foreground">
           Erst ein Kinderprofil, dann direkt zur passenden Starter-Routine.
         </Text>
+        <FamilyHeroArt theme={selectedTheme} compact className="mt-4" />
       </View>
 
       {/* Added children list */}

@@ -38,6 +38,9 @@ export default function ProfileScreen() {
   const nextReward = selectedChild
     ? sortedRewards.find((reward) => reward.cost > selectedChild.stars)
     : undefined;
+  const latestActivity = insights.summaries.length > 0
+    ? insights.summaries[insights.summaries.length - 1]
+    : null;
 
   useEffect(() => {
     if (selectedChild) {
@@ -133,81 +136,211 @@ export default function ProfileScreen() {
               monthLabel={insights.monthLabel}
               rows={insights.calendarRows}
               palette={palette}
+              monthlyActiveDays={insights.monthlyActiveDays}
+              monthlyStars={insights.monthlyStars}
             />
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(160).duration(320)} className="mt-4">
+          {childLogs.length === 0 ? (
+            <Animated.View entering={FadeInDown.delay(160).duration(320)} className="mt-4">
+              <Card
+                className="overflow-hidden rounded-[30px]"
+                style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+              >
+                <View
+                  className="absolute right-[-14px] top-[-10px] h-20 w-20 rounded-full"
+                  style={{ backgroundColor: palette.motifSecondary, opacity: 0.24 }}
+                />
+                <View className="flex-row items-center gap-3">
+                  <View
+                    className="h-12 w-12 items-center justify-center rounded-[18px]"
+                    style={{ backgroundColor: palette.heroSurface }}
+                  >
+                    <Sparkles size={20} color={palette.accentStrong} />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-lg font-headline text-foreground">Hier wächst dein Fortschritt</Text>
+                    <Text className="text-sm font-body text-muted-foreground">
+                      Sobald erste Routinen erledigt werden, füllen sich Woche, Monat und Insights
+                      automatisch.
+                    </Text>
+                  </View>
+                </View>
+              </Card>
+            </Animated.View>
+          ) : (
+            <>
+              <Animated.View entering={FadeInDown.delay(160).duration(320)} className="mt-4">
+                <Card
+                  className="overflow-hidden rounded-[30px]"
+                  style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+                >
+                  <View className="flex-row items-center justify-between gap-3">
+                    <View className="flex-row items-center gap-3">
+                      <View
+                        className="h-11 w-11 items-center justify-center rounded-[18px]"
+                        style={{ backgroundColor: palette.heroSurface }}
+                      >
+                        <Sparkles size={20} color={palette.accentStrong} />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-lg font-headline text-foreground">Schöne Einblicke</Text>
+                        <Text className="text-sm font-body text-muted-foreground">
+                          Kindnah und hilfreich für den Alltag.
+                        </Text>
+                      </View>
+                    </View>
+                    <View
+                      className="rounded-full px-3 py-1.5"
+                      style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
+                    >
+                      <Text className="text-xs font-body-semibold" style={{ color: palette.accentText }}>
+                        {insights.totalActivities} Aktivitäten
+                      </Text>
+                    </View>
+                  </View>
+                </Card>
+              </Animated.View>
+
+              <View className="mt-4 flex-row gap-3">
+                <InsightCard
+                  label="Aktive Tage"
+                  value={`${insights.activeDays}`}
+                  caption="Tage mit erledigten Aufgaben"
+                  accentColor={palette.accentText}
+                  backgroundColor={palette.cardTint}
+                />
+                <InsightCard
+                  label="Monatsquote"
+                  value={`${insights.monthlyCompletionRate}%`}
+                  caption="An wie vielen Tagen etwas geschafft wurde"
+                  accentColor={palette.chartPrimary}
+                  backgroundColor={palette.cardTint}
+                />
+              </View>
+
+              <View className="mt-3 flex-row gap-3">
+                <InsightCard
+                  label="Sterne verdient"
+                  value={`${insights.totalStars}`}
+                  caption="Alle Sterne aus erledigten Aufgaben"
+                  accentColor={palette.chartSecondary}
+                  backgroundColor={palette.cardTint}
+                />
+                <InsightCard
+                  label="Aufgaben"
+                  value={`${insights.totalActivities}`}
+                  caption="So viele Aktivitäten wurden schon geloggt"
+                  accentColor={palette.accentStrong}
+                  backgroundColor={palette.cardTint}
+                />
+              </View>
+            </>
+          )}
+
+          <Animated.View entering={FadeInDown.delay(220).duration(320)} className="mt-4">
             <Card
-              className="rounded-[28px]"
+              className="overflow-hidden rounded-[30px]"
               style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
             >
-              <View className="flex-row items-center gap-3">
-                <View
-                  className="h-11 w-11 items-center justify-center rounded-[18px]"
-                  style={{ backgroundColor: palette.heroSurface }}
-                >
-                  <Sparkles size={20} color={palette.accentStrong} />
-                </View>
-                <View>
-                  <Text className="text-lg font-headline text-foreground">Deine Einblicke</Text>
-                  <Text className="text-sm font-body text-muted-foreground">
-                    Kindnah und hilfreich für den Alltag.
-                  </Text>
+              <View
+                className="absolute right-[-14px] top-[-10px] h-20 w-20 rounded-full"
+                style={{ backgroundColor: palette.motifPrimary, opacity: 0.16 }}
+              />
+              <View className="flex-row items-center justify-between gap-3">
+                <View className="flex-row items-center gap-3">
+                  <View
+                    className="h-11 w-11 items-center justify-center rounded-[18px]"
+                    style={{ backgroundColor: palette.heroSurface }}
+                  >
+                    <Sparkles size={20} color={palette.accentStrong} />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-lg font-headline text-foreground">Rhythmus & Highlights</Text>
+                    <Text className="text-sm font-body text-muted-foreground">
+                      Kleine Rückblicke auf starke Tage und zuletzt geschaffte Momente.
+                    </Text>
+                  </View>
                 </View>
               </View>
             </Card>
           </Animated.View>
 
           <View className="mt-4 flex-row gap-3">
-            <InsightCard
-              label="Aktive Tage"
-              value={`${insights.activeDays}`}
-              caption="Tage mit erledigten Aufgaben"
-              accentColor={palette.accentText}
-              backgroundColor={palette.cardTint}
-            />
-            <InsightCard
-              label="Monatsquote"
-              value={`${insights.monthlyCompletionRate}%`}
-              caption="An wie vielen Tagen etwas geschafft wurde"
-              accentColor={palette.chartPrimary}
-              backgroundColor={palette.cardTint}
-            />
-          </View>
-
-          <View className="mt-3 flex-row gap-3">
-            <InsightCard
-              label="Sterne verdient"
-              value={`${insights.totalStars}`}
-              caption="Alle Sterne aus erledigten Aufgaben"
-              accentColor={palette.chartSecondary}
-              backgroundColor={palette.cardTint}
-            />
-            <InsightCard
-              label="Aufgaben"
-              value={`${insights.totalActivities}`}
-              caption="So viele Aktivitäten wurden schon geloggt"
-              accentColor={palette.accentStrong}
-              backgroundColor={palette.cardTint}
-            />
-          </View>
-
-          <Animated.View entering={FadeInDown.delay(220).duration(320)} className="mt-4">
             <Card
-              className="rounded-[28px]"
+              className="min-h-[172px] flex-1 overflow-hidden rounded-[28px]"
               style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
             >
+              <View
+                className="absolute right-[-10px] top-[-10px] h-16 w-16 rounded-full"
+                style={{ backgroundColor: palette.chartPrimary, opacity: 0.08 }}
+              />
               <Text className="text-sm font-body text-muted-foreground">Bester Tag</Text>
-              <Text className="mt-2 text-2xl font-headline text-foreground">
+              <Text className="mt-2 text-xl font-headline text-foreground">
                 {insights.bestDay ? formatFriendlyDate(insights.bestDay.date) : "Noch offen"}
               </Text>
               <Text className="mt-2 text-sm font-body" style={{ color: palette.accentText }}>
                 {insights.bestDay
-                  ? `${insights.bestDay.totalStars} Sterne und ${insights.bestDay.taskCount} erledigte Aufgaben.`
+                  ? "Hier war besonders viel geschafft."
                   : "Sobald erste Routinen geschafft werden, erscheint hier der stärkste Tag."}
               </Text>
+              <View className="mt-4 flex-row gap-2">
+                <View
+                  className="rounded-full px-3 py-1.5"
+                  style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
+                >
+                  <Text className="text-xs font-body-semibold" style={{ color: palette.accentText }}>
+                    {insights.bestDay ? `${insights.bestDay.totalStars} Sterne` : "Noch keine Sterne"}
+                  </Text>
+                </View>
+                <View
+                  className="rounded-full px-3 py-1.5"
+                  style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
+                >
+                  <Text className="text-xs font-body-semibold text-muted-foreground">
+                    {insights.bestDay ? `${insights.bestDay.taskCount} Aufgaben` : "Noch keine Aufgaben"}
+                  </Text>
+                </View>
+              </View>
             </Card>
-          </Animated.View>
+
+            <Card
+              className="min-h-[172px] flex-1 overflow-hidden rounded-[28px]"
+              style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+            >
+              <View
+                className="absolute right-[-10px] top-[-10px] h-16 w-16 rounded-full"
+                style={{ backgroundColor: palette.chartSecondary, opacity: 0.1 }}
+              />
+              <Text className="text-sm font-body text-muted-foreground">Zuletzt aktiv</Text>
+              <Text className="mt-2 text-xl font-headline text-foreground">
+                {latestActivity ? formatFriendlyDate(latestActivity.date) : "Noch offen"}
+              </Text>
+              <Text className="mt-2 text-sm font-body" style={{ color: palette.accentText }}>
+                {latestActivity
+                  ? "Der letzte eingetragene Fortschrittsmoment."
+                  : "Sobald etwas erledigt wird, erscheint hier der letzte aktive Tag."}
+              </Text>
+              <View className="mt-4 flex-row gap-2">
+                <View
+                  className="rounded-full px-3 py-1.5"
+                  style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
+                >
+                  <Text className="text-xs font-body-semibold" style={{ color: palette.accentText }}>
+                    {latestActivity ? `${latestActivity.totalStars} Sterne` : "0 Sterne"}
+                  </Text>
+                </View>
+                <View
+                  className="rounded-full px-3 py-1.5"
+                  style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
+                >
+                  <Text className="text-xs font-body-semibold text-muted-foreground">
+                    {latestActivity ? `${latestActivity.taskCount} Aufgaben` : "0 Aufgaben"}
+                  </Text>
+                </View>
+              </View>
+            </Card>
+          </View>
         </ScrollView>
       </View>
     </ThemedScreenBackground>

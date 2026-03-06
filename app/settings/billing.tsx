@@ -81,19 +81,26 @@ export default function BillingSettings() {
             Demnächst
           </Text>
           <Text className="text-sm font-body text-muted-foreground">
-            Wir informieren dich, sobald Premium startet.
+            Premium ist in dieser Version noch nicht buchbar.
           </Text>
         </View>
 
         {/* CTA button */}
         <Button
-          onPress={() => toast({ title: "Premium ist noch nicht verfügbar." })}
+          onPress={() =>
+            toast({
+              title: "Premium ist noch nicht live",
+              description: "Sobald es verfügbar ist, wird dieser Bereich aktualisiert.",
+            })
+          }
+          variant="outline"
           className="w-full"
+          style={{ borderColor: "#E5C66D" }}
         >
           <View className="flex-row items-center gap-2">
-            <Sparkles size={18} color="#1a1a2e" />
-            <Text className="text-base font-body-semibold text-primary-foreground">
-              Premium holen
+            <Sparkles size={18} color="#8C6A00" />
+            <Text className="text-base font-body-semibold text-foreground">
+              Noch nicht live
             </Text>
           </View>
         </Button>

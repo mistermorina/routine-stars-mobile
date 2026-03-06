@@ -1,19 +1,25 @@
 import { useState, useEffect, useCallback } from "react";
+import { useFocusEffect } from "expo-router";
 import { storage, KEYS } from "@/lib/storage";
 import type { ActivityLog, Task } from "@/lib/types";
 
 export function useActivityLogs() {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
 
-  useEffect(() => {
-    async function load() {
-      const stored = await storage.getItem<ActivityLog[]>(KEYS.ACTIVITY_LOGS);
-      if (stored) {
-        setLogs(stored);
-      }
-    }
-    load();
+  const loadLogs = useCallback(async () => {
+    const stored = await storage.getItem<ActivityLog[]>(KEYS.ACTIVITY_LOGS);
+    setLogs(stored ?? []);
   }, []);
+
+  useEffect(() => {
+    void loadLogs();
+  }, [loadLogs]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadLogs();
+    }, [loadLogs])
+  );
 
   const logActivity = useCallback(
     async (childId: string, task: Task, bonusStars = 0) => {

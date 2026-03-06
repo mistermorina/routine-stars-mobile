@@ -10,6 +10,7 @@ const KEYS = {
   ROUTINE_PROGRESS: "routineProgress",
   PARENT_PIN_HASH: "parentPinHash",
   NOTIFICATION_SETTINGS: "notificationSettings",
+  LEGAL_PREFERENCES: "legalPreferences",
 } as const;
 
 export { KEYS };

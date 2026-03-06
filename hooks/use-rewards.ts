@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useFocusEffect } from "expo-router";
 import { storage, KEYS } from "@/lib/storage";
 import type { Reward } from "@/lib/types";
 
@@ -6,16 +7,21 @@ export function useRewards() {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function load() {
-      const stored = await storage.getItem<Reward[]>(KEYS.CUSTOM_REWARDS);
-      if (stored) {
-        setRewards(stored);
-      }
-      setIsLoading(false);
-    }
-    load();
+  const loadRewards = useCallback(async () => {
+    const stored = await storage.getItem<Reward[]>(KEYS.CUSTOM_REWARDS);
+    setRewards(stored ?? []);
+    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    void loadRewards();
+  }, [loadRewards]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadRewards();
+    }, [loadRewards])
+  );
 
   const addReward = useCallback(async (reward: Reward) => {
     const updated = [...rewards, reward];

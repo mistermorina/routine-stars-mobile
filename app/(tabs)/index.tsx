@@ -18,6 +18,7 @@ import { Progress } from "@/components/ui/progress";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { triggerFeedback } from "@/lib/feedback";
 import { getActivityInsights } from "@/lib/activity-insights";
+import { getIcon } from "@/lib/icons";
 import { getThemePalette } from "@/lib/theme";
 import type { Routine, Task } from "@/lib/types";
 
@@ -89,6 +90,7 @@ export default function DashboardScreen() {
         missingStars: Math.max(nextReward.cost - selectedChild.stars, 0),
       }
     : undefined;
+  const FocusIcon = firstOpenTask ? getIcon(firstOpenTask.task.iconName) : Sparkles;
 
   useEffect(() => {
     if (!isLoading && children.length === 0) {
@@ -199,40 +201,94 @@ export default function DashboardScreen() {
         >
           <Animated.View entering={FadeInDown.duration(320)} className="mx-4 mt-4">
             <Card
-              className="overflow-hidden rounded-[30px] px-5 py-5"
+              className="overflow-hidden rounded-[32px] px-5 pb-5 pt-4"
               style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
             >
               <View
-                className="absolute inset-x-0 top-0 h-36 rounded-[30px]"
+                className="absolute inset-x-0 top-0 h-40 rounded-[32px]"
                 style={{ backgroundColor: palette.heroSurface }}
+              />
+              <View
+                className="absolute right-[-18px] top-[-10px] h-24 w-24 rounded-full"
+                style={{ backgroundColor: palette.motifSecondary, opacity: 0.28 }}
+              />
+              <View
+                className="absolute left-[-10px] top-20 h-16 w-16 rounded-full"
+                style={{ backgroundColor: palette.motifPrimary, opacity: 0.2 }}
               />
 
               <View className="relative">
                 <View className="flex-row items-start justify-between">
                   <View className="flex-1 pr-4">
-                    <Text className="text-sm font-body text-muted-foreground">
-                      {getGreeting()}
-                    </Text>
-                    <Text className="mt-1 text-3xl font-headline text-foreground">
+                    <View
+                      className="self-start rounded-full px-3 py-1.5"
+                      style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
+                    >
+                      <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+                        {getGreeting()}
+                      </Text>
+                    </View>
+                    <Text className="mt-3 text-[34px] font-headline text-foreground">
                       Heute zuerst
                     </Text>
-                    <Text className="mt-2 text-sm font-body" style={{ color: palette.accentText }}>
+                    <Text className="mt-2 text-[15px] font-body leading-6" style={{ color: palette.accentText }}>
                       {firstOpenTask
                         ? `Starte am besten mit „${firstOpenTask.task.title}“ aus ${firstOpenTask.routineName}.`
                         : "Alle Aufgaben sind geschafft. Zeit für eine kleine Belohnung."}
                     </Text>
                   </View>
                   <View
-                    className="rounded-full px-3 py-1.5"
-                    style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
+                    className="rounded-[22px] px-3.5 py-3"
+                    style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
                   >
-                    <Text className="text-xs font-body-semibold" style={{ color: palette.accentText }}>
-                      {remainingTasks === 0 ? "Frei" : `${remainingTasks} offen`}
+                    <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+                      Status
+                    </Text>
+                    <Text className="mt-1 text-lg font-headline" style={{ color: palette.accentText }}>
+                      {remainingTasks === 0 ? "Frei" : remainingTasks}
+                    </Text>
+                    <Text className="text-xs font-body text-muted-foreground">
+                      {remainingTasks === 0 ? "Alles geschafft" : "Aufgaben offen"}
                     </Text>
                   </View>
                 </View>
 
-                <View className="mt-5">
+                <View
+                  className="mt-5 rounded-[24px] border px-4 py-4"
+                  style={{
+                    borderColor: palette.accentBorder,
+                    backgroundColor: "rgba(255,255,255,0.74)",
+                  }}
+                >
+                  <View className="flex-row items-center">
+                    <View
+                      className="h-12 w-12 items-center justify-center rounded-[18px]"
+                      style={{ backgroundColor: palette.tabActiveBg }}
+                    >
+                      <FocusIcon size={20} color={palette.accentStrong} />
+                    </View>
+                    <View className="ml-3 flex-1">
+                      <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+                        {firstOpenTask ? "Nächster kleiner Schritt" : "Belohnungszeit"}
+                      </Text>
+                      <Text className="mt-1 text-lg font-headline text-foreground">
+                        {firstOpenTask ? firstOpenTask.task.title : "Alles erledigt"}
+                      </Text>
+                      <Text className="mt-1 text-xs font-body" style={{ color: palette.accentText }}>
+                        {firstOpenTask
+                          ? firstOpenTask.routineName
+                          : nextRewardHint
+                            ? `${nextRewardHint.title} wartet schon`
+                            : "Belohnungen sind bereit"}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                <View
+                  className="mt-4 rounded-[24px] px-4 py-4"
+                  style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
+                >
                   <View className="mb-2 flex-row items-center justify-between">
                     <Text className="text-sm font-body-semibold text-muted-foreground">
                       Tagesfortschritt
@@ -249,19 +305,32 @@ export default function DashboardScreen() {
                   />
                 </View>
 
-                <View className="mt-5 flex-row gap-3">
+                <View className="mt-4 flex-row gap-3">
                   <View
                     className="flex-1 rounded-[22px] px-4 py-4"
                     style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
                   >
-                    <View className="flex-row items-center gap-2">
-                      <Flame size={16} color={palette.chartSecondary} />
-                      <Text className="text-xs font-body-semibold text-muted-foreground">
-                        Serie
-                      </Text>
+                    <View className="flex-row items-center justify-between">
+                      <View className="flex-row items-center gap-2">
+                        <Flame size={16} color={palette.chartSecondary} />
+                        <Text className="text-xs font-body-semibold text-muted-foreground">
+                          Serie
+                        </Text>
+                      </View>
+                      <View
+                        className="rounded-full px-2 py-1"
+                        style={{ backgroundColor: palette.tabActiveBg }}
+                      >
+                        <Text className="text-[10px] font-body-semibold" style={{ color: palette.accentText }}>
+                          Tage
+                        </Text>
+                      </View>
                     </View>
                     <Text className="mt-3 text-3xl font-headline text-foreground">
                       {insights.currentStreak}
+                    </Text>
+                    <Text className="mt-1 text-xs font-body text-muted-foreground">
+                      Bleib im Rhythmus und sammle weiter Sterne.
                     </Text>
                   </View>
 
@@ -269,11 +338,21 @@ export default function DashboardScreen() {
                     className="flex-1 rounded-[22px] px-4 py-4"
                     style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
                   >
-                    <View className="flex-row items-center gap-2">
-                      <Trophy size={16} color={palette.accentStrong} />
-                      <Text className="text-xs font-body-semibold text-muted-foreground">
-                        Nächstes Ziel
-                      </Text>
+                    <View className="flex-row items-center justify-between">
+                      <View className="flex-row items-center gap-2">
+                        <Trophy size={16} color={palette.accentStrong} />
+                        <Text className="text-xs font-body-semibold text-muted-foreground">
+                          Nächstes Ziel
+                        </Text>
+                      </View>
+                      <View
+                        className="rounded-full px-2 py-1"
+                        style={{ backgroundColor: palette.tabActiveBg }}
+                      >
+                        <Text className="text-[10px] font-body-semibold" style={{ color: palette.accentText }}>
+                          Belohnung
+                        </Text>
+                      </View>
                     </View>
                     <Text className="mt-3 text-base font-headline text-foreground">
                       {nextRewardHint ? nextRewardHint.title : "Alles erreicht"}
@@ -309,7 +388,14 @@ export default function DashboardScreen() {
                     </Text>
                   </View>
                 </View>
-                <ArrowRight size={18} color={palette.accentStrong} />
+                <View
+                  className="rounded-full px-3 py-1.5"
+                  style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
+                >
+                  <Text className="text-xs font-body-semibold" style={{ color: palette.accentText }}>
+                    {remainingTasks === 0 ? "Alles erledigt" : `${remainingTasks} bereit`}
+                  </Text>
+                </View>
               </View>
             </Card>
           </Animated.View>

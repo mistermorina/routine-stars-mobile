@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useFocusEffect } from "expo-router";
 import { storage, KEYS } from "@/lib/storage";
 import type { Routine } from "@/lib/types";
 
@@ -11,54 +12,61 @@ export function useRoutines(selectedChildId?: string) {
   const [isLoading, setIsLoading] = useState(true);
   const hasMigrated = useRef(false);
 
-  // Load routine templates and progress
-  useEffect(() => {
-    async function load() {
-      const [storedRoutines, storedProgress] = await Promise.all([
-        storage.getItem<Routine[]>(KEYS.CUSTOM_ROUTINES),
-        storage.getItem<RoutineProgress>(KEYS.ROUTINE_PROGRESS),
-      ]);
+  const loadRoutines = useCallback(async () => {
+    const [storedRoutines, storedProgress] = await Promise.all([
+      storage.getItem<Routine[]>(KEYS.CUSTOM_ROUTINES),
+      storage.getItem<RoutineProgress>(KEYS.ROUTINE_PROGRESS),
+    ]);
 
-      let templates: Routine[] = storedRoutines ?? [];
+    let templates: Routine[] = storedRoutines ?? [];
 
-      // Migration: if no progress exists yet but routines have completed tasks,
-      // migrate existing completion state as progress for the current child
-      if (!storedProgress && !hasMigrated.current) {
-        hasMigrated.current = true;
-        const hasCompletedTasks = templates.some((r) =>
-          r.tasks.some((t) => t.completed)
-        );
+    // Migration: if no progress exists yet but routines have completed tasks,
+    // migrate existing completion state as progress for the current child
+    if (!storedProgress && !hasMigrated.current) {
+      hasMigrated.current = true;
+      const hasCompletedTasks = templates.some((r) =>
+        r.tasks.some((t) => t.completed)
+      );
 
-        if (hasCompletedTasks && selectedChildId) {
-          const migratedProgress: Record<string, boolean> = {};
-          for (const routine of templates) {
-            for (const task of routine.tasks) {
-              if (task.completed) {
-                migratedProgress[task.id] = true;
-              }
+      if (hasCompletedTasks && selectedChildId) {
+        const migratedProgress: Record<string, boolean> = {};
+        for (const routine of templates) {
+          for (const task of routine.tasks) {
+            if (task.completed) {
+              migratedProgress[task.id] = true;
             }
           }
-          const newProgress: RoutineProgress = { [selectedChildId]: migratedProgress };
-          setProgress(newProgress);
-          await storage.setItem(KEYS.ROUTINE_PROGRESS, newProgress);
-
-          // Reset all tasks in templates to completed: false
-          const cleanTemplates = templates.map((r) => ({
-            ...r,
-            tasks: r.tasks.map((t) => ({ ...t, completed: false })),
-          }));
-          templates = cleanTemplates;
-          await storage.setItem(KEYS.CUSTOM_ROUTINES, cleanTemplates);
         }
-      } else if (storedProgress) {
-        setProgress(storedProgress);
-      }
+        const newProgress: RoutineProgress = { [selectedChildId]: migratedProgress };
+        setProgress(newProgress);
+        await storage.setItem(KEYS.ROUTINE_PROGRESS, newProgress);
 
-      setRoutineTemplates(templates);
-      setIsLoading(false);
+        // Reset all tasks in templates to completed: false
+        const cleanTemplates = templates.map((r) => ({
+          ...r,
+          tasks: r.tasks.map((t) => ({ ...t, completed: false })),
+        }));
+        templates = cleanTemplates;
+        await storage.setItem(KEYS.CUSTOM_ROUTINES, cleanTemplates);
+      }
+    } else {
+      setProgress(storedProgress ?? {});
     }
-    load();
+
+    setRoutineTemplates(templates);
+    setIsLoading(false);
   }, [selectedChildId]);
+
+  // Load routine templates and progress
+  useEffect(() => {
+    void loadRoutines();
+  }, [loadRoutines]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadRoutines();
+    }, [loadRoutines])
+  );
 
   // Computed routines: merge templates with child-specific progress
   const routines = useMemo(() => {

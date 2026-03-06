@@ -1,18 +1,18 @@
 import React, { useEffect } from "react";
-import { Stack } from "expo-router";
-import { View, ActivityIndicator, Pressable, Text } from "react-native";
+import { Stack, useRootNavigationState } from "expo-router";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function SettingsLayout() {
   const router = useRouter();
+  const rootNavigationState = useRootNavigationState();
   const { isParentAuthorized } = useAuth();
 
   useEffect(() => {
-    if (!isParentAuthorized) {
-      router.replace("/parent-login");
-    }
-  }, [isParentAuthorized, router]);
+    if (!rootNavigationState?.key || isParentAuthorized) return;
+    router.replace("/parent-login");
+  }, [isParentAuthorized, rootNavigationState?.key, router]);
 
   if (!isParentAuthorized) {
     return (

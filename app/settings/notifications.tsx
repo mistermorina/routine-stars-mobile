@@ -71,6 +71,18 @@ export default function NotificationsSettings() {
 
   return (
     <ScrollView className="flex-1 bg-background" contentContainerClassName="p-4 pb-8">
+      <Card className="mb-4 border-dashed">
+        <View className="rounded-2xl bg-secondary/60 px-4 py-4">
+          <Text className="text-sm font-body-semibold text-foreground">
+            Aktuell nur lokale Einstellungen
+          </Text>
+          <Text className="mt-1 text-sm font-body text-muted-foreground">
+            Diese Schalter werden auf dem Gerät gespeichert. Echte Push-Benachrichtigungen
+            sind noch nicht live.
+          </Text>
+        </View>
+      </Card>
+
       {/* Routine reminders */}
       <Card className="mb-4">
         <CardHeader>
@@ -153,7 +165,7 @@ export default function NotificationsSettings() {
           <CardTitle className="text-base">Ruhezeit</CardTitle>
         </CardHeader>
         <Text className="text-xs font-body text-muted-foreground mb-4">
-          Während der Ruhezeit werden keine Benachrichtigungen gesendet.
+          Diese Zeiten werden lokal gespeichert und für spätere Erinnerungen vorgemerkt.
         </Text>
 
         <View className="flex-row items-center gap-3">

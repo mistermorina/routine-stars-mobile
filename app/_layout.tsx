@@ -1,14 +1,12 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import * as SplashScreen from "expo-splash-screen";
+import { View, ActivityIndicator } from "react-native";
 import { useFonts } from "expo-font";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AuthProvider } from "@/contexts/auth-context";
 
-import "../global.css";
-
-SplashScreen.preventAutoHideAsync();
+require("../global.css");
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -17,14 +15,12 @@ export default function RootLayout() {
     Poppins_700Bold: require("../assets/fonts/Poppins-Bold.ttf"),
   });
 
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
   if (!fontsLoaded) {
-    return null;
+    return (
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator size="large" color="#FFD700" />
+      </View>
+    );
   }
 
   return (
