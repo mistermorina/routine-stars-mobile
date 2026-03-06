@@ -40,7 +40,7 @@ const authModeContent: Record<
   signup: {
     eyebrow: "Neu hier",
     title: "Familienkonto anlegen",
-    description: "Danach geht es direkt in Kind, Starter-Routine und Belohnungen.",
+    description: "Danach geht es direkt in euer Setup fuer Kind, Starter-Routine und Belohnungen.",
     action: "Familienkonto anlegen",
     Icon: UserRoundPlus,
   },
@@ -66,15 +66,15 @@ export default function LoginScreen() {
     () => [
       {
         icon: Shield,
-        label: "Privat auf diesem Gerät",
+        label: "Privat auf diesem Geraet",
       },
       {
         icon: Heart,
-        label: "Eltern richten alles ein",
+        label: "Familienalltag zuerst",
       },
       {
         icon: Sparkles,
-        label: "Danach startet euer Onboarding",
+        label: "Danach startet euer Setup",
       },
     ],
     []
@@ -111,6 +111,10 @@ export default function LoginScreen() {
       title: `${provider === "google" ? "Google" : "Apple"} ist vorbereitet`,
       description: "Fürs Erste startest du lokal auf diesem Gerät.",
     });
+    if (authMode === "signup") {
+      router.replace("/(auth)/onboarding");
+      return;
+    }
     router.replace(await getPostAuthRoute());
   };
 
@@ -164,12 +168,12 @@ export default function LoginScreen() {
               </View>
 
               <Text className="mt-4 text-[30px] font-headline leading-[36px] text-foreground">
-                Erst kurz anmelden, dann startet euer echtes Onboarding.
+                Vom Familienalltag zu eurer ersten Routine.
               </Text>
               <Text className="mt-3 text-sm font-body leading-6 text-muted-foreground">
-                Der erste Eindruck soll Vertrauen schaffen: Eltern richten alles ein,
-                Kinder bekommen danach eine liebevollere App-Welt mit Routinen,
-                Sternen und Belohnungen.
+                Zahnputzen, Hausaufgaben, Spielzeit und Abendrituale: Eltern richten
+                alles einmal ein, danach fuehlt sich die App fuer Kinder vertraut,
+                freundlich und motivierend an.
               </Text>
 
               <FamilyHeroArt theme="sterne" className="mt-4" />
@@ -197,7 +201,7 @@ export default function LoginScreen() {
                 style={{ backgroundColor: palette.heroSurface }}
               >
                 <Text className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground">
-                  So laeuft der Start
+                  So startet ihr
                 </Text>
                 <View className="mt-3 flex-row items-center gap-2">
                   <View className="rounded-full bg-white px-3 py-2">
@@ -218,6 +222,10 @@ export default function LoginScreen() {
                     </Text>
                   </View>
                 </View>
+                <Text className="mt-3 text-xs font-body leading-5 text-muted-foreground">
+                  Du legst jetzt die Familienbasis fest. Danach landet ihr nicht direkt
+                  in irgendeinem Dashboard, sondern im passenden Onboarding.
+                </Text>
               </View>
             </View>
 

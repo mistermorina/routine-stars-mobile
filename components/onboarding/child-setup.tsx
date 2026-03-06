@@ -167,12 +167,32 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
           </Text>
         </View>
         <Text className="text-xl font-headline text-foreground">
-          Wir richten kurz eure Welt ein
+          Wir bauen jetzt eure erste Familienwelt
         </Text>
         <Text className="mt-2 text-sm font-body text-muted-foreground">
-          Erst ein Kinderprofil, dann direkt zur passenden Starter-Routine.
+          Erst ein Profil, dann passende Routinen fuer Alltag, Zaehneputzen,
+          Lernen und eure kleinen Familienmomente.
         </Text>
         <FamilyHeroArt theme={selectedTheme} compact className="mt-4" />
+        <View className="mt-3 flex-row flex-wrap gap-2">
+          {["Alltag", "Zaehne", "Lernen", "Zusammen"].map((moment) => (
+            <View
+              key={moment}
+              className="rounded-full border px-3 py-1.5"
+              style={{
+                backgroundColor: "#FFFFFF",
+                borderColor: palette.accentBorder,
+              }}
+            >
+              <Text
+                className="text-[11px] font-body-semibold uppercase tracking-[0.7px]"
+                style={{ color: palette.accentText }}
+              >
+                {moment}
+              </Text>
+            </View>
+          ))}
+        </View>
       </View>
 
       {/* Added children list */}
