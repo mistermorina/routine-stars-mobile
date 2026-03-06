@@ -1,4 +1,4 @@
-import React from "react";
+import React, { forwardRef } from "react";
 import { TextInput, type TextInputProps } from "react-native";
 import { cn } from "@/lib/utils";
 
@@ -6,9 +6,13 @@ export interface InputProps extends TextInputProps {
   className?: string;
 }
 
-export function Input({ className, style, ...props }: InputProps) {
+export const Input = forwardRef<TextInput, InputProps>(function Input(
+  { className, style, ...props },
+  ref
+) {
   return (
     <TextInput
+      ref={ref}
       className={cn(
         "h-12 w-full rounded-lg border border-input bg-card px-4 placeholder:text-muted-foreground",
         props.editable === false && "opacity-50",
@@ -29,4 +33,4 @@ export function Input({ className, style, ...props }: InputProps) {
       {...props}
     />
   );
-}
+});

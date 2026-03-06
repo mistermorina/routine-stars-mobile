@@ -1,6 +1,15 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { View, Text, ScrollView, Pressable, Alert } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  TextInput as RNTextInput,
+} from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import Animated, {
   FadeInDown,
   FadeOutUp,
@@ -22,6 +31,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { ToastOverlay } from "@/components/ui/toast";
 import { avatarCategories } from "@/lib/data";
 import { useRoutines } from "@/hooks/use-routines";
 import { useRewards } from "@/hooks/use-rewards";
@@ -43,9 +53,10 @@ const AGE_GROUP_OPTIONS: Array<{ value: AgeGroup; label: string }> = [
 ];
 
 export default function ChildrenSettings() {
+  const router = useRouter();
   const params = useLocalSearchParams<{ preview?: string | string[] }>();
   const { children, addChild, updateChild, removeChild } = useChildren();
-  const { toast } = useToast();
+  const { toasts, toast, dismiss } = useToast();
   const { routines } = useRoutines();
   const { rewards } = useRewards();
   const [expandedChildId, setExpandedChildId] = useState<string | null>(null);
@@ -57,6 +68,7 @@ export default function ChildrenSettings() {
   const [newChildAvatar, setNewChildAvatar] = useState("🦁");
   const [newChildTheme, setNewChildTheme] = useState<ChildTheme>("sterne");
   const [newChildAgeGroup, setNewChildAgeGroup] = useState<AgeGroup>("6-8");
+  const newChildNameInputRef = useRef<RNTextInput>(null);
 
   const allAvatars = Object.entries(avatarCategories);
   const newChildPalette = getThemePalette(newChildTheme);
@@ -85,6 +97,16 @@ export default function ChildrenSettings() {
       setShowAvatarPicker(previewMode === "avatar" ? children[0].id : null);
     }
   }, [children, previewMode]);
+
+  useEffect(() => {
+    if (!showAddForm) return;
+
+    const timeout = setTimeout(() => {
+      newChildNameInputRef.current?.focus();
+    }, 220);
+
+    return () => clearTimeout(timeout);
+  }, [showAddForm]);
 
   function getThemeLabel(theme: Child["theme"]) {
     if (theme === "tiere") return "Tiere";
@@ -168,7 +190,18 @@ export default function ChildrenSettings() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-background" contentContainerClassName="p-4 pb-8">
+    <View className="flex-1 bg-background">
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 96 : 0}
+      >
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="p-4 pb-8"
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+      >
       <Card className="mb-4 overflow-hidden rounded-[30px] border p-0">
         <View className="rounded-[30px] bg-secondary/70 px-4 py-5">
           <View className="flex-row items-start justify-between">
@@ -498,9 +531,27 @@ export default function ChildrenSettings() {
                     className="rounded-[22px] border px-4 py-4"
                     style={{ borderColor: childPalette.accentBorder, backgroundColor: "rgba(255,255,255,0.84)" }}
                   >
-                    <Text className="mb-2 text-sm font-body-semibold" style={{ color: childPalette.accentText }}>
-                      Routinen
-                    </Text>
+                    <View className="mb-2 flex-row items-center justify-between gap-3">
+                      <View className="flex-1">
+                        <Text className="text-sm font-body-semibold" style={{ color: childPalette.accentText }}>
+                          Routinen
+                        </Text>
+                        <Text className="mt-0.5 text-xs font-body text-muted-foreground">
+                          Familienweit fuer alle Kinder
+                        </Text>
+                      </View>
+                      <View
+                        className="rounded-full px-2.5 py-1"
+                        style={{ backgroundColor: childPalette.tabActiveBg }}
+                      >
+                        <Text
+                          className="text-[10px] font-body-semibold uppercase tracking-[0.6px]"
+                          style={{ color: childPalette.accentText }}
+                        >
+                          Familienweit
+                        </Text>
+                      </View>
+                    </View>
                     {routines.length === 0 ? (
                       <Text className="text-sm font-body text-muted-foreground">
                         Noch keine Routinen angelegt.
@@ -526,6 +577,19 @@ export default function ChildrenSettings() {
                         </View>
                       ))
                     )}
+                    <Button
+                      variant="outline"
+                      onPress={() => router.push("/settings/routines" as never)}
+                      className="mt-3 w-full"
+                      style={{
+                        borderColor: childPalette.accentBorder,
+                        backgroundColor: "#FFFFFF",
+                      }}
+                    >
+                      <Text className="text-sm font-body-semibold" style={{ color: childPalette.accentText }}>
+                        Routinen bearbeiten
+                      </Text>
+                    </Button>
                   </View>
 
                   {/* Rewards overview */}
@@ -533,9 +597,27 @@ export default function ChildrenSettings() {
                     className="rounded-[22px] border px-4 py-4"
                     style={{ borderColor: childPalette.accentBorder, backgroundColor: "rgba(255,255,255,0.84)" }}
                   >
-                    <Text className="mb-2 text-sm font-body-semibold" style={{ color: childPalette.accentText }}>
-                      Belohnungen
-                    </Text>
+                    <View className="mb-2 flex-row items-center justify-between gap-3">
+                      <View className="flex-1">
+                        <Text className="text-sm font-body-semibold" style={{ color: childPalette.accentText }}>
+                          Belohnungen
+                        </Text>
+                        <Text className="mt-0.5 text-xs font-body text-muted-foreground">
+                          Familienweit fuer alle Kinder
+                        </Text>
+                      </View>
+                      <View
+                        className="rounded-full px-2.5 py-1"
+                        style={{ backgroundColor: childPalette.tabActiveBg }}
+                      >
+                        <Text
+                          className="text-[10px] font-body-semibold uppercase tracking-[0.6px]"
+                          style={{ color: childPalette.accentText }}
+                        >
+                          Familienweit
+                        </Text>
+                      </View>
+                    </View>
                     {rewards.length === 0 ? (
                       <Text className="text-sm font-body text-muted-foreground">
                         Noch keine Belohnungen angelegt.
@@ -559,6 +641,19 @@ export default function ChildrenSettings() {
                         );
                       })
                     )}
+                    <Button
+                      variant="outline"
+                      onPress={() => router.push("/settings/rewards" as never)}
+                      className="mt-3 w-full"
+                      style={{
+                        borderColor: childPalette.accentBorder,
+                        backgroundColor: "#FFFFFF",
+                      }}
+                    >
+                      <Text className="text-sm font-body-semibold" style={{ color: childPalette.accentText }}>
+                        Belohnungen bearbeiten
+                      </Text>
+                    </Button>
                   </View>
 
                   {/* Delete button */}
@@ -633,12 +728,15 @@ export default function ChildrenSettings() {
                 <Text className="text-sm font-body-semibold text-muted-foreground mb-2">
                   Name
                 </Text>
-                <Input
-                  value={newChildName}
-                  onChangeText={setNewChildName}
-                  placeholder="Name des Kindes"
-                  autoFocus
-                />
+                <Pressable onPress={() => newChildNameInputRef.current?.focus()}>
+                  <Input
+                    ref={newChildNameInputRef}
+                    value={newChildName}
+                    onChangeText={setNewChildName}
+                    placeholder="Name des Kindes"
+                    returnKeyType="done"
+                  />
+                </Pressable>
               </View>
 
               <View>
@@ -705,6 +803,7 @@ export default function ChildrenSettings() {
                   showsVerticalScrollIndicator={false}
                   className="max-h-[260px] rounded-[20px]"
                   contentContainerClassName="gap-3 pb-1"
+                  keyboardShouldPersistTaps="handled"
                 >
                   {allAvatars.map(([category, avatars]) => (
                     <View key={category}>
@@ -771,6 +870,9 @@ export default function ChildrenSettings() {
           </View>
         </Button>
       )}
-    </ScrollView>
+      </ScrollView>
+      </KeyboardAvoidingView>
+      <ToastOverlay toasts={toasts} onDismiss={dismiss} />
+    </View>
   );
 }

@@ -7,6 +7,7 @@ const KEYS = {
   CUSTOM_ROUTINES: "customRoutines",
   CUSTOM_REWARDS: "customRewards",
   HAS_ONBOARDED: "hasOnboarded",
+  HAS_SEEN_WELCOME: "hasSeenWelcome",
   ROUTINE_PROGRESS: "routineProgress",
   PARENT_PIN_HASH: "parentPinHash",
   NOTIFICATION_SETTINGS: "notificationSettings",

@@ -140,6 +140,9 @@ export function TaskTimerModal({
   const circumference = 2 * Math.PI * circleRadius;
   const viewBox = `0 0 ${circleRadius * 2 + 24} ${circleRadius * 2 + 24}`;
   const center = circleRadius + 12;
+  const timerTextFontSize = isCompactLayout ? 54 : 64;
+  const timerTextLineHeight = isCompactLayout ? 64 : 74;
+  const timerVisualOffset = isCompactLayout ? 8 : 6;
 
   return (
     <Modal
@@ -210,7 +213,7 @@ export function TaskTimerModal({
                 </View>
 
                 <View
-                  style={{ width: circleSize, height: circleSize }}
+                  style={{ width: circleSize, height: circleSize + timerVisualOffset }}
                   className={cn(
                     "items-center justify-center",
                     isCompactLayout ? "mb-6" : "mb-8"
@@ -222,6 +225,7 @@ export function TaskTimerModal({
                     viewBox={viewBox}
                     style={{
                       position: "absolute",
+                      top: timerVisualOffset / 2,
                       transform: [{ rotate: "-90deg" }],
                     }}
                   >
@@ -245,14 +249,18 @@ export function TaskTimerModal({
                       animatedProps={circleAnimatedProps}
                     />
                   </Svg>
-                  <Text
-                    className={cn(
-                      "font-body-bold text-white",
-                      isCompactLayout ? "text-4xl" : "text-5xl"
-                    )}
-                  >
-                    {formatTime(timeLeft)}
-                  </Text>
+                  <View style={{ paddingTop: timerVisualOffset }}>
+                    <Text
+                      className="font-body-bold text-white"
+                      allowFontScaling={false}
+                      style={{
+                        fontSize: timerTextFontSize,
+                        lineHeight: timerTextLineHeight,
+                      }}
+                    >
+                      {formatTime(timeLeft)}
+                    </Text>
+                  </View>
                 </View>
 
                 <Button

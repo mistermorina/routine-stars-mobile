@@ -11,7 +11,7 @@ export default function Index() {
     if (!rootNavigationState?.key) return;
 
     async function checkOnboarding() {
-      router.replace(await getInitialAuthRoute());
+      router.replace((await getInitialAuthRoute()) as never);
     }
 
     void checkOnboarding();

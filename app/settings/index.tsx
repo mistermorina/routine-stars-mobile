@@ -88,7 +88,7 @@ export default function SettingsIndex() {
           style: "destructive",
           onPress: async () => {
             await storage.clear();
-            router.replace("/(auth)/onboarding");
+            router.replace("/(auth)/welcome" as never);
           },
         },
       ]

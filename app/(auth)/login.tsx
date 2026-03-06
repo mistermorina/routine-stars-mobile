@@ -1,13 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { View, Text, ScrollView, KeyboardAvoidingView, Platform, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
-  ArrowRight,
-  Check,
-  Heart,
   LogIn,
-  Shield,
   Sparkles,
   UserRoundPlus,
 } from "lucide-react-native";
@@ -16,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
-import { FamilyHeroArt } from "@/components/ui/family-hero-art";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { storage, KEYS } from "@/lib/storage";
@@ -62,23 +57,6 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const palette = getThemePalette("sterne");
   const currentMode = authModeContent[authMode];
-  const trustPoints = useMemo(
-    () => [
-      {
-        icon: Shield,
-        label: "Privat auf diesem Geraet",
-      },
-      {
-        icon: Heart,
-        label: "Familienalltag zuerst",
-      },
-      {
-        icon: Sparkles,
-        label: "Danach startet euer Setup",
-      },
-    ],
-    []
-  );
 
   const handleSubmit = async () => {
     if (!email.trim() || !password.trim()) return;
@@ -98,7 +76,7 @@ export default function LoginScreen() {
         title: "Willkommen zurück",
         description: "Cloud-Konten folgen später. Du nutzt die App lokal auf diesem Gerät.",
       });
-      router.replace(await getPostAuthRoute());
+      router.replace((await getPostAuthRoute()) as never);
     }
   };
 
@@ -115,7 +93,7 @@ export default function LoginScreen() {
       router.replace("/(auth)/onboarding");
       return;
     }
-    router.replace(await getPostAuthRoute());
+    router.replace((await getPostAuthRoute()) as never);
   };
 
   const handleModeChange = (mode: AuthMode) => {
@@ -136,22 +114,24 @@ export default function LoginScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View
-              className="rounded-[32px] border px-4 pb-4 pt-4"
+              className="rounded-[32px] border px-5 pb-5 pt-5"
               style={{
                 backgroundColor: palette.cardTint,
                 borderColor: palette.accentBorder,
               }}
             >
-              <View className="flex-row items-center justify-between">
-                <View className="flex-row items-center gap-2">
-                  <View
-                    className="rounded-2xl p-2.5"
-                    style={{ backgroundColor: palette.tabActiveBg }}
-                  >
-                    <Check size={18} color={palette.accentText} strokeWidth={3} />
-                  </View>
-                  <Text className="text-xl font-headline text-foreground">
-                    Routine Stars
+              <View className="flex-row items-start justify-between">
+                <View className="mr-4 flex-1">
+                  <Text className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground">
+                    Familienkonto
+                  </Text>
+                  <Text className="mt-2 text-[30px] font-headline leading-[36px] text-foreground">
+                    Jetzt nur noch Konto waehlen.
+                  </Text>
+                  <Text className="mt-3 text-sm font-body leading-6 text-muted-foreground">
+                    Willkommen war fuer Emotion und Vertrauen. Hier geht es jetzt
+                    nur noch darum, ob du neu startest oder zu eurer bestehenden
+                    Familie zurueckkehrst.
                   </Text>
                 </View>
                 <View
@@ -162,69 +142,30 @@ export default function LoginScreen() {
                     className="text-xs font-body-semibold uppercase tracking-[0.8px]"
                     style={{ color: palette.accentText }}
                   >
-                    Familienstart
+                    Login
                   </Text>
                 </View>
               </View>
 
-              <Text className="mt-4 text-[30px] font-headline leading-[36px] text-foreground">
-                Vom Familienalltag zu eurer ersten Routine.
-              </Text>
-              <Text className="mt-3 text-sm font-body leading-6 text-muted-foreground">
-                Zahnputzen, Hausaufgaben, Spielzeit und Abendrituale: Eltern richten
-                alles einmal ein, danach fuehlt sich die App fuer Kinder vertraut,
-                freundlich und motivierend an.
-              </Text>
-
-              <FamilyHeroArt theme="sterne" className="mt-4" />
-
-              <View className="mt-4 flex-row flex-wrap gap-2">
-                {trustPoints.map((point) => (
-                  <View
-                    key={point.label}
-                    className="flex-row items-center gap-2 rounded-full border px-3 py-2"
-                    style={{
-                      backgroundColor: "#FFFFFF",
-                      borderColor: palette.accentBorder,
-                    }}
-                  >
-                    <point.icon size={14} color={palette.accentStrong} />
-                    <Text className="text-xs font-body-semibold text-foreground">
-                      {point.label}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-
               <View
-                className="mt-4 rounded-[22px] px-4 py-3"
+                className="mt-5 rounded-[24px] border px-4 py-4"
                 style={{ backgroundColor: palette.heroSurface }}
               >
-                <Text className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground">
-                  So startet ihr
-                </Text>
-                <View className="mt-3 flex-row items-center gap-2">
+                <View className="flex-row flex-wrap gap-2">
                   <View className="rounded-full bg-white px-3 py-2">
                     <Text className="text-xs font-body-semibold text-foreground">
-                      1 Konto
+                      Registrieren startet euer Setup
                     </Text>
                   </View>
-                  <ArrowRight size={14} color={palette.accentStrong} />
                   <View className="rounded-full bg-white px-3 py-2">
                     <Text className="text-xs font-body-semibold text-foreground">
-                      2 Kind
-                    </Text>
-                  </View>
-                  <ArrowRight size={14} color={palette.accentStrong} />
-                  <View className="rounded-full bg-white px-3 py-2">
-                    <Text className="text-xs font-body-semibold text-foreground">
-                      3 Routine
+                      Anmelden bringt euch zurueck
                     </Text>
                   </View>
                 </View>
                 <Text className="mt-3 text-xs font-body leading-5 text-muted-foreground">
-                  Du legst jetzt die Familienbasis fest. Danach landet ihr nicht direkt
-                  in irgendeinem Dashboard, sondern im passenden Onboarding.
+                  Social Login bleibt getrennt. Neue Familien landen danach im echten
+                  Onboarding, bestehende Familien direkt wieder in ihrer App.
                 </Text>
               </View>
             </View>

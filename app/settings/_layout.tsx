@@ -64,6 +64,14 @@ export default function SettingsLayout() {
         options={{ title: "Kinder verwalten" }}
       />
       <Stack.Screen
+        name="routines"
+        options={{ title: "Routinen bearbeiten" }}
+      />
+      <Stack.Screen
+        name="rewards"
+        options={{ title: "Belohnungen bearbeiten" }}
+      />
+      <Stack.Screen
         name="progress"
         options={{ title: "Fortschritt" }}
       />
