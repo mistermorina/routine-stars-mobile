@@ -1,20 +1,19 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { View, Text, ScrollView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Sparkles } from "lucide-react-native";
 import { useChildren } from "@/hooks/use-children";
-import { useChildProgression } from "@/hooks/use-child-progression";
 import { useRewards } from "@/hooks/use-rewards";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
-import { Header } from "@/components/routine-stars/header";
+import { useStickerWall } from "@/hooks/use-sticker-wall";
 import { Card } from "@/components/ui/card";
-import { StickerAlbum } from "@/components/profile/sticker-album";
+import { StickerWall } from "@/components/stickers/sticker-wall";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { InsightCard } from "@/components/profile/insight-card";
 import { MonthlyCompletionCalendar } from "@/components/profile/monthly-completion-calendar";
 import { ProfileHeroCard } from "@/components/profile/profile-hero-card";
-import { WeeklyActivityStrip } from "@/components/profile/weekly-activity-strip";
 import { getActivityInsights, formatFriendlyDate } from "@/lib/activity-insights";
 import { triggerFeedback } from "@/lib/feedback";
 import { getThemePalette } from "@/lib/theme";
@@ -26,7 +25,7 @@ export default function ProfileScreen() {
   const { children, selectedChild, selectChild, selectedChildId, isLoading } = useChildren();
   const { rewards } = useRewards();
   const { getLogsForChild } = useActivityLogs();
-  const { albumStickers, nextSticker } = useChildProgression(selectedChildId);
+  const { placedStickers } = useStickerWall(selectedChildId);
   const palette = getThemePalette(selectedChild?.theme);
   const previousStarsRef = useRef(0);
   const previousStreakRef = useRef(0);
@@ -106,18 +105,16 @@ export default function ProfileScreen() {
 
   return (
     <ThemedScreenBackground theme={selectedChild.theme}>
-      <View className="flex-1">
-        <Header child={selectedChild} allChildren={children} onSelectChild={selectChild} />
-
+      <SafeAreaView className="flex-1" edges={["top"]}>
         <ScrollView
           className="flex-1"
-          contentContainerClassName="px-4 pb-8"
+          contentContainerClassName="px-4 pb-8 pt-2"
           showsVerticalScrollIndicator={false}
         >
-          <View className="mt-4">
+          <View className="mt-2">
             <ProfileHeroCard
-              avatar={selectedChild.avatar}
-              childName={selectedChild.name}
+              child={selectedChild}
+              allChildren={children}
               stars={selectedChild.stars}
               streak={insights.currentStreak}
               nextReward={
@@ -129,29 +126,27 @@ export default function ProfileScreen() {
                   : null
               }
               palette={palette}
+              onSelectChild={selectChild}
+              onSettingsPress={() => router.push("/parent-login")}
             />
           </View>
 
-          <Animated.View entering={FadeInDown.delay(70).duration(320)} className="mt-4">
-            <WeeklyActivityStrip items={insights.weeklyItems} palette={palette} />
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(120).duration(320)} className="mt-4">
+          <Animated.View entering={FadeInDown.delay(90).duration(320)} className="mt-4">
             <MonthlyCompletionCalendar
               monthLabel={insights.monthLabel}
               rows={insights.calendarRows}
+              weeklyItems={insights.weeklyItems}
               palette={palette}
               monthlyActiveDays={insights.monthlyActiveDays}
               monthlyStars={insights.monthlyStars}
             />
           </Animated.View>
 
-          <StickerAlbum
-            albumStickers={albumStickers}
-            nextSticker={nextSticker}
+          <StickerWall
+            entries={placedStickers}
             palette={palette}
-            childTheme={selectedChild.theme}
-            onOpenAlbum={() => router.push("/sticker-album")}
+            compact
+            onOpenWall={() => router.push("/sticker-album")}
           />
 
           {childLogs.length === 0 ? (
@@ -355,7 +350,7 @@ export default function ProfileScreen() {
             </Card>
           </View>
         </ScrollView>
-      </View>
+      </SafeAreaView>
     </ThemedScreenBackground>
   );
 }

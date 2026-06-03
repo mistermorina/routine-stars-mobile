@@ -4,15 +4,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Award } from "lucide-react-native";
 import { useChildren } from "@/hooks/use-children";
-import { useChildProgression } from "@/hooks/use-child-progression";
-import { StickerAlbum } from "@/components/profile/sticker-album";
+import { useStickerWall } from "@/hooks/use-sticker-wall";
+import { StickerWall } from "@/components/stickers/sticker-wall";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { getThemePalette } from "@/lib/theme";
 
 export default function StickerAlbumScreen() {
   const router = useRouter();
   const { selectedChild, selectedChildId, isLoading } = useChildren();
-  const { albumStickers, nextSticker } = useChildProgression(selectedChildId);
+  const { placedStickers } = useStickerWall(selectedChildId);
   const palette = getThemePalette(selectedChild?.theme);
 
   if (isLoading) {
@@ -60,10 +60,10 @@ export default function StickerAlbumScreen() {
 
             <View className="flex-1">
               <Text className="text-center text-[28px] font-headline text-foreground">
-                Sticker-Album
+                Sticker-Wall
               </Text>
               <Text className="text-center text-sm font-body" style={{ color: palette.accentText }}>
-                {selectedChild.name}s Meilensteine und kleine Sammlerstücke
+                {selectedChild.name}s gesammelte Tagessticker
               </Text>
             </View>
 
@@ -81,11 +81,9 @@ export default function StickerAlbumScreen() {
           contentContainerClassName="px-4 pb-8"
           showsVerticalScrollIndicator={false}
         >
-          <StickerAlbum
-            albumStickers={albumStickers}
-            nextSticker={nextSticker}
+          <StickerWall
+            entries={placedStickers}
             palette={palette}
-            childTheme={selectedChild.theme}
           />
         </ScrollView>
       </SafeAreaView>

@@ -91,7 +91,7 @@ export function RoutineCompleteDialog({
     <Dialog visible={isOpen} onClose={onClose}>
       <Animated.View style={cardAnimatedStyle}>
         <DialogContent
-          className="items-center overflow-hidden rounded-[32px] px-5 py-5"
+          className="items-center overflow-hidden rounded-[28px] px-5 py-5"
           style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder, borderWidth: 1 }}
         >
           <View
@@ -112,30 +112,32 @@ export function RoutineCompleteDialog({
             </Text>
           </View>
 
-          <Animated.View style={starAnimatedStyle} className="mb-4">
+          <Animated.View style={starAnimatedStyle} className="mb-3">
             <Text className="text-5xl">⭐</Text>
           </Animated.View>
 
           <DialogHeader className="items-center">
-            <DialogTitle className="text-center text-[28px]">
+            <DialogTitle className="text-center text-[28px] leading-[34px]">
               Super!
             </DialogTitle>
             <DialogDescription className="mt-2 text-center leading-6">
-              Du hast alle Aufgaben geschafft und kannst jetzt deine Sterne sichern.
+              Alle Aufgaben geschafft. Die Sterne sind gesichert.
             </DialogDescription>
           </DialogHeader>
 
           <View
-            className="mt-1 w-full rounded-[22px] px-4 py-3.5"
+            className="mt-3 w-full rounded-[18px] px-4 py-3"
             style={{ backgroundColor: "rgba(255,255,255,0.72)" }}
           >
-            <Text className="text-sm font-body text-muted-foreground">Nächster schöner Moment</Text>
-            <Text className="mt-1 text-[16px] font-headline leading-7 text-foreground">
-              Belohnung anschauen oder erst den Erfolg genießen.
+            <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+              Nächster Moment
+            </Text>
+            <Text className="mt-1 text-base font-headline leading-6 text-foreground">
+              Belohnung ansehen oder weiter Routinen erledigen.
             </Text>
           </View>
 
-          <View className="mt-5 w-full gap-3">
+          <View className="mt-4 w-full gap-3">
             <Button
               onPress={handleViewRewards}
               className="h-12 w-full rounded-[20px]"

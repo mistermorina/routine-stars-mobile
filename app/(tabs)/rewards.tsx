@@ -6,6 +6,7 @@ import { getIcon, Trophy, Star, Sparkles } from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
 import { useToast } from "@/hooks/use-toast";
 import { useRewards } from "@/hooks/use-rewards";
+import { useCollapsibleHeader } from "@/hooks/use-collapsible-header";
 import { Header } from "@/components/routine-stars/header";
 import { RewardsOverview } from "@/components/routine-stars/rewards-overview";
 import { Card } from "@/components/ui/card";
@@ -26,6 +27,11 @@ export default function RewardsScreen() {
   const { rewards, isLoading: rewardsLoading } = useRewards();
   const palette = getThemePalette(selectedChild?.theme);
   const [recentlyRedeemedRewardId, setRecentlyRedeemedRewardId] = useState<string | null>(null);
+  const {
+    handleHeaderScroll,
+    isHeaderCollapsed,
+    toggleHeaderCollapsed,
+  } = useCollapsibleHeader();
   const sortedRewards = useMemo(
     () => [...rewards].sort((left, right) => left.cost - right.cost),
     [rewards]
@@ -99,12 +105,20 @@ export default function RewardsScreen() {
     <ThemedScreenBackground theme={selectedChild?.theme}>
       <View className="flex-1">
         {selectedChild && (
-          <Header child={selectedChild} allChildren={children} onSelectChild={selectChild} />
+          <Header
+            child={selectedChild}
+            allChildren={children}
+            collapsed={isHeaderCollapsed}
+            onSelectChild={selectChild}
+            onToggleCollapsed={toggleHeaderCollapsed}
+          />
         )}
 
         <ScrollView
           className="flex-1"
           contentContainerClassName="px-4 pb-8"
+          onScroll={handleHeaderScroll}
+          scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
         >
           <Animated.View entering={FadeInDown.duration(320)} className="mt-4">
@@ -127,7 +141,7 @@ export default function RewardsScreen() {
 
               <View className="relative">
                 <View>
-                  <View className="max-w-[240px]">
+                  <View>
                     <View
                       className="self-start rounded-full px-3 py-1.5"
                       style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
@@ -136,26 +150,33 @@ export default function RewardsScreen() {
                         Belohnungen
                       </Text>
                     </View>
-                    <Text className="mt-2 text-[28px] font-headline leading-[32px] text-foreground">
+                    <Text
+                      className="mt-2 text-[27px] font-headline leading-[32px] text-foreground"
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.82}
+                    >
                       Wunschliste
                     </Text>
-                    <Text className="mt-1 text-[15px] font-body leading-5" style={{ color: palette.accentText }}>
-                      Sterne werden hier zu kleinen Wunschmomenten. Was heute schon erreichbar ist,
-                      darf direkt eingelöst werden.
+                    <Text className="mt-2 max-w-[240px] text-sm font-body leading-5" style={{ color: palette.accentText }}>
+                      Sterne werden zu Wunschmomenten. Erreichbare Belohnungen
+                      kannst du direkt einlösen.
                     </Text>
                   </View>
                   <View
-                    className="mt-3 self-start rounded-[16px] px-3 py-2.5"
+                    className="mt-3 flex-row items-center justify-between rounded-[16px] px-3.5 py-3"
                     style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
                   >
-                    <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
-                      Bereit
-                    </Text>
-                    <Text className="mt-1 text-lg font-headline" style={{ color: palette.accentText }}>
+                    <View>
+                      <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+                        Bereit
+                      </Text>
+                      <Text className="text-xs font-body text-muted-foreground">
+                        Belohnungen frei
+                      </Text>
+                    </View>
+                    <Text className="text-2xl font-headline leading-7" style={{ color: palette.accentText }}>
                       {availableRewards}
-                    </Text>
-                    <Text className="text-xs font-body text-muted-foreground">
-                      Belohnungen frei
                     </Text>
                   </View>
                 </View>

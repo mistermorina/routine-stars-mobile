@@ -12,7 +12,6 @@ import Animated, {
 } from "react-native-reanimated";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { Star, Check, Clock } from "lucide-react-native";
-import { cn } from "@/lib/utils";
 import { getIcon } from "@/lib/icons";
 import { getThemePalette } from "@/lib/theme";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
@@ -167,7 +166,7 @@ export function TaskItem({
   const hasTimer = task.timerInMinutes && task.timerInMinutes > 0;
   const hasBonus = task.bonusStars && task.bonusStars > 0;
 
-  const starColor = isCompleted ? "#9A6A00" : routineColor || "#737373";
+  const starColor = routineColor || "#737373";
   const taskSurface = isCompleted
     ? "#FFFFFF"
     : isSuggested
@@ -199,7 +198,13 @@ export function TaskItem({
       )}
 
       {/* Swipe backdrop with overflow hidden */}
-      <View style={{ overflow: "hidden" }}>
+      <View
+        style={{
+          overflow: "hidden",
+          borderRadius: 18,
+          backgroundColor: taskSurface,
+        }}
+      >
         {/* "Erledigt" backdrop revealed on swipe (only for incomplete tasks) */}
         {!isCompleted && (
           <View
@@ -237,38 +242,52 @@ export function TaskItem({
                     alignSelf: "stretch",
                     flexDirection: "row",
                     alignItems: "center",
-                    borderRadius: 0,
+                    borderRadius: 18,
                     backgroundColor: taskSurface,
                     borderWidth: 1,
                     borderColor: isCompleted
-                      ? "rgba(154,106,0,0.18)"
+                      ? "rgba(157,184,216,0.28)"
                       : isSuggested
                         ? palette.accentBorder
-                        : "rgba(255,255,255,0.2)",
-                    padding: 16,
+                        : "#EAF1F7",
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                    shadowColor: "#9DB8D8",
+                    shadowOpacity: 0.11,
+                    shadowRadius: 12,
+                    shadowOffset: { width: 0, height: 6 },
                     width: "100%",
                   },
                 ]}
               >
+                <View
+                  className="mr-3 h-7 w-7 items-center justify-center rounded-full"
+                  style={{
+                    backgroundColor: isCompleted ? starColor : "#FFFFFF",
+                    borderColor: starColor,
+                    borderWidth: 2,
+                  }}
+                >
+                  {isCompleted ? <Check size={16} color="#FFFFFF" strokeWidth={3} /> : null}
+                </View>
+
                 {/* Icon */}
                 <View
-                  className="mr-3 h-12 w-12 items-center justify-center rounded-[14px]"
-                  style={{ backgroundColor: isCompleted ? palette.tabActiveBg : isSuggested ? "#FFFFFF" : palette.surface }}
+                  className="mr-3 h-11 w-11 items-center justify-center rounded-[14px]"
+                  style={{
+                    backgroundColor: isCompleted || isSuggested ? palette.tabActiveBg : palette.surface,
+                  }}
                 >
                   <Icon
-                    size={24}
-                    color={isCompleted ? "#8A8A8A" : routineColor || "#737373"}
+                    size={22}
+                    color={isCompleted ? starColor : routineColor || "#737373"}
                   />
                 </View>
 
                 {/* Title */}
                 <View className="flex-1 min-w-0 pr-3">
                   <Text
-                    className={cn(
-                      "text-base font-body-semibold text-foreground",
-                      isCompleted && "line-through"
-                    )}
-                    style={isCompleted ? { color: "#6B6B6B" } : undefined}
+                    className="text-[15px] font-body-semibold leading-5 text-foreground"
                     numberOfLines={2}
                   >
                     {task.title}
@@ -297,8 +316,7 @@ export function TaskItem({
                   </View>
                 ) : (
                   <View
-                    className="shrink-0 flex-row items-center gap-1 rounded-full px-2.5 py-1"
-                    style={{ backgroundColor: isCompleted ? palette.tabActiveBg : "rgba(255,255,255,0.82)" }}
+                    className="shrink-0 flex-row items-center gap-1 px-1 py-1"
                   >
                     <Text
                       className="text-sm font-body-bold"
@@ -307,9 +325,9 @@ export function TaskItem({
                       {task.stars}
                     </Text>
                     <Star
-                      size={18}
+                      size={17}
                       color={starColor}
-                      fill={isCompleted ? starColor : "transparent"}
+                      fill={starColor}
                     />
                   </View>
                 )}

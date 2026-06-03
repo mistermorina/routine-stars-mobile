@@ -12,9 +12,9 @@ const buttonVariants = {
 } as const;
 
 const buttonSizes = {
-  default: "h-12 px-5 py-3",
-  sm: "h-9 px-3 py-2",
-  lg: "h-14 px-8 py-4",
+  default: "h-12 px-5 py-0",
+  sm: "h-9 px-3 py-0",
+  lg: "h-14 px-6 py-0",
   icon: "h-10 w-10",
 } as const;
 
@@ -28,10 +28,10 @@ const textVariants = {
 } as const;
 
 const textSizes = {
-  default: "text-base",
-  sm: "text-sm",
-  lg: "text-lg",
-  icon: "text-base",
+  default: "text-base leading-5",
+  sm: "text-sm leading-4",
+  lg: "text-base leading-5",
+  icon: "text-base leading-5",
 } as const;
 
 export interface ButtonProps extends PressableProps {
@@ -57,7 +57,6 @@ export function Button({
         "flex-row items-center justify-center rounded-lg",
         buttonVariants[variant],
         buttonSizes[size],
-        disabled && "opacity-50",
         className
       )}
       disabled={disabled}

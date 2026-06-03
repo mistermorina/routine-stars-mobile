@@ -7,7 +7,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from "react-native-reanimated";
-import { Star, Settings } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Star, Settings } from "lucide-react-native";
 import { cn } from "@/lib/utils";
 import { getThemePalette } from "@/lib/theme";
 import type { Child } from "@/lib/types";
@@ -15,10 +15,18 @@ import type { Child } from "@/lib/types";
 interface HeaderProps {
   child: Child;
   allChildren?: Child[];
+  collapsed?: boolean;
   onSelectChild?: (id: string) => void;
+  onToggleCollapsed?: () => void;
 }
 
-export function Header({ child, allChildren, onSelectChild }: HeaderProps) {
+export function Header({
+  child,
+  allChildren,
+  collapsed = false,
+  onSelectChild,
+  onToggleCollapsed,
+}: HeaderProps) {
   const router = useRouter();
   const starScale = useSharedValue(1);
   const prevStars = useSharedValue(child.stars);
@@ -45,35 +53,115 @@ export function Header({ child, allChildren, onSelectChild }: HeaderProps) {
     router.push("/(tabs)/star-account");
   };
 
+  if (collapsed) {
+    return (
+      <SafeAreaView edges={["top"]} style={{ backgroundColor: palette.headerGlass }}>
+        <View className="px-4 pb-2 pt-2">
+          <View
+            className="flex-row items-center gap-2 overflow-hidden rounded-[18px] border px-3 py-2"
+            style={{
+              backgroundColor: palette.cardTint,
+              borderColor: palette.accentBorder,
+            }}
+          >
+            <Pressable
+              onPress={onToggleCollapsed}
+              className="flex-1 flex-row items-center gap-2"
+              accessibilityRole="button"
+              accessibilityLabel="Header ausklappen"
+            >
+              <View
+                className="h-10 w-10 items-center justify-center rounded-[14px]"
+                style={{ backgroundColor: palette.heroSurface }}
+              >
+                <Text className="text-[22px]">{child.avatar}</Text>
+              </View>
+              <View className="min-w-0 flex-1">
+                <Text
+                  className="text-xs font-body text-muted-foreground"
+                  numberOfLines={1}
+                >
+                  Hallo {child.name}
+                </Text>
+                <Text
+                  className="text-base font-headline leading-5 text-foreground"
+                  numberOfLines={1}
+                >
+                  Routine Stars
+                </Text>
+              </View>
+              <ChevronDown size={18} color={palette.accentText} />
+            </Pressable>
+
+            <Pressable onPress={handleStarsPress} hitSlop={8}>
+              <Animated.View
+                className="rounded-full px-3 py-1.5"
+                style={[
+                  starAnimatedStyle,
+                  {
+                    alignItems: "center",
+                    backgroundColor: palette.surface,
+                    borderRadius: 999,
+                    borderColor: palette.accentBorder,
+                    borderWidth: 1,
+                    flexDirection: "row",
+                    gap: 6,
+                    minWidth: 56,
+                  },
+                ]}
+              >
+                <Star size={16} fill="#FFD700" color="#FFD700" />
+                <Text
+                  className="text-sm font-body-bold leading-5"
+                  numberOfLines={1}
+                  style={{ color: palette.accentText }}
+                >
+                  {child.stars}
+                </Text>
+              </Animated.View>
+            </Pressable>
+
+            <Pressable
+              onPress={handleSettingsPress}
+              className="h-10 w-10 items-center justify-center rounded-full"
+              style={{ backgroundColor: "rgba(255,255,255,0.82)" }}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Elternbereich öffnen"
+            >
+              <Settings size={19} color={palette.accentText} />
+            </Pressable>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView edges={["top"]} style={{ backgroundColor: palette.headerGlass }}>
       <View className="px-4 pb-2 pt-2">
         <View
-          className="overflow-hidden rounded-[24px] border px-4 pb-4 pt-3"
+          className="overflow-hidden rounded-[22px] border px-4 pb-4 pt-3"
           style={{
             backgroundColor: palette.cardTint,
             borderColor: palette.accentBorder,
           }}
         >
           <View
-            className="absolute right-[-18px] top-[-14px] h-24 w-24 rounded-full"
-            style={{ backgroundColor: palette.motifSecondary, opacity: 0.24 }}
-          />
-          <View
-            className="absolute left-[-8px] top-12 h-14 w-14 rounded-full"
-            style={{ backgroundColor: palette.motifPrimary, opacity: 0.18 }}
+            className="absolute right-[-18px] top-[-18px] h-24 w-24 rounded-full"
+            style={{ backgroundColor: palette.motifSecondary, opacity: 0.16 }}
           />
 
-          <View className="flex-row items-start justify-between">
-            <View className="mr-3 flex-1 flex-row items-center gap-3">
+          <View className="flex-row items-center justify-between gap-3">
+            <View className="flex-1 flex-row items-center gap-3">
               <View
-                className="h-[52px] w-[52px] items-center justify-center rounded-[20px]"
+                className="h-[50px] w-[50px] items-center justify-center rounded-[18px]"
                 style={{ backgroundColor: palette.heroSurface }}
               >
-                <Text className="text-[28px]">{child.avatar}</Text>
+                <Text className="text-[26px]">{child.avatar}</Text>
               </View>
               <View className="flex-1">
-                <View className="flex-row items-center gap-2">
+                <View className="flex-row flex-wrap items-center gap-2">
                   <Text className="text-sm font-body text-muted-foreground">
                     Hallo {child.name}
                   </Text>
@@ -91,43 +179,63 @@ export function Header({ child, allChildren, onSelectChild }: HeaderProps) {
                 </View>
                 <View className="mt-1 flex-row items-center gap-2">
                   <Star size={18} fill="#FFD700" color="#FFD700" />
-                  <Text className="text-[17px] font-headline text-foreground">
+                  <Text
+                    className="flex-1 text-[19px] font-headline leading-6 text-foreground"
+                    numberOfLines={1}
+                  >
                     Routine Stars
                   </Text>
                 </View>
-                <Text className="mt-1 text-sm font-body" style={{ color: palette.accentText }}>
-                  Heute in kleinen Schritten, großen Sternmomenten.
-                </Text>
+                <Pressable onPress={handleStarsPress} className="mt-2 self-start">
+                  <Animated.View
+                    className="rounded-full px-3 py-1.5"
+                    style={[
+                      starAnimatedStyle,
+                      {
+                        alignItems: "center",
+                        backgroundColor: palette.surface,
+                        borderRadius: 999,
+                        borderColor: palette.accentBorder,
+                        borderWidth: 1,
+                        flexDirection: "row",
+                        gap: 6,
+                        minWidth: 58,
+                      },
+                    ]}
+                  >
+                    <Star size={17} fill="#FFD700" color="#FFD700" />
+                    <Text
+                      className="text-base font-body-bold leading-5"
+                      numberOfLines={1}
+                      style={{ color: palette.accentText }}
+                    >
+                      {child.stars}
+                    </Text>
+                  </Animated.View>
+                </Pressable>
               </View>
             </View>
 
-            <View className="flex-row items-center gap-2">
-              <Pressable onPress={handleStarsPress}>
-                <Animated.View
-                  className="flex-row items-center gap-1.5 rounded-full px-3.5 py-2"
-                  style={[
-                    starAnimatedStyle,
-                    {
-                      backgroundColor: palette.surface,
-                      borderColor: palette.accentBorder,
-                      borderWidth: 1,
-                    },
-                  ]}
-                >
-                  <Star size={18} fill="#FFD700" color="#FFD700" />
-                  <Text className="text-base font-body-bold" style={{ color: palette.accentText }}>
-                    {child.stars}
-                  </Text>
-                </Animated.View>
+            <View className="gap-2">
+              <Pressable
+                onPress={onToggleCollapsed}
+                className="h-10 w-10 items-center justify-center rounded-full"
+                style={{ backgroundColor: "rgba(255,255,255,0.82)" }}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Header einklappen"
+              >
+                <ChevronUp size={19} color={palette.accentText} />
               </Pressable>
-
               <Pressable
                 onPress={handleSettingsPress}
-                className="h-11 w-11 items-center justify-center rounded-full"
-                style={{ backgroundColor: "rgba(255,255,255,0.8)" }}
+                className="h-10 w-10 items-center justify-center rounded-full"
+                style={{ backgroundColor: "rgba(255,255,255,0.82)" }}
                 hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Elternbereich öffnen"
               >
-                <Settings size={20} color={palette.accentText} />
+                <Settings size={19} color={palette.accentText} />
               </Pressable>
             </View>
           </View>
@@ -136,7 +244,7 @@ export function Header({ child, allChildren, onSelectChild }: HeaderProps) {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerClassName="gap-2 pt-4"
+              contentContainerClassName="gap-2 pt-3"
             >
               {allChildren.map((c) => {
                 const isActive = c.id === child.id;
@@ -173,18 +281,7 @@ export function Header({ child, allChildren, onSelectChild }: HeaderProps) {
                 );
               })}
             </ScrollView>
-          ) : (
-            <View className="pt-4">
-              <View
-                className="rounded-[16px] px-3.5 py-3"
-                style={{ backgroundColor: "rgba(255,255,255,0.72)" }}
-              >
-                <Text className="text-sm font-body text-muted-foreground">
-                  Heute im Fokus: kleine Schritte, große Sterne.
-                </Text>
-              </View>
-            </View>
-          )}
+          ) : null}
         </View>
       </View>
     </SafeAreaView>

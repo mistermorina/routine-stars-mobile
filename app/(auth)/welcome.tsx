@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -141,6 +141,7 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const palette = getThemePalette("sterne");
   const reduceMotion = useReducedMotion();
+  const scrollViewRef = useRef<ScrollView>(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(0);
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
@@ -161,6 +162,12 @@ export default function WelcomeScreen() {
 
   const previewCard = previewCards[previewIndex];
 
+  const scrollToTop = () => {
+    requestAnimationFrame(() => {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    });
+  };
+
   const markWelcomeSeen = async () => {
     await storage.setItem(KEYS.HAS_SEEN_WELCOME, true);
   };
@@ -176,6 +183,7 @@ export default function WelcomeScreen() {
     setDirection("forward");
     setPreviewIndex(0);
     setIsPreviewMode(true);
+    scrollToTop();
     void triggerFeedback("theme_preview");
   };
 
@@ -186,16 +194,19 @@ export default function WelcomeScreen() {
     }
     setDirection("forward");
     setPreviewIndex((prev) => prev + 1);
+    scrollToTop();
     void triggerFeedback("tab_focus");
   };
 
   const handlePreviousPreview = () => {
     if (previewIndex === 0) {
       setIsPreviewMode(false);
+      scrollToTop();
       return;
     }
     setDirection("backward");
     setPreviewIndex((prev) => prev - 1);
+    scrollToTop();
     void triggerFeedback("tab_focus");
   };
 
@@ -216,8 +227,9 @@ export default function WelcomeScreen() {
           ))}
 
         <ScrollView
+          ref={scrollViewRef}
           className="flex-1"
-          contentContainerClassName="px-4 pb-10 pt-4"
+          contentContainerClassName="px-4 pb-12 pt-4"
           showsVerticalScrollIndicator={false}
         >
           <View className="flex-row items-center justify-between px-1">
@@ -272,7 +284,7 @@ export default function WelcomeScreen() {
                   borderColor: palette.accentBorder,
                 }}
               >
-                <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center justify-between gap-3">
                   <View className="flex-row items-center gap-2">
                     <View
                       className="rounded-2xl p-2.5"
@@ -292,28 +304,28 @@ export default function WelcomeScreen() {
                   </View>
                 </View>
 
-                <Text className="mt-5 text-[34px] font-headline leading-[40px] text-foreground">
+                <Text className="mt-4 text-[28px] font-headline leading-[33px] text-foreground">
                   Starke Routinen. Kleine Stars.
                 </Text>
-                <Text className="mt-3 text-base font-body leading-7 text-muted-foreground">
+                <Text className="mt-3 text-[15px] font-body leading-6 text-muted-foreground">
                   Spielerisch motiviert, liebevoll begleitet und jeden Tag ein
                   bisschen selbstständiger.
                 </Text>
 
                 <View
-                  className="mt-5 overflow-hidden rounded-[24px] border"
+                  className="mt-4 overflow-hidden rounded-[22px] border"
                   style={{ borderColor: palette.accentBorder, backgroundColor: palette.heroSurface }}
                 >
                   <Image
                     source={onboardingHeroImage}
-                    style={{ width: "100%", aspectRatio: 1 }}
+                    style={{ width: "100%", aspectRatio: 1.28 }}
                     contentFit="cover"
                     transition={180}
                     accessibilityLabel="Kind und Elternteil planen gemeinsam eine Routine"
                   />
                 </View>
 
-                <View className="mt-5 flex-row flex-wrap gap-2">
+                <View className="mt-4 flex-row flex-wrap gap-2">
                   {[
                     { icon: Sparkles, label: "Sterne statt Stress" },
                     { icon: Star, label: "Jeden Tag ein Level weiter" },
@@ -335,18 +347,18 @@ export default function WelcomeScreen() {
                   ))}
                 </View>
 
-                <View className="mt-6 gap-3">
+                <View className="mt-5 gap-3">
                   <Button
                     onPress={() => {
                       void handleStart();
                     }}
                     size="lg"
-                    className="w-full rounded-[22px]"
+                    className="h-14 w-full rounded-[22px]"
                     style={{ backgroundColor: palette.button }}
                   >
                     <View className="flex-row items-center gap-2">
                       <Star size={18} color="#FFFFFF" fill="#FFFFFF" />
-                      <Text className="text-lg font-body-semibold text-white">Loslegen</Text>
+                      <Text className="text-base font-body-semibold leading-5 text-white">Loslegen</Text>
                     </View>
                   </Button>
 
@@ -364,7 +376,7 @@ export default function WelcomeScreen() {
                   >
                     <View className="flex-row items-center gap-2">
                       <Sparkles size={18} color={palette.accentStrong} />
-                      <Text className="text-lg font-body-semibold" style={{ color: palette.accentStrong }}>
+                      <Text className="text-base font-body-semibold leading-5" style={{ color: palette.accentStrong }}>
                         Erst anschauen
                       </Text>
                     </View>
@@ -381,12 +393,12 @@ export default function WelcomeScreen() {
                   borderColor: palette.accentBorder,
                 }}
               >
-                <View className="flex-row items-center justify-between">
-                  <View>
+                <View className="flex-row items-start justify-between gap-3">
+                  <View className="flex-1">
                     <Text className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground">
                       {previewCard.eyebrow}
                     </Text>
-                    <Text className="mt-2 text-[28px] font-headline leading-[34px] text-foreground">
+                    <Text className="mt-2 text-[25px] font-headline leading-[31px] text-foreground">
                       {previewCard.title}
                     </Text>
                   </View>
@@ -398,11 +410,11 @@ export default function WelcomeScreen() {
                   </View>
                 </View>
 
-                <Text className="mt-4 text-base font-body leading-7 text-muted-foreground">
+                <Text className="mt-4 text-[15px] font-body leading-6 text-muted-foreground">
                   {previewCard.description}
                 </Text>
 
-                <View className="mt-5 min-h-[260px]">
+                <View className="mt-5">
                   <Animated.View
                     key={previewIndex}
                     entering={enteringAnimation}
@@ -420,7 +432,7 @@ export default function WelcomeScreen() {
                           <View className="overflow-hidden rounded-[22px]">
                             <Image
                               source={onboardingHeroImage}
-                              style={{ width: "100%", aspectRatio: 1 }}
+                              style={{ width: "100%", aspectRatio: 1.08 }}
                               contentFit="cover"
                               transition={180}
                               accessibilityLabel="Kind und Elternteil planen gemeinsam eine Routine"
@@ -441,11 +453,11 @@ export default function WelcomeScreen() {
                         </>
                       ) : (
                         <>
-                          <View className="flex-row gap-3">
+                          <View className="gap-3">
                             {previewCard.chips.map((chip, index) => (
                               <View
                                 key={chip}
-                                className="flex-1 rounded-[22px] border px-3 py-4"
+                                className="flex-row items-start rounded-[20px] border px-3.5 py-3.5"
                                 style={{
                                   backgroundColor: index === 1 ? "#FFFFFF" : palette.cardTint,
                                   borderColor: palette.accentBorder,
@@ -463,22 +475,24 @@ export default function WelcomeScreen() {
                                     <Shield size={16} color={palette.accentStrong} />
                                   )}
                                 </View>
-                                <Text className="mt-3 text-sm font-body-semibold text-foreground">
-                                  {chip}
-                                </Text>
-                                <Text className="mt-1 text-xs font-body leading-5 text-muted-foreground">
-                                  {previewIndex === 1
-                                    ? index === 0
-                                      ? "Aufgaben geben direkt sichtbaren Fortschritt."
-                                      : index === 1
-                                        ? "Belohnungen machen aus Routine kleine Ziele."
-                                        : "Eltern sehen klar, was gut läuft."
-                                    : index === 0
-                                      ? "Nur Eltern kommen in die Verwaltung."
-                                    : index === 1
-                                        ? "Familiendaten bleiben lokal auf dem Gerät."
-                                        : "Kinder brauchen kein eigenes Konto."}
-                                </Text>
+                                <View className="ml-3 flex-1">
+                                  <Text className="text-base font-body-semibold leading-5 text-foreground">
+                                    {chip}
+                                  </Text>
+                                  <Text className="mt-1 text-sm font-body leading-5 text-muted-foreground">
+                                    {previewIndex === 1
+                                      ? index === 0
+                                        ? "Aufgaben zeigen sofort, was geschafft ist."
+                                        : index === 1
+                                          ? "Belohnungen machen Routine zu kleinen Zielen."
+                                          : "Eltern sehen klar, was gut läuft."
+                                      : index === 0
+                                        ? "Nur Eltern kommen in die Verwaltung."
+                                        : index === 1
+                                          ? "Familiendaten bleiben lokal auf dem Gerät."
+                                          : "Kinder brauchen kein eigenes Konto."}
+                                  </Text>
+                                </View>
                               </View>
                             ))}
                           </View>
@@ -522,11 +536,11 @@ export default function WelcomeScreen() {
                       void handleNextPreview();
                     }}
                     size="lg"
-                    className="w-full rounded-[22px]"
+                    className="h-14 w-full rounded-[22px]"
                     style={{ backgroundColor: palette.button }}
                   >
                     <View className="flex-row items-center gap-2">
-                      <Text className="text-lg font-body-semibold text-white">
+                      <Text className="text-base font-body-semibold leading-5 text-white">
                         {previewIndex === previewCards.length - 1 ? "Jetzt starten" : "Weiter"}
                       </Text>
                       <ArrowRight size={18} color="#FFFFFF" />
@@ -543,7 +557,7 @@ export default function WelcomeScreen() {
                       borderColor: palette.accentBorder,
                     }}
                   >
-                    <Text className="text-lg font-body-semibold" style={{ color: palette.accentStrong }}>
+                    <Text className="text-base font-body-semibold leading-5" style={{ color: palette.accentStrong }}>
                       {previewIndex === 0 ? "Zurück zum Welcome" : "Zurück"}
                     </Text>
                   </Button>

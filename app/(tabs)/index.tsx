@@ -10,22 +10,27 @@ import { useChildProgression } from "@/hooks/use-child-progression";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
 import { useRoutines } from "@/hooks/use-routines";
 import { useRewards } from "@/hooks/use-rewards";
+import { useCollapsibleHeader } from "@/hooks/use-collapsible-header";
+import { useStickerWall } from "@/hooks/use-sticker-wall";
 import { Header } from "@/components/routine-stars/header";
 import { DailyMissionCard } from "@/components/routine-stars/daily-mission-card";
 import { RoutineCard } from "@/components/routine-stars/routine-card";
 import { TaskTimerModal } from "@/components/routine-stars/task-timer-modal";
 import { RoutineCompleteDialog } from "@/components/routine-stars/routine-complete-dialog";
 import { Confetti } from "@/components/routine-stars/confetti";
+import { StickerRewardSheet } from "@/components/stickers/sticker-reward-sheet";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { triggerFeedback } from "@/lib/feedback";
 import { getActivityInsights } from "@/lib/activity-insights";
-import { getIcon } from "@/lib/icons";
 import { getThemePalette } from "@/lib/theme";
+import type { AnimalSticker } from "@/lib/animal-stickers";
 import type { Routine, Task } from "@/lib/types";
 import emptyRoutinesImage from "@/assets/images/empty-routines.png";
+import rewardStarGiftImage from "@/assets/images/reward-star-gift-soft.png";
+import routineTrophyImage from "@/assets/images/routine-trophy-soft.png";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -55,20 +60,23 @@ export default function DashboardScreen() {
     evaluateProgressAfterTaskCompletion,
     clearRecentUnlocks,
   } = useChildProgression(selectedChildId);
+  const {
+    availableDailyStickers,
+    hasClaimedToday,
+    claimDailySticker,
+  } = useStickerWall(selectedChildId);
   const [timerTask, setTimerTask] = useState<Task | null>(null);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showStickerRewardSheet, setShowStickerRewardSheet] = useState(false);
+  const {
+    handleHeaderScroll,
+    isHeaderCollapsed,
+    toggleHeaderCollapsed,
+  } = useCollapsibleHeader();
 
   const palette = getThemePalette(selectedChild?.theme);
-  const displayRoutines = useMemo(
-    () =>
-      [...routines].sort((left, right) => {
-        const leftRemaining = left.tasks.filter((task) => !task.completed).length;
-        const rightRemaining = right.tasks.filter((task) => !task.completed).length;
-        return leftRemaining - rightRemaining;
-      }),
-    [routines]
-  );
+  const displayRoutines = routines;
 
   const totalTasks = displayRoutines.reduce((count, routine) => count + routine.tasks.length, 0);
   const completedTasks = displayRoutines.reduce(
@@ -103,7 +111,7 @@ export default function DashboardScreen() {
         missingStars: Math.max(nextReward.cost - selectedChild.stars, 0),
       }
     : undefined;
-  const FocusIcon = firstOpenTask ? getIcon(firstOpenTask.task.iconName) : Sparkles;
+  const canClaimDailySticker = totalTasks > 0 && remainingTasks === 0 && !hasClaimedToday;
 
   useEffect(() => {
     if (!isLoading && children.length === 0) {
@@ -140,6 +148,12 @@ export default function DashboardScreen() {
       if (!task || task.completed) return;
 
       const previousInsights = getActivityInsights(getLogsForChild(selectedChildId));
+      const openTasksBeforeCompletion = routines.reduce(
+        (count, routine) => count + routine.tasks.filter((entry) => !entry.completed).length,
+        0
+      );
+      const isCompletingDay =
+        openTasksBeforeCompletion === 1 && totalTasks > 0 && !hasClaimedToday;
 
       await toggleTaskCompletion(parentRoutine.id, taskId);
 
@@ -174,7 +188,11 @@ export default function DashboardScreen() {
 
       if (allCompleted) {
         setShowConfetti(true);
-        setShowCompleteDialog(true);
+        if (isCompletingDay) {
+          setShowStickerRewardSheet(true);
+        } else {
+          setShowCompleteDialog(true);
+        }
         void triggerFeedback("routine_complete");
         setTimeout(() => setShowConfetti(false), 4000);
         return;
@@ -191,10 +209,12 @@ export default function DashboardScreen() {
       addStars,
       evaluateProgressAfterTaskCompletion,
       getLogsForChild,
+      hasClaimedToday,
       logActivity,
       routines,
       selectedChild,
       selectedChildId,
+      totalTasks,
       toggleTaskCompletion,
     ]
   );
@@ -207,6 +227,10 @@ export default function DashboardScreen() {
     router.push("/parent-login");
   }, [router]);
 
+  const handleOpenStickerReward = useCallback(() => {
+    setShowStickerRewardSheet(true);
+  }, []);
+
   const handleTimerClose = useCallback(
     (success: boolean) => {
       if (success && timerTask) {
@@ -215,6 +239,25 @@ export default function DashboardScreen() {
       setTimerTask(null);
     },
     [handleTaskComplete, timerTask]
+  );
+
+  const handleSelectDailySticker = useCallback(
+    async (sticker: AnimalSticker) => {
+      const placedSticker = await claimDailySticker(sticker.id);
+      setShowStickerRewardSheet(false);
+
+      if (!placedSticker) {
+        return;
+      }
+
+      setShowConfetti(true);
+      void triggerFeedback("sticker_unlocked");
+      setTimeout(() => setShowConfetti(false), 2800);
+      setTimeout(() => {
+        router.push("/sticker-album");
+      }, 360);
+    },
+    [claimDailySticker, router]
   );
 
   if (isLoading || routinesLoading) {
@@ -249,189 +292,186 @@ export default function DashboardScreen() {
   return (
     <ThemedScreenBackground theme={selectedChild.theme}>
       <View className="flex-1">
-        <Header child={selectedChild} allChildren={children} onSelectChild={selectChild} />
+        <Header
+          child={selectedChild}
+          allChildren={children}
+          collapsed={isHeaderCollapsed}
+          onSelectChild={selectChild}
+          onToggleCollapsed={toggleHeaderCollapsed}
+        />
 
         <ScrollView
           className="flex-1"
           contentContainerClassName="pb-8"
+          onScroll={handleHeaderScroll}
+          scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
         >
-          <Animated.View entering={FadeInDown.duration(320)} className="mx-4 mt-4">
+          <Animated.View entering={FadeInDown.duration(320)} className="mx-4 mt-3">
             <Card
-              className="overflow-hidden rounded-[24px] px-5 pb-5 pt-4"
-              style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+              className="overflow-hidden rounded-[22px] px-4 py-4"
+              style={{
+                backgroundColor: palette.cardTint,
+                borderColor: palette.accentBorder,
+                shadowColor: "#9DB8D8",
+                shadowOpacity: 0.14,
+                shadowRadius: 18,
+                shadowOffset: { width: 0, height: 10 },
+              }}
             >
-              <View
-                className="absolute inset-x-0 top-0 h-40 rounded-[24px]"
-                style={{ backgroundColor: palette.heroSurface }}
-              />
-              <View
-                className="absolute right-[-18px] top-[-10px] h-24 w-24 rounded-full"
-                style={{ backgroundColor: palette.motifSecondary, opacity: 0.28 }}
-              />
-              <View
-                className="absolute left-[-10px] top-20 h-16 w-16 rounded-full"
-                style={{ backgroundColor: palette.motifPrimary, opacity: 0.2 }}
-              />
-
-              <View className="relative">
-                <View className="flex-row items-start justify-between">
-                  <View className="flex-1 pr-4">
-                    <View
-                      className="self-start rounded-full px-3 py-1.5"
-                      style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
-                    >
-                      <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
-                        {getGreeting()}
-                      </Text>
-                    </View>
-                    <Text className="mt-3 text-[34px] font-headline text-foreground">
-                      Heute zuerst
-                    </Text>
-                    <Text className="mt-2 text-[15px] font-body leading-6" style={{ color: palette.accentText }}>
-                      {firstOpenTask
-                        ? `Starte am besten mit „${firstOpenTask.task.title}“ aus ${firstOpenTask.routineName}.`
-                        : "Alle Aufgaben sind geschafft. Zeit für eine kleine Belohnung."}
-                    </Text>
-                  </View>
-                  <View
-                    className="rounded-[16px] px-3.5 py-3"
-                    style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
-                  >
-                    <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
-                      Status
-                    </Text>
-                    <Text className="mt-1 text-lg font-headline" style={{ color: palette.accentText }}>
-                      {remainingTasks === 0 ? "Frei" : remainingTasks}
-                    </Text>
-                    <Text className="text-xs font-body text-muted-foreground">
-                      {remainingTasks === 0 ? "Alles geschafft" : "Aufgaben offen"}
-                    </Text>
-                  </View>
-                </View>
-
-                <View
-                  className="mt-5 rounded-[18px] border px-4 py-4"
-                  style={{
-                    borderColor: palette.accentBorder,
-                    backgroundColor: "rgba(255,255,255,0.74)",
-                  }}
-                >
-                  <View className="flex-row items-center">
-                    <View
-                      className="h-12 w-12 items-center justify-center rounded-[18px]"
-                      style={{ backgroundColor: palette.tabActiveBg }}
-                    >
-                      <FocusIcon size={20} color={palette.accentStrong} />
-                    </View>
-                    <View className="ml-3 flex-1">
-                      <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
-                        {firstOpenTask ? "Nächster kleiner Schritt" : "Belohnungszeit"}
-                      </Text>
-                      <Text className="mt-1 text-lg font-headline text-foreground">
-                        {firstOpenTask ? firstOpenTask.task.title : "Alles erledigt"}
-                      </Text>
-                      <Text className="mt-1 text-xs font-body" style={{ color: palette.accentText }}>
-                        {firstOpenTask
-                          ? firstOpenTask.routineName
-                          : nextRewardHint
-                            ? `${nextRewardHint.title} wartet schon`
-                            : "Belohnungen sind bereit"}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-
-                <DailyMissionCard
-                  mission={todayMission}
-                  missionProgress={missionProgress}
-                  isMissionComplete={isMissionComplete}
-                  recentUnlocks={recentUnlocks}
-                  palette={palette}
-                />
-
-                <View
-                  className="mt-4 rounded-[18px] px-4 py-4"
-                  style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
-                >
-                  <View className="mb-2 flex-row items-center justify-between">
-                    <Text className="text-sm font-body-semibold text-muted-foreground">
-                      Tagesfortschritt
-                    </Text>
-                    <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>
-                      {completedTasks}/{totalTasks}
-                    </Text>
-                  </View>
-                  <Progress
-                    value={progressValue}
-                    className="h-3"
-                    indicatorColor={palette.chartPrimary}
-                    trackStyle={{ backgroundColor: "rgba(255,255,255,0.86)" }}
-                  />
-                </View>
-
-                <View className="mt-4 flex-row gap-3">
-                  <View
-                    className="flex-1 rounded-[18px] px-4 py-4"
-                    style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
-                  >
-                    <View className="flex-row items-center justify-between">
-                      <View className="flex-row items-center gap-2">
-                        <Flame size={16} color={palette.chartSecondary} />
-                        <Text className="text-xs font-body-semibold text-muted-foreground">
-                          Serie
-                        </Text>
-                      </View>
-                      <View
-                        className="rounded-full px-2 py-1"
-                        style={{ backgroundColor: palette.tabActiveBg }}
-                      >
-                        <Text className="text-[10px] font-body-semibold" style={{ color: palette.accentText }}>
-                          Tage
-                        </Text>
-                      </View>
-                    </View>
-                    <Text className="mt-3 text-3xl font-headline text-foreground">
-                      {insights.currentStreak}
-                    </Text>
-                    <Text className="mt-1 text-xs font-body text-muted-foreground">
-                      Bleib im Rhythmus und sammle weiter Sterne.
-                    </Text>
-                  </View>
-
-                  <View
-                    className="flex-1 rounded-[18px] px-4 py-4"
-                    style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
-                  >
-                    <View className="flex-row items-center justify-between">
-                      <View className="flex-row items-center gap-2">
-                        <Trophy size={16} color={palette.accentStrong} />
-                        <Text className="text-xs font-body-semibold text-muted-foreground">
-                          Nächstes Ziel
-                        </Text>
-                      </View>
-                      <View
-                        className="rounded-full px-2 py-1"
-                        style={{ backgroundColor: palette.tabActiveBg }}
-                      >
-                        <Text className="text-[10px] font-body-semibold" style={{ color: palette.accentText }}>
-                          Belohnung
-                        </Text>
-                      </View>
-                    </View>
-                    <Text className="mt-3 text-base font-headline text-foreground">
-                      {nextRewardHint ? nextRewardHint.title : "Alles erreicht"}
-                    </Text>
-                    <Text className="mt-1 text-xs font-body" style={{ color: palette.accentText }}>
-                      {nextRewardHint
-                        ? `Noch ${nextRewardHint.missingStars} Sterne`
-                        : "Belohnungen sind bereit"}
-                    </Text>
-                  </View>
-                </View>
+              <View className="mb-3 flex-row items-center justify-between">
+                <Text className="text-base font-body-semibold text-muted-foreground">
+                  Tagesfortschritt
+                </Text>
+                <Text className="text-base font-body-semibold text-foreground">
+                  {completedTasks} / {totalTasks}
+                </Text>
               </View>
+              <Progress
+                value={progressValue}
+                className="h-3"
+                indicatorColor={remainingTasks === 0 ? "#4FD17A" : palette.chartPrimary}
+                trackStyle={{ backgroundColor: "#EAF1F7" }}
+              />
+              <Text className="mt-4 text-center text-sm font-body-semibold text-muted-foreground">
+                {remainingTasks === 0
+                  ? "Super gemacht! Alle Aufgaben erledigt!"
+                  : firstOpenTask
+                    ? `Als Nächstes: ${firstOpenTask.task.title}`
+                    : `${getGreeting()} - kleine Schritte zählen.`}
+              </Text>
             </Card>
           </Animated.View>
+
+          <Animated.View entering={FadeInDown.delay(55).duration(320)} className="mx-4 mt-3 flex-row gap-3">
+            <Card
+              className="min-h-[156px] flex-1 overflow-hidden rounded-[20px] px-4 py-4"
+              style={{
+                backgroundColor: palette.cardTint,
+                borderColor: palette.accentBorder,
+                shadowColor: "#9DB8D8",
+                shadowOpacity: 0.12,
+                shadowRadius: 16,
+                shadowOffset: { width: 0, height: 8 },
+              }}
+            >
+              <View className="flex-row items-center gap-2">
+                <Flame size={17} color="#F97316" />
+                <Text className="text-xs font-body-semibold text-muted-foreground">
+                  Serie
+                </Text>
+              </View>
+              <View className="mt-3 flex-row items-end gap-1">
+                <Text className="text-3xl font-headline text-foreground">
+                  {insights.currentStreak}
+                </Text>
+                <Text className="mb-1 text-xs font-body text-muted-foreground">Tag</Text>
+              </View>
+              <Text className="mt-2 text-xs font-body leading-5 text-muted-foreground">
+                Bleib im Rhythmus und sammle weiter Sterne.
+              </Text>
+              <Image
+                source={rewardStarGiftImage}
+                style={{
+                  position: "absolute",
+                  bottom: -20,
+                  right: -18,
+                  width: 94,
+                  height: 94,
+                  opacity: 0.42,
+                }}
+                contentFit="contain"
+              />
+            </Card>
+
+            <Card
+              className="min-h-[156px] flex-1 overflow-hidden rounded-[20px] px-4 py-4"
+              style={{
+                backgroundColor: palette.cardTint,
+                borderColor: palette.accentBorder,
+                shadowColor: "#9DB8D8",
+                shadowOpacity: 0.12,
+                shadowRadius: 16,
+                shadowOffset: { width: 0, height: 8 },
+              }}
+            >
+              <View className="flex-row items-center gap-2">
+                <Trophy size={17} color="#F97316" />
+                <Text className="text-xs font-body-semibold text-muted-foreground">
+                  Nächstes Ziel
+                </Text>
+              </View>
+              <Text className="mt-3 text-base font-headline leading-5 text-foreground">
+                {nextRewardHint ? nextRewardHint.title : "Alles erreicht"}
+              </Text>
+              <Text className="mt-2 text-xs font-body leading-5" style={{ color: palette.accentText }}>
+                {nextRewardHint
+                  ? `Noch ${nextRewardHint.missingStars} Sterne`
+                  : "Belohnungen sind bereit"}
+              </Text>
+              <Image
+                source={routineTrophyImage}
+                style={{
+                  position: "absolute",
+                  bottom: -20,
+                  right: -18,
+                  width: 96,
+                  height: 96,
+                  opacity: 0.44,
+                }}
+                contentFit="contain"
+              />
+            </Card>
+          </Animated.View>
+
+          <View className="mx-4">
+            <DailyMissionCard
+              mission={todayMission}
+              missionProgress={missionProgress}
+              isMissionComplete={isMissionComplete}
+              recentUnlocks={recentUnlocks}
+              palette={palette}
+            />
+          </View>
+
+          {canClaimDailySticker ? (
+            <Animated.View entering={FadeInDown.delay(80).duration(320)} className="mx-4 mt-4">
+              <Card
+                className="overflow-hidden rounded-[22px] px-4 py-4"
+                style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+              >
+                <View
+                  className="absolute right-[-18px] top-[-16px] h-24 w-24 rounded-full"
+                  style={{ backgroundColor: palette.motifPrimary, opacity: 0.2 }}
+                />
+                <View className="flex-row items-center gap-3">
+                  <View
+                    className="h-12 w-12 items-center justify-center rounded-[18px]"
+                    style={{ backgroundColor: palette.heroSurface }}
+                  >
+                    <Sparkles size={21} color={palette.accentStrong} />
+                  </View>
+                  <View className="min-w-0 flex-1">
+                    <Text className="text-lg font-headline text-foreground">
+                      Dein Tagessticker wartet
+                    </Text>
+                    <Text className="mt-1 text-sm font-body text-muted-foreground">
+                      Such dir ein Tier für deine Sticker-Wall aus.
+                    </Text>
+                  </View>
+                  <Button
+                    onPress={handleOpenStickerReward}
+                    className="h-11 rounded-[16px] px-4"
+                    style={{ backgroundColor: palette.button }}
+                  >
+                    <Text className="text-sm font-body-semibold text-white">
+                      Aussuchen
+                    </Text>
+                  </Button>
+                </View>
+              </Card>
+            </Animated.View>
+          ) : null}
 
           <Animated.View entering={FadeInDown.delay(90).duration(320)} className="mx-4 mt-4">
             <Card
@@ -534,6 +574,15 @@ export default function DashboardScreen() {
           isOpen={showCompleteDialog}
           onClose={() => setShowCompleteDialog(false)}
           childTheme={selectedChild.theme}
+        />
+
+        <StickerRewardSheet
+          visible={showStickerRewardSheet}
+          childName={selectedChild.name}
+          stickers={availableDailyStickers}
+          palette={palette}
+          onSelectSticker={handleSelectDailySticker}
+          onClose={() => setShowStickerRewardSheet(false)}
         />
 
         {showConfetti && <Confetti colors={palette.celebrationColors} />}

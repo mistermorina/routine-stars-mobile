@@ -113,24 +113,25 @@ export default function LoginScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View
-              className="rounded-[32px] border px-5 pb-5 pt-5"
+              className="rounded-[20px] border px-4 py-3"
               style={{
                 backgroundColor: palette.cardTint,
                 borderColor: palette.accentBorder,
               }}
             >
-              <View className="flex-row items-start justify-between">
-                <View className="mr-4 flex-1">
+              <View className="flex-row items-center gap-3">
+                <View
+                  className="h-11 w-11 items-center justify-center rounded-full"
+                  style={{ backgroundColor: palette.surface }}
+                >
+                  <currentMode.Icon size={20} color={palette.accentStrong} />
+                </View>
+                <View className="flex-1">
                   <Text className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground">
-                    Familienkonto
+                    Familienzugang
                   </Text>
-                  <Text className="mt-2 text-[30px] font-headline leading-[36px] text-foreground">
-                    Jetzt nur noch Konto wählen.
-                  </Text>
-                  <Text className="mt-3 text-sm font-body leading-6 text-muted-foreground">
-                    Willkommen war für Emotion und Vertrauen. Hier geht es jetzt
-                    nur noch darum, ob du neu startest oder zu eurer bestehenden
-                    Familie zurückkehrst.
+                  <Text className="text-lg font-headline leading-6 text-foreground">
+                    {authMode === "signup" ? "Neu starten" : "Zurückkehren"}
                   </Text>
                 </View>
                 <View
@@ -141,114 +142,14 @@ export default function LoginScreen() {
                     className="text-xs font-body-semibold uppercase tracking-[0.8px]"
                     style={{ color: palette.accentText }}
                   >
-                    Login
+                    Lokal
                   </Text>
                 </View>
               </View>
-
-              <View
-                className="mt-5 rounded-[24px] border px-4 py-4"
-                style={{ backgroundColor: palette.heroSurface }}
-              >
-                <View className="flex-row flex-wrap gap-2">
-                  <View className="rounded-full bg-white px-3 py-2">
-                    <Text className="text-xs font-body-semibold text-foreground">
-                      Registrieren startet euer Setup
-                    </Text>
-                  </View>
-                  <View className="rounded-full bg-white px-3 py-2">
-                    <Text className="text-xs font-body-semibold text-foreground">
-                      Anmelden bringt euch zurück
-                    </Text>
-                  </View>
-                </View>
-                <Text className="mt-3 text-xs font-body leading-5 text-muted-foreground">
-                  Social Login bleibt getrennt. Neue Familien landen danach im echten
-                  Onboarding, bestehende Familien direkt wieder in ihrer App.
-                </Text>
-              </View>
             </View>
 
             <View
-              className="mt-4 rounded-[28px] border px-4 py-4"
-              style={{
-                backgroundColor: palette.cardTint,
-                borderColor: palette.accentBorder,
-              }}
-            >
-              <Text className="text-lg font-headline text-foreground">
-                Wie möchtest du starten?
-              </Text>
-              <Text className="mt-1 text-sm font-body text-muted-foreground">
-                Registrieren und Anmelden sind jetzt klar getrennt.
-              </Text>
-
-              <View className="mt-4 gap-3">
-                {(["signup", "login"] as AuthMode[]).map((mode) => {
-                  const isSelected = authMode === mode;
-                  const modeDetails = authModeContent[mode];
-                  const ModeIcon = modeDetails.Icon;
-
-                  return (
-                    <Pressable
-                      key={mode}
-                      onPress={() => handleModeChange(mode)}
-                      className="rounded-[24px] border px-4 py-4"
-                      style={
-                        isSelected
-                          ? {
-                              backgroundColor: palette.accentSoft,
-                              borderColor: palette.accent,
-                            }
-                          : {
-                              backgroundColor: "#FFFFFF",
-                              borderColor: palette.accentBorder,
-                            }
-                      }
-                    >
-                      <View className="flex-row items-start gap-3">
-                        <View
-                          className="mt-0.5 h-11 w-11 items-center justify-center rounded-full"
-                          style={{
-                            backgroundColor: isSelected
-                              ? palette.surface
-                              : palette.heroSurface,
-                          }}
-                        >
-                          <ModeIcon size={20} color={palette.accentStrong} />
-                        </View>
-                        <View className="flex-1">
-                          <Text className="text-base font-headline text-foreground">
-                            {modeDetails.title}
-                          </Text>
-                          <Text className="mt-1 text-sm font-body text-muted-foreground">
-                            {mode === "signup"
-                              ? "Für neue Familien. Danach geht es direkt in den Einrichtungsflow."
-                              : "Für bestehende Familien. Bei unvollständiger Einrichtung startet danach wieder das Onboarding."}
-                          </Text>
-                        </View>
-                        {isSelected ? (
-                          <View
-                            className="rounded-full px-2 py-1"
-                            style={{ backgroundColor: palette.tabActiveBg }}
-                          >
-                            <Text
-                              className="text-[11px] font-body-semibold uppercase tracking-[0.7px]"
-                              style={{ color: palette.accentText }}
-                            >
-                              Aktiv
-                            </Text>
-                          </View>
-                        ) : null}
-                      </View>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-
-            <View
-              className="mt-4 rounded-[28px] border px-4 py-4"
+              className="mt-3 rounded-[22px] border px-4 py-4"
               style={{
                 backgroundColor: palette.cardTint,
                 borderColor: palette.accentBorder,
@@ -274,6 +175,36 @@ export default function LoginScreen() {
               <Text className="mt-3 text-sm font-body leading-6 text-muted-foreground">
                 {currentMode.description}
               </Text>
+
+              <View
+                className="mt-4 flex-row rounded-[18px] p-1"
+                style={{ backgroundColor: palette.heroSurface }}
+              >
+                {(["signup", "login"] as AuthMode[]).map((mode) => {
+                  const isSelected = authMode === mode;
+                  const modeDetails = authModeContent[mode];
+
+                  return (
+                    <Pressable
+                      key={mode}
+                      onPress={() => handleModeChange(mode)}
+                      className="flex-1 rounded-[14px] px-3 py-2.5"
+                      style={{
+                        backgroundColor: isSelected ? "#FFFFFF" : "transparent",
+                      }}
+                    >
+                      <Text
+                        className="text-center text-sm font-body-semibold leading-5"
+                        style={{
+                          color: isSelected ? palette.accentText : "#6F6F74",
+                        }}
+                      >
+                        {modeDetails.title}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
 
               <View className="mt-5 gap-4">
                 <View className="gap-1.5">
@@ -305,8 +236,16 @@ export default function LoginScreen() {
               <Button
                 onPress={handleSubmit}
                 size="lg"
-                className="mt-5 w-full"
-                style={{ backgroundColor: palette.button }}
+                className="mt-5 h-14 w-full rounded-[18px]"
+                style={{
+                  backgroundColor:
+                    !email.trim() || !password.trim() ? "#DDE8EC" : palette.button,
+                }}
+                textClassName={
+                  !email.trim() || !password.trim()
+                    ? "text-[#344A53] font-body-semibold leading-5"
+                    : "text-white font-body-semibold leading-5"
+                }
                 disabled={!email.trim() || !password.trim()}
               >
                 {currentMode.action}
@@ -324,26 +263,26 @@ export default function LoginScreen() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="w-full"
+                  className="h-14 w-full rounded-[18px]"
                   style={{ borderColor: palette.accentBorder, backgroundColor: "#FFFFFF" }}
                   onPress={() => {
                     void handleSocialLogin("google");
                   }}
                 >
-                  <Text className="text-base font-body-semibold text-foreground">
+                  <Text className="text-center text-base font-body-semibold leading-5 text-foreground">
                     {authMode === "signup" ? "Mit Google registrieren" : "Mit Google anmelden"}
                   </Text>
                 </Button>
                 <Button
                   variant="outline"
                   size="lg"
-                  className="w-full bg-[#111111]"
+                  className="h-14 w-full rounded-[18px] bg-[#111111]"
                   style={{ borderColor: "#111111" }}
                   onPress={() => {
                     void handleSocialLogin("apple");
                   }}
                 >
-                  <Text className="text-base font-body-semibold text-white">
+                  <Text className="text-center text-base font-body-semibold leading-5 text-white">
                     {authMode === "signup" ? "Mit Apple registrieren" : "Mit Apple anmelden"}
                   </Text>
                 </Button>

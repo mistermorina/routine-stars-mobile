@@ -105,6 +105,32 @@ export interface ChildProgressState {
   lastSeenUnlockIds?: StickerId[];
 }
 
+export type AnimalStickerId =
+  | "loewe"
+  | "giraffe"
+  | "panda"
+  | "hase"
+  | "fuchs"
+  | "baer"
+  | "katze"
+  | "hund"
+  | "eule"
+  | "schildkroete";
+
+export interface StickerWallEntry {
+  id: string;
+  stickerId: AnimalStickerId;
+  earnedDate: string;
+  reason: "day_complete";
+  slot: number;
+  createdAt: string;
+}
+
+export interface StickerWallState {
+  placedStickers: StickerWallEntry[];
+  claimedDayDates: string[];
+}
+
 // --- Template Types ---
 export type AgeGroup = '3-5' | '6-8' | '9-12';
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'flexible';

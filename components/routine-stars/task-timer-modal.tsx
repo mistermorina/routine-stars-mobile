@@ -47,16 +47,16 @@ export function TaskTimerModal({
   const palette = getThemePalette(childTheme);
   const isCompactLayout = screenHeight < 760;
   const circleSize = Math.min(
-    screenWidth * 0.62,
-    isCompactLayout ? screenHeight * 0.3 : screenHeight * 0.36,
-    isCompactLayout ? 210 : 250
+    screenWidth * 0.56,
+    isCompactLayout ? screenHeight * 0.26 : screenHeight * 0.3,
+    isCompactLayout ? 178 : 210
   );
-  const circleRadius = Math.max(72, Math.min(90, circleSize / 2 - 18));
+  const circleRadius = Math.max(62, Math.min(78, circleSize / 2 - 18));
   const circumference = 2 * Math.PI * circleRadius;
   const viewBox = `0 0 ${circleRadius * 2 + 24} ${circleRadius * 2 + 24}`;
   const center = circleRadius + 12;
-  const timerTextFontSize = isCompactLayout ? 54 : 64;
-  const timerTextLineHeight = isCompactLayout ? 64 : 74;
+  const timerTextFontSize = isCompactLayout ? 44 : 54;
+  const timerTextLineHeight = isCompactLayout ? 52 : 62;
   const timerVisualOffset = isCompactLayout ? 8 : 6;
 
   useEffect(() => {
@@ -143,6 +143,8 @@ export function TaskTimerModal({
     return null;
   }
 
+  const visibleBonusStars = Math.max(task.bonusStars ?? 0, 0);
+
   return (
     <Modal
       visible={!!task}
@@ -150,52 +152,66 @@ export function TaskTimerModal({
       animationType="fade"
       onRequestClose={() => onClose(false)}
     >
-      <View className="flex-1 bg-black/85 px-5 py-8">
+      <View
+        className="flex-1 px-5 py-8"
+        style={{ backgroundColor: "rgba(246,250,255,0.88)" }}
+      >
         {showConfetti && <Confetti colors={palette.celebrationColors} />}
 
         <Pressable
           onPress={() => onClose(false)}
           className="absolute right-6 top-12 z-50 h-12 w-12 items-center justify-center rounded-full"
+          style={{ backgroundColor: "rgba(255,255,255,0.86)" }}
           hitSlop={12}
         >
-          <X size={28} color="rgba(255,255,255,0.7)" />
+          <X size={26} color={palette.accentText} />
         </Pressable>
 
         <View className="flex-1 items-center justify-center">
           <Animated.View
-            style={contentAnimatedStyle}
             className={cn(
-              "w-full max-w-[360px] items-center justify-center self-center overflow-hidden rounded-[34px] border",
-              isCompactLayout ? "px-5 pb-7 pt-10" : "px-6 pb-8 pt-12"
+              "w-full max-w-[360px] items-center justify-center self-center overflow-hidden rounded-[30px] border",
+              isCompactLayout ? "px-5 pb-6 pt-8" : "px-5 pb-7 pt-10"
             )}
+            style={[
+              contentAnimatedStyle,
+              {
+                backgroundColor: palette.cardTint,
+                borderColor: palette.accentBorder,
+                shadowColor: "#9DB8D8",
+                shadowOpacity: 0.2,
+                shadowRadius: 28,
+                shadowOffset: { width: 0, height: 18 },
+              },
+            ]}
           >
             <View
-              className="absolute inset-0 rounded-[34px]"
-              style={{ backgroundColor: "rgba(18,18,34,0.42)", borderColor: "rgba(255,255,255,0.14)", borderWidth: 1 }}
+              className="absolute inset-x-0 top-0 h-36 rounded-[30px]"
+              style={{ backgroundColor: palette.heroSurface }}
             />
             <View
               className="absolute right-[-14px] top-[-10px] h-24 w-24 rounded-full"
-              style={{ backgroundColor: palette.button, opacity: 0.18 }}
+              style={{ backgroundColor: palette.motifSecondary, opacity: 0.32 }}
             />
             <View
               className="absolute bottom-6 left-[-10px] h-20 w-20 rounded-full"
-              style={{ backgroundColor: palette.chartSecondary, opacity: 0.12 }}
+              style={{ backgroundColor: palette.motifPrimary, opacity: 0.2 }}
             />
             {timerState === "running" && (
               <>
                 <View
                   className="mb-4 rounded-full px-3 py-1.5"
-                  style={{ backgroundColor: "rgba(255,255,255,0.12)" }}
+                  style={{ backgroundColor: palette.tabActiveBg }}
                 >
-                  <Text className="text-xs font-body-semibold uppercase tracking-[0.8px] text-white/80">
+                  <Text className="text-xs font-body-semibold uppercase tracking-[0.8px]" style={{ color: palette.accentText }}>
                     Bonus-Challenge
                   </Text>
                 </View>
                 <View className="items-center">
                   <Text
                     className={cn(
-                      "max-w-[280px] font-headline text-center text-white",
-                      isCompactLayout ? "mb-2 text-[24px] leading-[29px]" : "mb-2 text-[28px] leading-[34px]"
+                      "max-w-[280px] font-headline text-center text-foreground",
+                      isCompactLayout ? "mb-2 text-[22px] leading-[27px]" : "mb-2 text-[25px] leading-[30px]"
                     )}
                     numberOfLines={2}
                   >
@@ -203,8 +219,8 @@ export function TaskTimerModal({
                   </Text>
                   <Text
                     className={cn(
-                      "max-w-[260px] font-body text-center text-white/70",
-                      isCompactLayout ? "mb-5 text-sm leading-5" : "mb-7 text-base"
+                      "max-w-[260px] font-body text-center text-muted-foreground",
+                      isCompactLayout ? "mb-4 text-sm leading-5" : "mb-5 text-[15px] leading-6"
                     )}
                   >
                     Schaffst du es rechtzeitig?
@@ -215,7 +231,7 @@ export function TaskTimerModal({
                   style={{ width: circleSize, height: circleSize + timerVisualOffset }}
                   className={cn(
                     "items-center justify-center",
-                    isCompactLayout ? "mb-6" : "mb-8"
+                    isCompactLayout ? "mb-5" : "mb-6"
                   )}
                 >
                   <Svg
@@ -233,7 +249,7 @@ export function TaskTimerModal({
                       cy={center}
                       r={circleRadius}
                       fill="none"
-                      stroke="rgba(255,255,255,0.15)"
+                      stroke="rgba(157,184,216,0.24)"
                       strokeWidth={10}
                     />
                     <AnimatedCircle
@@ -250,7 +266,7 @@ export function TaskTimerModal({
                   </Svg>
                   <View style={{ paddingTop: timerVisualOffset }}>
                     <Text
-                      className="font-body-bold text-white"
+                      className="font-body-bold text-foreground"
                       allowFontScaling={false}
                       style={{
                         fontSize: timerTextFontSize,
@@ -273,28 +289,38 @@ export function TaskTimerModal({
                   textClassName="text-white"
                 >
                   <View className="flex-row items-center gap-3">
-                    <Check size={24} color="#FFFFFF" />
-                    <Text className="text-xl font-body-bold text-white">
+                    <Check size={22} color="#FFFFFF" />
+                    <Text className="text-lg font-body-bold leading-6 text-white">
                       Fertig!
                     </Text>
                   </View>
                 </Button>
 
-                <View className="flex-row items-center gap-2">
-                  <Award size={20} color={palette.chartPrimary} />
-                  <Text className="text-base font-body-semibold text-white/80">
-                    +{task.bonusStars} Bonus-Sterne
-                  </Text>
-                </View>
+                {visibleBonusStars > 0 ? (
+                  <View className="flex-row items-center gap-2">
+                    <Award size={19} color={palette.chartPrimary} />
+                    <Text className="text-sm font-body-semibold leading-5" style={{ color: palette.accentText }}>
+                      +{visibleBonusStars} Bonus-Sterne
+                    </Text>
+                  </View>
+                ) : null}
               </>
             )}
 
             {timerState === "confirming" && (
               <>
-                <Text className="mb-4 max-w-[280px] text-center text-[28px] font-headline leading-[34px] text-white">
+                <View
+                  className="mb-4 rounded-full px-3 py-1.5"
+                  style={{ backgroundColor: palette.tabActiveBg }}
+                >
+                  <Text className="text-xs font-body-semibold uppercase tracking-[0.8px]" style={{ color: palette.accentText }}>
+                    Eltern-Check
+                  </Text>
+                </View>
+                <Text className="mb-3 max-w-[280px] text-center text-[24px] font-headline leading-[30px] text-foreground">
                   Hat {childName} die Aufgabe geschafft?
                 </Text>
-                <Text className="mb-7 max-w-[270px] text-center text-base font-body leading-6 text-white/70">
+                <Text className="mb-6 max-w-[270px] text-center text-sm font-body leading-5 text-muted-foreground">
                   Bestätige, ob die Aufgabe rechtzeitig erledigt wurde.
                 </Text>
                 <View
@@ -307,13 +333,13 @@ export function TaskTimerModal({
                     onPress={() => handleParentConfirmation(true)}
                     className={cn(
                       "items-center justify-center rounded-[22px]",
-                      isCompactLayout ? "h-14 w-full" : "h-20 flex-1"
+                      isCompactLayout ? "h-[52px] w-full" : "h-16 flex-1"
                     )}
                     style={{ backgroundColor: palette.button }}
                   >
                     <View className="flex-row items-center gap-2">
                       <ThumbsUp size={24} color="#FFFFFF" />
-                      <Text className="text-xl font-body-bold text-white">
+                      <Text className="text-lg font-body-bold leading-6 text-white">
                         Ja!
                       </Text>
                     </View>
@@ -322,13 +348,13 @@ export function TaskTimerModal({
                     onPress={() => handleParentConfirmation(false)}
                     className={cn(
                       "items-center justify-center rounded-[22px] border",
-                      isCompactLayout ? "h-14 w-full" : "h-20 flex-1"
+                      isCompactLayout ? "h-[52px] w-full" : "h-16 flex-1"
                     )}
-                    style={{ backgroundColor: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.16)" }}
+                    style={{ backgroundColor: "#FFFFFF", borderColor: palette.accentBorder }}
                   >
                     <View className="flex-row items-center gap-2">
-                      <ThumbsDown size={24} color="#FFFFFF" />
-                      <Text className="text-xl font-body-bold text-white">
+                      <ThumbsDown size={24} color={palette.accentText} />
+                      <Text className="text-lg font-body-bold leading-6" style={{ color: palette.accentText }}>
                         Nein
                       </Text>
                     </View>
@@ -339,15 +365,29 @@ export function TaskTimerModal({
 
             {timerState === "success" && (
               <>
-                <Text className="mb-5 text-center text-4xl font-headline text-white">
+                <View
+                  className="mb-4 h-20 w-20 items-center justify-center rounded-[26px]"
+                  style={{ backgroundColor: palette.tabActiveBg }}
+                >
+                  <Text className="text-5xl">⭐</Text>
+                </View>
+                <Text className="mb-2 text-center text-3xl font-headline text-foreground">
                   Super!
                 </Text>
-                <View className="flex-row items-center gap-3">
-                  <Award size={36} color={palette.chartPrimary} />
-                  <Text className="text-center text-[22px] font-body-bold" style={{ color: palette.chartPrimary }}>
-                    +{task.bonusStars} Bonus-Sterne!
-                  </Text>
-                </View>
+                <Text className="mb-5 max-w-[260px] text-center text-sm font-body leading-5 text-muted-foreground">
+                  Aufgabe geschafft. Der Fortschritt wird jetzt gespeichert.
+                </Text>
+                {visibleBonusStars > 0 ? (
+                  <View
+                    className="flex-row items-center gap-3 rounded-full px-4 py-2.5"
+                    style={{ backgroundColor: palette.tabActiveBg }}
+                  >
+                    <Award size={32} color={palette.chartPrimary} />
+                    <Text className="text-center text-lg font-body-bold leading-6" style={{ color: palette.chartPrimary }}>
+                      +{visibleBonusStars} Bonus-Sterne!
+                    </Text>
+                  </View>
+                ) : null}
               </>
             )}
           </Animated.View>

@@ -10,6 +10,7 @@ const KEYS = {
   HAS_SEEN_WELCOME: "hasSeenWelcome",
   ROUTINE_PROGRESS: "routineProgress",
   CHILD_PROGRESS_STATE: "childProgressState",
+  STICKER_WALL: "stickerWall",
   PARENT_PIN_HASH: "parentPinHash",
   NOTIFICATION_SETTINGS: "notificationSettings",
   LEGAL_PREFERENCES: "legalPreferences",
