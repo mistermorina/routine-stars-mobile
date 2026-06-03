@@ -65,12 +65,12 @@ export function IconPicker({ value, onSelect, visible, onClose }: IconPickerProp
               onPress={() => setSelectedCategory("all")}
               className={cn(
                 "px-3 py-1.5 rounded-full",
-                selectedCategory === "all" ? "bg-[#87CEEB]" : "bg-secondary"
+                selectedCategory === "all" ? "bg-accent" : "bg-secondary"
               )}
             >
               <Text className={cn(
                 "text-xs font-body-semibold",
-                selectedCategory === "all" ? "text-white" : "text-muted-foreground"
+                selectedCategory === "all" ? "text-accent-foreground" : "text-muted-foreground"
               )}>
                 Alle
               </Text>
@@ -81,12 +81,12 @@ export function IconPicker({ value, onSelect, visible, onClose }: IconPickerProp
                 onPress={() => setSelectedCategory(cat.id)}
                 className={cn(
                   "px-3 py-1.5 rounded-full",
-                  selectedCategory === cat.id ? "bg-[#87CEEB]" : "bg-secondary"
+                  selectedCategory === cat.id ? "bg-accent" : "bg-secondary"
                 )}
               >
                 <Text className={cn(
                   "text-xs font-body-semibold",
-                  selectedCategory === cat.id ? "text-white" : "text-muted-foreground"
+                  selectedCategory === cat.id ? "text-accent-foreground" : "text-muted-foreground"
                 )}>
                   {cat.emoji} {cat.label}
                 </Text>
@@ -110,13 +110,13 @@ export function IconPicker({ value, onSelect, visible, onClose }: IconPickerProp
                     className={cn(
                       "h-14 w-14 items-center justify-center rounded-xl",
                       isSelected
-                        ? "bg-primary/40 border-2 border-[#87CEEB]"
+                        ? "bg-primary/40 border-2 border-accent"
                         : "bg-secondary"
                     )}
                   >
                     <Icon
                       size={24}
-                      color={isSelected ? "#87CEEB" : "#737373"}
+                      color={isSelected ? "#245A74" : "#737373"}
                     />
                   </Pressable>
                 );

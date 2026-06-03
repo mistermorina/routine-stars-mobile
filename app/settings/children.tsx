@@ -40,13 +40,13 @@ import { getThemePalette } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { AgeGroup, Child, ChildTheme } from "@/lib/types";
 
-const THEME_OPTIONS: Array<{ value: ChildTheme; label: string; emoji: string }> = [
+const THEME_OPTIONS: { value: ChildTheme; label: string; emoji: string }[] = [
   { value: "sterne", label: "Sterne", emoji: "⭐" },
   { value: "tiere", label: "Tiere", emoji: "🐾" },
   { value: "galaxy", label: "Galaxy", emoji: "🌌" },
 ];
 
-const AGE_GROUP_OPTIONS: Array<{ value: AgeGroup; label: string }> = [
+const AGE_GROUP_OPTIONS: { value: AgeGroup; label: string }[] = [
   { value: "3-5", label: "3-5" },
   { value: "6-8", label: "6-8" },
   { value: "9-12", label: "9-12" },

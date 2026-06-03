@@ -52,7 +52,15 @@ function ConfettiStar({ particle }: { particle: StarParticle }) {
         easing: Easing.linear,
       })
     );
-  }, []);
+  }, [
+    height,
+    opacity,
+    particle.delay,
+    particle.duration,
+    particle.rotation,
+    rotate,
+    translateY,
+  ]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [

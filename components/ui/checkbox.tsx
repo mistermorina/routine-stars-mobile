@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, View } from "react-native";
+import { Pressable } from "react-native";
 import { Check } from "lucide-react-native";
 import { cn } from "@/lib/utils";
 

@@ -2,8 +2,9 @@ import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { Image } from "expo-image";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { Flame, Sparkles, Trophy } from "lucide-react-native";
+import { Flame, Plus, Sparkles, Trophy } from "lucide-react-native";
 import { useChildren } from "@/hooks/use-children";
 import { useChildProgression } from "@/hooks/use-child-progression";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
@@ -17,12 +18,14 @@ import { RoutineCompleteDialog } from "@/components/routine-stars/routine-comple
 import { Confetti } from "@/components/routine-stars/confetti";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { triggerFeedback } from "@/lib/feedback";
 import { getActivityInsights } from "@/lib/activity-insights";
 import { getIcon } from "@/lib/icons";
 import { getThemePalette } from "@/lib/theme";
 import type { Routine, Task } from "@/lib/types";
+import emptyRoutinesImage from "@/assets/images/empty-routines.png";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -200,6 +203,10 @@ export default function DashboardScreen() {
     setTimerTask(task);
   }, []);
 
+  const handleCreateRoutine = useCallback(() => {
+    router.push("/parent-login");
+  }, [router]);
+
   const handleTimerClose = useCallback(
     (success: boolean) => {
       if (success && timerTask) {
@@ -251,11 +258,11 @@ export default function DashboardScreen() {
         >
           <Animated.View entering={FadeInDown.duration(320)} className="mx-4 mt-4">
             <Card
-              className="overflow-hidden rounded-[32px] px-5 pb-5 pt-4"
+              className="overflow-hidden rounded-[24px] px-5 pb-5 pt-4"
               style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
             >
               <View
-                className="absolute inset-x-0 top-0 h-40 rounded-[32px]"
+                className="absolute inset-x-0 top-0 h-40 rounded-[24px]"
                 style={{ backgroundColor: palette.heroSurface }}
               />
               <View
@@ -288,7 +295,7 @@ export default function DashboardScreen() {
                     </Text>
                   </View>
                   <View
-                    className="rounded-[22px] px-3.5 py-3"
+                    className="rounded-[16px] px-3.5 py-3"
                     style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
                   >
                     <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
@@ -304,7 +311,7 @@ export default function DashboardScreen() {
                 </View>
 
                 <View
-                  className="mt-5 rounded-[24px] border px-4 py-4"
+                  className="mt-5 rounded-[18px] border px-4 py-4"
                   style={{
                     borderColor: palette.accentBorder,
                     backgroundColor: "rgba(255,255,255,0.74)",
@@ -344,7 +351,7 @@ export default function DashboardScreen() {
                 />
 
                 <View
-                  className="mt-4 rounded-[24px] px-4 py-4"
+                  className="mt-4 rounded-[18px] px-4 py-4"
                   style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
                 >
                   <View className="mb-2 flex-row items-center justify-between">
@@ -365,7 +372,7 @@ export default function DashboardScreen() {
 
                 <View className="mt-4 flex-row gap-3">
                   <View
-                    className="flex-1 rounded-[22px] px-4 py-4"
+                    className="flex-1 rounded-[18px] px-4 py-4"
                     style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
                   >
                     <View className="flex-row items-center justify-between">
@@ -393,7 +400,7 @@ export default function DashboardScreen() {
                   </View>
 
                   <View
-                    className="flex-1 rounded-[22px] px-4 py-4"
+                    className="flex-1 rounded-[18px] px-4 py-4"
                     style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
                   >
                     <View className="flex-row items-center justify-between">
@@ -428,7 +435,7 @@ export default function DashboardScreen() {
 
           <Animated.View entering={FadeInDown.delay(90).duration(320)} className="mx-4 mt-4">
             <Card
-              className="rounded-[28px]"
+              className="rounded-[22px]"
               style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
             >
               <View className="flex-row items-center justify-between">
@@ -473,15 +480,44 @@ export default function DashboardScreen() {
               ))
             ) : (
               <Card
-                className="rounded-[28px] px-5 py-8"
+                className="overflow-hidden rounded-[22px] px-5 py-7"
                 style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
               >
+                <View
+                  className="absolute right-[-24px] top-[-24px] h-28 w-28 rounded-full"
+                  style={{ backgroundColor: palette.motifPrimary, opacity: 0.16 }}
+                />
+                <View
+                  className="mx-auto mb-4 w-full max-w-[220px] overflow-hidden rounded-[22px]"
+                  style={{ backgroundColor: palette.heroSurface }}
+                >
+                  <Image
+                    source={emptyRoutinesImage}
+                    style={{ width: "100%", aspectRatio: 1 }}
+                    contentFit="cover"
+                    transition={180}
+                    accessibilityLabel="Leeres Routine-Board mit Sternen"
+                  />
+                </View>
                 <Text className="text-center text-lg font-headline text-foreground">
-                  Noch keine Routinen angelegt
+                  Noch keine Routinen für heute
                 </Text>
-                <Text className="mt-2 text-center text-sm font-body text-muted-foreground">
-                  Bitte öffne das Onboarding erneut, um eine Starter-Routine anzulegen.
+                <Text className="mx-auto mt-2 max-w-[280px] text-center text-sm font-body leading-6 text-muted-foreground">
+                  Lege im Elternbereich eine Starter-Routine an. Danach erscheint sie hier für das Kind.
                 </Text>
+                <Button
+                  onPress={handleCreateRoutine}
+                  size="lg"
+                  className="mt-5 rounded-[22px]"
+                  style={{ backgroundColor: palette.button }}
+                >
+                  <View className="flex-row items-center gap-2">
+                    <Plus size={18} color="#FFFFFF" />
+                    <Text className="text-base font-body-semibold text-white">
+                      Routine anlegen
+                    </Text>
+                  </View>
+                </Button>
               </Card>
             )}
           </View>

@@ -5,8 +5,7 @@ import { View, ActivityIndicator } from "react-native";
 import { useFonts } from "expo-font";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AuthProvider } from "@/contexts/auth-context";
-
-require("../global.css");
+import "../global.css";
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({

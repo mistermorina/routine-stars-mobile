@@ -45,6 +45,19 @@ export function TaskTimerModal({
   const contentOpacity = useSharedValue(0);
 
   const palette = getThemePalette(childTheme);
+  const isCompactLayout = screenHeight < 760;
+  const circleSize = Math.min(
+    screenWidth * 0.62,
+    isCompactLayout ? screenHeight * 0.3 : screenHeight * 0.36,
+    isCompactLayout ? 210 : 250
+  );
+  const circleRadius = Math.max(72, Math.min(90, circleSize / 2 - 18));
+  const circumference = 2 * Math.PI * circleRadius;
+  const viewBox = `0 0 ${circleRadius * 2 + 24} ${circleRadius * 2 + 24}`;
+  const center = circleRadius + 12;
+  const timerTextFontSize = isCompactLayout ? 54 : 64;
+  const timerTextLineHeight = isCompactLayout ? 64 : 74;
+  const timerVisualOffset = isCompactLayout ? 8 : 6;
 
   useEffect(() => {
     if (task && task.timerInMinutes) {
@@ -129,20 +142,6 @@ export function TaskTimerModal({
   if (!task) {
     return null;
   }
-
-  const isCompactLayout = screenHeight < 760;
-  const circleSize = Math.min(
-    screenWidth * 0.62,
-    isCompactLayout ? screenHeight * 0.3 : screenHeight * 0.36,
-    isCompactLayout ? 210 : 250
-  );
-  const circleRadius = Math.max(72, Math.min(90, circleSize / 2 - 18));
-  const circumference = 2 * Math.PI * circleRadius;
-  const viewBox = `0 0 ${circleRadius * 2 + 24} ${circleRadius * 2 + 24}`;
-  const center = circleRadius + 12;
-  const timerTextFontSize = isCompactLayout ? 54 : 64;
-  const timerTextLineHeight = isCompactLayout ? 64 : 74;
-  const timerVisualOffset = isCompactLayout ? 8 : 6;
 
   return (
     <Modal

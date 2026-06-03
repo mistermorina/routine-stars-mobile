@@ -1,4 +1,5 @@
 import { buildDailySummaries } from "@/lib/activity-insights";
+import { getLocalIsoDate } from "@/lib/local-date";
 import type {
   ActivityLog,
   Child,
@@ -122,10 +123,6 @@ export const STICKER_DEFINITIONS: StickerDefinition[] = [
   },
 ];
 
-function getTodayIsoDate() {
-  return new Date().toISOString().split("T")[0];
-}
-
 function unique<T>(values: T[]) {
   return Array.from(new Set(values));
 }
@@ -216,7 +213,7 @@ function countCompletedRoutinesForDate(
   ).length;
 }
 
-export function getDailyMission(childId: string, date = getTodayIsoDate()): DailyMission {
+export function getDailyMission(childId: string, date = getLocalIsoDate()): DailyMission {
   const missionKind = DAILY_MISSION_KINDS[hashText(`${childId}:${date}`) % DAILY_MISSION_KINDS.length];
   const meta = getMissionMeta(missionKind);
 

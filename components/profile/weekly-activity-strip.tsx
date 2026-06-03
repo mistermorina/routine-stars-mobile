@@ -18,7 +18,7 @@ export function WeeklyActivityStrip({
 
   return (
     <Card
-      className="overflow-hidden rounded-[30px]"
+      className="overflow-hidden rounded-[22px] px-4 py-4"
       style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
     >
       <View
@@ -42,7 +42,7 @@ export function WeeklyActivityStrip({
         </View>
       </View>
 
-      <View className="mt-5 flex-row justify-between">
+      <View className="mt-4 flex-row justify-between">
         {items.map((item, index) => (
           <Animated.View
             key={item.key}
@@ -56,7 +56,7 @@ export function WeeklyActivityStrip({
               {item.label}
             </Text>
             <View
-              className="h-14 w-14 items-center justify-center rounded-[22px] border"
+              className="h-12 w-12 items-center justify-center rounded-[16px] border"
               style={{
                 backgroundColor: item.isActive ? palette.heroSurface : "rgba(255,255,255,0.76)",
                 borderColor: item.isToday ? palette.accent : "rgba(255,255,255,0.72)",

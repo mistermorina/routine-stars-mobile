@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { Image } from "expo-image";
 import {
   ArrowRight,
   Check,
@@ -26,19 +27,19 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Button } from "@/components/ui/button";
-import { FamilyHeroArt } from "@/components/ui/family-hero-art";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { triggerFeedback } from "@/lib/feedback";
 import { getThemePalette } from "@/lib/theme";
 import { KEYS, storage } from "@/lib/storage";
+import onboardingHeroImage from "@/assets/images/onboarding-hero.png";
 
 const previewCards = [
   {
     eyebrow: "Familienalltag",
     title: "Mehr Leichtigkeit im Familienalltag.",
     description:
-      "Eltern richten einmal ein, Kinder erleben kleine Erfolgsmomente statt taeglicher Diskussionen.",
+      "Eltern richten einmal ein, Kinder erleben kleine Erfolgsmomente statt täglicher Diskussionen.",
     Icon: Sparkles,
     chips: ["Morgen", "Abend", "Hausaufgaben"],
   },
@@ -46,7 +47,7 @@ const previewCards = [
     eyebrow: "Spielerisch",
     title: "Routinen werden zu kleinen Levels.",
     description:
-      "Zaehneputzen, Aufraeumen und Abendrituale werden zu sichtbaren Schritten mit Sternen und Belohnungen.",
+      "Zähneputzen, Aufräumen und Abendrituale werden zu sichtbaren Schritten mit Sternen und Belohnungen.",
     Icon: Star,
     chips: ["Sterne", "Belohnungen", "Fortschritt"],
   },
@@ -229,7 +230,7 @@ export default function WelcomeScreen() {
                 >
                   <ChevronLeft size={16} color={palette.accentStrong} />
                   <Text className="ml-1 text-xs font-body-semibold" style={{ color: palette.accentText }}>
-                    Zurueck
+                    Zurück
                   </Text>
                 </Pressable>
               ) : (
@@ -247,7 +248,7 @@ export default function WelcomeScreen() {
             {isPreviewMode ? (
               <Pressable onPress={handleSkip}>
                 <Text className="text-sm font-body-semibold" style={{ color: palette.accentStrong }}>
-                  Ueberspringen
+                  Überspringen
                 </Text>
               </Pressable>
             ) : (
@@ -296,10 +297,21 @@ export default function WelcomeScreen() {
                 </Text>
                 <Text className="mt-3 text-base font-body leading-7 text-muted-foreground">
                   Spielerisch motiviert, liebevoll begleitet und jeden Tag ein
-                  bisschen selbststaendiger.
+                  bisschen selbstständiger.
                 </Text>
 
-                <FamilyHeroArt theme="sterne" className="mt-5" />
+                <View
+                  className="mt-5 overflow-hidden rounded-[24px] border"
+                  style={{ borderColor: palette.accentBorder, backgroundColor: palette.heroSurface }}
+                >
+                  <Image
+                    source={onboardingHeroImage}
+                    style={{ width: "100%", aspectRatio: 1 }}
+                    contentFit="cover"
+                    transition={180}
+                    accessibilityLabel="Kind und Elternteil planen gemeinsam eine Routine"
+                  />
+                </View>
 
                 <View className="mt-5 flex-row flex-wrap gap-2">
                   {[
@@ -405,7 +417,15 @@ export default function WelcomeScreen() {
                     >
                       {previewIndex === 0 ? (
                         <>
-                          <FamilyHeroArt theme="sterne" compact />
+                          <View className="overflow-hidden rounded-[22px]">
+                            <Image
+                              source={onboardingHeroImage}
+                              style={{ width: "100%", aspectRatio: 1 }}
+                              contentFit="cover"
+                              transition={180}
+                              accessibilityLabel="Kind und Elternteil planen gemeinsam eine Routine"
+                            />
+                          </View>
                           <View className="mt-4 flex-row flex-wrap gap-2">
                             {previewCard.chips.map((chip) => (
                               <View
@@ -452,11 +472,11 @@ export default function WelcomeScreen() {
                                       ? "Aufgaben geben direkt sichtbaren Fortschritt."
                                       : index === 1
                                         ? "Belohnungen machen aus Routine kleine Ziele."
-                                        : "Eltern sehen klar, was gut laeuft."
+                                        : "Eltern sehen klar, was gut läuft."
                                     : index === 0
                                       ? "Nur Eltern kommen in die Verwaltung."
-                                      : index === 1
-                                        ? "Familiendaten bleiben lokal auf dem Geraet."
+                                    : index === 1
+                                        ? "Familiendaten bleiben lokal auf dem Gerät."
                                         : "Kinder brauchen kein eigenes Konto."}
                                 </Text>
                               </View>
@@ -471,8 +491,8 @@ export default function WelcomeScreen() {
                           >
                             <Text className="text-sm font-body leading-6 text-muted-foreground">
                               {previewIndex === 1
-                                ? "So fuehlt sich die App spaeter fuer Kinder an: freundlich, motivierend und mit klaren kleinen Schritten."
-                                : "Der Elternbereich bleibt bewusst getrennt, damit Kinder nur ihre Welt sehen und Eltern trotzdem alles steuern koennen."}
+                                ? "So fühlt sich die App später für Kinder an: freundlich, motivierend und mit klaren kleinen Schritten."
+                                : "Der Elternbereich bleibt bewusst getrennt, damit Kinder nur ihre Welt sehen und Eltern trotzdem alles steuern können."}
                             </Text>
                           </View>
                         </>
@@ -524,7 +544,7 @@ export default function WelcomeScreen() {
                     }}
                   >
                     <Text className="text-lg font-body-semibold" style={{ color: palette.accentStrong }}>
-                      {previewIndex === 0 ? "Zurueck zum Welcome" : "Zurueck"}
+                      {previewIndex === 0 ? "Zurück zum Welcome" : "Zurück"}
                     </Text>
                   </Button>
                 </View>

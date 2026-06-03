@@ -1,16 +1,16 @@
 import React, { useMemo, useState } from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
-import { Star, PawPrint, Rocket, Trash2, Check } from "lucide-react-native";
-import { cn } from "@/lib/utils";
+import { Image } from "expo-image";
+import { Star, PawPrint, Rocket, Trash2 } from "lucide-react-native";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { FamilyHeroArt } from "@/components/ui/family-hero-art";
 import { avatarCategories } from "@/lib/data";
 import { triggerFeedback } from "@/lib/feedback";
 import { getThemePalette } from "@/lib/theme";
 import type { AgeGroup, ChildProfile, ChildTheme } from "@/lib/types";
+import onboardingHeroImage from "@/assets/images/onboarding-hero.png";
 
 interface ChildSetupProps {
   onNext: (data: { children: ChildProfile[] }) => void;
@@ -44,14 +44,14 @@ const themes = [
   },
 ] as const;
 
-const ageGroupOptions: Array<{ id: AgeGroup; label: string; hint: string }> = [
+const ageGroupOptions: { id: AgeGroup; label: string; hint: string }[] = [
   { id: "3-5", label: "3–5 Jahre", hint: "Kurze, spielerische Schritte" },
   { id: "6-8", label: "6–8 Jahre", hint: "Gute Starter-Routinen für den Alltag" },
   { id: "9-12", label: "9–12 Jahre", hint: "Mehr Eigenständigkeit und Verantwortung" },
 ];
 
 const defaultAvatar = avatarCategories.Tiere[0].emoji;
-const avatarCategoryNames = Object.keys(avatarCategories) as Array<keyof typeof avatarCategories>;
+const avatarCategoryNames = Object.keys(avatarCategories) as (keyof typeof avatarCategories)[];
 
 function ThemePreview({
   themeId,
@@ -173,7 +173,18 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
           Erst ein Profil, dann passende Routinen fuer Alltag, Zaehneputzen,
           Lernen und eure kleinen Familienmomente.
         </Text>
-        <FamilyHeroArt theme={selectedTheme} compact className="mt-4" />
+        <View
+          className="mt-4 overflow-hidden rounded-[22px] border"
+          style={{ borderColor: palette.accentBorder, backgroundColor: palette.heroSurface }}
+        >
+          <Image
+            source={onboardingHeroImage}
+            style={{ width: "100%", aspectRatio: 1 }}
+            contentFit="cover"
+            transition={180}
+            accessibilityLabel="Kind und Elternteil planen gemeinsam eine Routine"
+          />
+        </View>
         <View className="mt-3 flex-row flex-wrap gap-2">
           {["Alltag", "Zaehne", "Lernen", "Zusammen"].map((moment) => (
             <View

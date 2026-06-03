@@ -23,12 +23,12 @@ import type { Child, ChildProfile, Routine, Reward } from "@/lib/types";
 interface OnboardingFormData {
   children: ChildProfile[];
   savedRoutines: SavedRoutine[];
-  rewards: Array<{
+  rewards: {
     id: string;
     title: string;
     cost: number;
     iconName: string;
-  }>;
+  }[];
 }
 
 const TOTAL_STEPS = 3;

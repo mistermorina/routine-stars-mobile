@@ -68,7 +68,7 @@ export function RoutineCompleteDialog({
       cardLift.value = 12;
       cardOpacity.value = 0;
     }
-  }, [isOpen]);
+  }, [cardLift, cardOpacity, isOpen, starRotate, starScale]);
 
   const starAnimatedStyle = useAnimatedStyle(() => ({
     transform: [

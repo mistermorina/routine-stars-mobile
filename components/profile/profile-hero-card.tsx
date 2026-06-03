@@ -25,11 +25,11 @@ export function ProfileHeroCard({
   return (
     <Animated.View entering={FadeInDown.duration(320)}>
       <Card
-        className="overflow-hidden rounded-[32px] px-5 pb-5 pt-4"
+        className="overflow-hidden rounded-[22px] px-4 pb-4 pt-4"
         style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
       >
         <View
-          className="absolute inset-x-0 top-0 h-44 rounded-[32px]"
+          className="absolute inset-x-0 top-0 h-40 rounded-[22px]"
           style={{ backgroundColor: palette.heroSurface }}
         />
         <View
@@ -44,10 +44,10 @@ export function ProfileHeroCard({
           <View className="flex-row items-start justify-between">
             <View className="mr-4 flex-1 flex-row items-center">
               <View
-                className="h-24 w-24 items-center justify-center rounded-[32px]"
+                className="h-20 w-20 items-center justify-center rounded-[18px]"
                 style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
               >
-                <Text className="text-5xl">{avatar}</Text>
+                <Text className="text-4xl">{avatar}</Text>
               </View>
               <View className="ml-4 flex-1">
                 <View className="flex-row items-center gap-2">
@@ -61,16 +61,16 @@ export function ProfileHeroCard({
                     </Text>
                   </View>
                 </View>
-                <Text className="mt-2 text-[32px] font-headline text-foreground">
+                <Text className="mt-1 text-[28px] font-headline text-foreground">
                   {childName}
                 </Text>
-                <Text className="mt-2 text-sm font-body leading-6" style={{ color: palette.accentText }}>
+                <Text className="mt-1 text-sm font-body leading-5" style={{ color: palette.accentText }}>
                   Heute weiter Sterne sammeln und Belohnungen freispielen.
                 </Text>
               </View>
             </View>
             <View
-              className="rounded-[20px] px-3.5 py-3"
+              className="rounded-[16px] px-3 py-2.5"
               style={{ backgroundColor: "rgba(255,255,255,0.74)" }}
             >
               <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
@@ -86,7 +86,7 @@ export function ProfileHeroCard({
           </View>
 
           <View
-            className="mt-5 rounded-[24px] border px-4 py-4"
+            className="mt-4 rounded-[18px] border px-4 py-3.5"
             style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.74)" }}
           >
             <View className="flex-row items-center">
@@ -122,7 +122,7 @@ export function ProfileHeroCard({
 
           <View className="mt-4 flex-row gap-3">
             <View
-              className="flex-1 rounded-[22px] px-4 py-4"
+              className="flex-1 rounded-[18px] px-4 py-3.5"
               style={{ backgroundColor: "rgba(255,255,255,0.72)" }}
             >
               <View className="flex-row items-center justify-between">
@@ -139,14 +139,14 @@ export function ProfileHeroCard({
                   </Text>
                 </View>
               </View>
-              <Text className="mt-3 text-4xl font-headline text-foreground">{stars}</Text>
+              <Text className="mt-2 text-4xl font-headline text-foreground">{stars}</Text>
               <Text className="mt-1 text-xs font-body text-muted-foreground">
                 Jeder kleine Schritt macht die Wunschliste erreichbarer.
               </Text>
             </View>
 
             <View
-              className="flex-1 rounded-[22px] px-4 py-4"
+              className="flex-1 rounded-[18px] px-4 py-3.5"
               style={{ backgroundColor: "rgba(255,255,255,0.72)" }}
             >
               <View className="flex-row items-center justify-between">
@@ -163,7 +163,7 @@ export function ProfileHeroCard({
                   </Text>
                 </View>
               </View>
-              <Text className="mt-3 text-4xl font-headline text-foreground">{streak}</Text>
+              <Text className="mt-2 text-4xl font-headline text-foreground">{streak}</Text>
               <Text className="mt-1 text-xs font-body text-muted-foreground">
                 Ein stetiger Rhythmus macht Fortschritt sichtbar.
               </Text>

@@ -1,15 +1,12 @@
 import React, { useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import {
-  CalendarDays,
   Check,
   ChevronDown,
   GripVertical,
   Minus,
-  Palette,
   Plus,
   Sparkles,
-  TimerReset,
   Trash2,
 } from "lucide-react-native";
 import DraggableFlatList, {
@@ -404,7 +401,7 @@ export default function RoutinesSettingsScreen() {
         </Button>
 
         <Card
-          className="mt-4 rounded-[28px] border px-4 py-4"
+          className="mt-5 rounded-[22px] border px-5 py-5"
           style={{ borderColor: palette.accentBorder, backgroundColor: palette.accentSoft }}
         >
           <View className="flex-row items-start gap-3">
@@ -415,17 +412,17 @@ export default function RoutinesSettingsScreen() {
               <Sparkles size={18} color={palette.accentStrong} />
             </View>
             <View className="flex-1">
-              <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>
+              <Text className="text-lg font-headline" style={{ color: palette.accentText }}>
                 Mit Vorlage starten
               </Text>
-              <Text className="mt-1 text-xs font-body leading-5 text-muted-foreground">
+              <Text className="mt-2 text-sm font-body leading-6 text-muted-foreground">
                 Hier kannst du dieselben vorgefertigten Routinen wie im Onboarding direkt
                 für eure Familie übernehmen und danach anpassen.
               </Text>
             </View>
           </View>
 
-          <View className="mt-4">
+          <View className="mt-5">
             <TemplateSelector
               onSelectTemplate={(template) => {
                 void handleCreateFromTemplate(template);
@@ -435,10 +432,15 @@ export default function RoutinesSettingsScreen() {
             />
           </View>
 
-          <Text className="mt-3 text-xs font-body text-muted-foreground">
-            Tipp: Beim Antippen wird sofort eine neue Routine aus der Vorlage angelegt und
-            unten im Editor geöffnet.
-          </Text>
+          <View
+            className="mt-5 rounded-[16px] px-3.5 py-3"
+            style={{ backgroundColor: "rgba(255,255,255,0.68)" }}
+          >
+            <Text className="text-xs font-body leading-5 text-muted-foreground">
+              Tipp: Beim Antippen wird sofort eine neue Routine aus der Vorlage angelegt und
+              unten im Editor geöffnet.
+            </Text>
+          </View>
         </Card>
 
         {routines.length === 0 ? (

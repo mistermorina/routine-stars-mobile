@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { View, Text, ScrollView } from "react-native";
 import { ChevronRight } from "lucide-react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { Trophy, Star, Sparkles } from "@/lib/icons";
+import { getIcon, Trophy, Star, Sparkles } from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
 import { useToast } from "@/hooks/use-toast";
 import { useRewards } from "@/hooks/use-rewards";
@@ -11,7 +11,6 @@ import { RewardsOverview } from "@/components/routine-stars/rewards-overview";
 import { Card } from "@/components/ui/card";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { triggerFeedback } from "@/lib/feedback";
-import { getIcon } from "@/lib/icons";
 import { getThemePalette } from "@/lib/theme";
 import type { Reward } from "@/lib/types";
 
@@ -110,11 +109,11 @@ export default function RewardsScreen() {
         >
           <Animated.View entering={FadeInDown.duration(320)} className="mt-4">
             <Card
-              className="overflow-hidden rounded-[32px] px-5 pb-5 pt-4"
+              className="overflow-hidden rounded-[22px] px-4 pb-4 pt-4"
               style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
             >
               <View
-                className="absolute inset-x-0 top-0 h-40 rounded-[32px]"
+                className="absolute inset-x-0 top-0 h-36 rounded-[22px]"
                 style={{ backgroundColor: palette.heroSurface }}
               />
               <View
@@ -137,16 +136,16 @@ export default function RewardsScreen() {
                         Belohnungen
                       </Text>
                     </View>
-                    <Text className="mt-3 text-[32px] font-headline leading-[36px] text-foreground">
+                    <Text className="mt-2 text-[28px] font-headline leading-[32px] text-foreground">
                       Wunschliste
                     </Text>
-                    <Text className="mt-2 text-[15px] font-body leading-6" style={{ color: palette.accentText }}>
+                    <Text className="mt-1 text-[15px] font-body leading-5" style={{ color: palette.accentText }}>
                       Sterne werden hier zu kleinen Wunschmomenten. Was heute schon erreichbar ist,
                       darf direkt eingelöst werden.
                     </Text>
                   </View>
                   <View
-                    className="mt-4 self-start rounded-[22px] px-3.5 py-3"
+                    className="mt-3 self-start rounded-[16px] px-3 py-2.5"
                     style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
                   >
                     <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
@@ -162,7 +161,7 @@ export default function RewardsScreen() {
                 </View>
 
                 <View
-                  className="mt-5 rounded-[24px] border px-4 py-4"
+                  className="mt-4 rounded-[18px] border px-4 py-3.5"
                   style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.74)" }}
                 >
                   <View className="flex-row items-center">
@@ -182,7 +181,7 @@ export default function RewardsScreen() {
                       <Text className="mt-1 text-xs font-body" style={{ color: palette.accentText }}>
                         {featuredReward
                           ? selectedChild.stars >= featuredReward.cost
-                            ? "Genug Sterne gesammelt. Wenn es passt, darf eingelöst werden."
+                            ? "Bereit zum Einlösen."
                             : `Noch ${Math.max(featuredReward.cost - selectedChild.stars, 0)} Sterne bis zum Wunschmoment.`
                           : "Lege im Onboarding oder in den Einstellungen Belohnungen an."}
                       </Text>
@@ -193,7 +192,7 @@ export default function RewardsScreen() {
 
                 <View className="mt-4 flex-row gap-3">
                   <View
-                    className="flex-1 rounded-[22px] px-4 py-4"
+                    className="flex-1 rounded-[18px] px-4 py-3.5"
                     style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
                   >
                     <Text className="text-sm font-body text-muted-foreground">
@@ -208,7 +207,7 @@ export default function RewardsScreen() {
                   </View>
 
                   <View
-                    className="flex-1 rounded-[22px] px-4 py-4"
+                    className="flex-1 rounded-[18px] px-4 py-3.5"
                     style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
                   >
                     <Text className="text-sm font-body text-muted-foreground">Wunschstatus</Text>
@@ -228,7 +227,7 @@ export default function RewardsScreen() {
 
           <Animated.View entering={FadeInDown.delay(70).duration(320)} className="mt-4">
             <Card
-              className="rounded-[28px]"
+              className="rounded-[22px] px-4 py-4"
               style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
             >
               <View className="flex-row items-center justify-between gap-3">

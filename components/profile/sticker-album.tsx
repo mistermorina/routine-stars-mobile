@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Modal, Pressable, View, Text } from "react-native";
+import { Image } from "expo-image";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import {
   Award,
@@ -17,6 +18,7 @@ import { Progress } from "@/components/ui/progress";
 import type { NextStickerGoal, StickerAlbumEntry } from "@/lib/child-progression";
 import type { ChildTheme, StickerId } from "@/lib/types";
 import type { ThemePalette } from "@/lib/theme";
+import stickerAlbumCoverImage from "@/assets/images/sticker-album-cover.png";
 
 interface StickerAlbumProps {
   albumStickers: StickerAlbumEntry[];
@@ -311,7 +313,7 @@ export function StickerAlbum({
   return (
     <Animated.View entering={FadeInDown.delay(150).duration(320)} className="mt-4">
       <Card
-        className="overflow-hidden rounded-[30px]"
+        className="overflow-hidden rounded-[22px] px-4 py-4"
         style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
       >
         <View
@@ -362,10 +364,17 @@ export function StickerAlbum({
         <Pressable
           disabled={!onOpenAlbum}
           onPress={onOpenAlbum}
-          className="mt-4 rounded-[24px] border px-4 py-4 active:opacity-95"
+          className="mt-4 overflow-hidden rounded-[20px] border active:opacity-95"
           style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.74)" }}
         >
-          <View className="flex-row items-start justify-between gap-3">
+          <Image
+            source={stickerAlbumCoverImage}
+            style={{ width: "100%", aspectRatio: 1.45 }}
+            contentFit="cover"
+            transition={180}
+            accessibilityLabel="Sticker-Album mit Sammelstickern"
+          />
+          <View className="flex-row items-start justify-between gap-3 px-4 pb-4 pt-4">
             <View className="flex-1">
               <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
                 Als Nächstes
@@ -390,7 +399,7 @@ export function StickerAlbum({
           </View>
 
           {nextSticker ? (
-            <View className="mt-4">
+            <View className="px-4 pb-4">
               <View className="mb-2 flex-row items-center justify-between">
                 <Text className="text-sm font-body-semibold text-muted-foreground">
                   {nextSticker.current}/{nextSticker.target}

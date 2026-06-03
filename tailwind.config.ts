@@ -8,6 +8,8 @@ export default {
     "./hooks/**/*.{js,ts,jsx,tsx}",
     "./contexts/**/*.{js,ts,jsx,tsx}",
   ],
+  // NativeWind exposes its Tailwind preset as CommonJS in this project version.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
@@ -37,8 +39,8 @@ export default {
           foreground: "#737373",
         },
         accent: {
-          DEFAULT: "#87CEEB",
-          foreground: "#1a1a2e",
+          DEFAULT: "#245A74",
+          foreground: "#FFFFFF",
         },
         destructive: {
           DEFAULT: "#EF4444",

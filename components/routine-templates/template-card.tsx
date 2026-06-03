@@ -7,9 +7,8 @@ import Animated, {
 } from "react-native-reanimated";
 import { getIcon } from "@/lib/icons";
 import { getThemePalette } from "@/lib/theme";
-import type { RoutineTemplate } from "@/lib/types";
+import type { ChildTheme, RoutineTemplate } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import type { ChildTheme } from "@/lib/types";
 
 interface TemplateCardProps {
   template: RoutineTemplate;
@@ -42,17 +41,18 @@ export function TemplateCard({
       }}
     >
       <Animated.View
-        className={cn("mr-3 overflow-hidden rounded-[26px] border p-4", isSelected ? "" : "")}
+        className={cn("overflow-hidden rounded-[20px] border px-4 py-4", isSelected ? "" : "")}
         style={[
           animatedStyle,
           {
-            width: 216,
+            width: 252,
+            minHeight: 246,
             backgroundColor: isSelected ? palette.heroSurface : palette.cardTint,
             borderColor: isSelected ? palette.accent : palette.accentBorder,
             shadowColor: template.color,
-            shadowOpacity: isSelected ? 0.16 : 0.08,
-            shadowRadius: isSelected ? 16 : 10,
-            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: isSelected ? 0.18 : 0.1,
+            shadowRadius: isSelected ? 18 : 12,
+            shadowOffset: { width: 0, height: 10 },
           },
         ]}
       >
@@ -84,11 +84,11 @@ export function TemplateCard({
           </View>
         </View>
 
-        <View className="mt-4">
+        <View className="mt-4 min-h-[112px]">
           <Text className="text-lg font-headline text-foreground" numberOfLines={2}>
             {template.name}
           </Text>
-          <Text className="mt-2 text-sm font-body text-muted-foreground" numberOfLines={3}>
+          <Text className="mt-2 text-sm font-body leading-5 text-muted-foreground" numberOfLines={3}>
             {template.description}
           </Text>
         </View>

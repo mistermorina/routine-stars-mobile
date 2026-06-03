@@ -31,7 +31,7 @@ export function Header({ child, allChildren, onSelectChild }: HeaderProps) {
         starScale.value = withSpring(1, { damping: 10, stiffness: 200 });
       });
     }
-  }, [child.stars]);
+  }, [child.stars, prevStars, starScale]);
 
   const starAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: starScale.value }],
@@ -49,7 +49,7 @@ export function Header({ child, allChildren, onSelectChild }: HeaderProps) {
     <SafeAreaView edges={["top"]} style={{ backgroundColor: palette.headerGlass }}>
       <View className="px-4 pb-2 pt-2">
         <View
-          className="overflow-hidden rounded-[28px] border px-4 pb-4 pt-3"
+          className="overflow-hidden rounded-[24px] border px-4 pb-4 pt-3"
           style={{
             backgroundColor: palette.cardTint,
             borderColor: palette.accentBorder,
@@ -176,7 +176,7 @@ export function Header({ child, allChildren, onSelectChild }: HeaderProps) {
           ) : (
             <View className="pt-4">
               <View
-                className="rounded-[18px] px-3.5 py-3"
+                className="rounded-[16px] px-3.5 py-3"
                 style={{ backgroundColor: "rgba(255,255,255,0.72)" }}
               >
                 <Text className="text-sm font-body text-muted-foreground">

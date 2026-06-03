@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
-import { Stack, useRootNavigationState } from "expo-router";
+import { Stack, useRootNavigationState, useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
-import { useRouter } from "expo-router";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function SettingsLayout() {

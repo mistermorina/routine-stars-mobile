@@ -4,8 +4,6 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withSequence,
-  runOnJS,
 } from "react-native-reanimated";
 import { cn } from "@/lib/utils";
 import type { ToastData } from "@/hooks/use-toast";

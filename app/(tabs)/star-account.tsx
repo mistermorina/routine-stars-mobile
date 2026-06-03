@@ -48,15 +48,15 @@ export default function ProfileScreen() {
     : null;
 
   useEffect(() => {
-    if (selectedChild) {
+    if (selectedChildId) {
       void triggerFeedback("tab_focus");
     }
-  }, [selectedChild?.id]);
+  }, [selectedChildId]);
 
   useEffect(() => {
     previousStarsRef.current = selectedChild?.stars ?? 0;
     previousStreakRef.current = insights.currentStreak;
-  }, [selectedChild?.id]);
+  }, [insights.currentStreak, selectedChild?.id, selectedChild?.stars]);
 
   useEffect(() => {
     const previousStars = previousStarsRef.current;
@@ -157,7 +157,7 @@ export default function ProfileScreen() {
           {childLogs.length === 0 ? (
             <Animated.View entering={FadeInDown.delay(160).duration(320)} className="mt-4">
               <Card
-                className="overflow-hidden rounded-[30px]"
+                className="overflow-hidden rounded-[22px] px-4 py-4"
                 style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
               >
                 <View
@@ -185,7 +185,7 @@ export default function ProfileScreen() {
             <>
               <Animated.View entering={FadeInDown.delay(160).duration(320)} className="mt-4">
                 <Card
-                  className="overflow-hidden rounded-[30px]"
+                  className="overflow-hidden rounded-[22px] px-4 py-4"
                   style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
                 >
                   <View className="flex-row items-center justify-between gap-3">
@@ -253,7 +253,7 @@ export default function ProfileScreen() {
 
           <Animated.View entering={FadeInDown.delay(220).duration(320)} className="mt-4">
             <Card
-              className="overflow-hidden rounded-[30px]"
+              className="overflow-hidden rounded-[22px] px-4 py-4"
               style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
             >
               <View
@@ -281,7 +281,7 @@ export default function ProfileScreen() {
 
           <View className="mt-4 flex-row gap-3">
             <Card
-              className="min-h-[172px] flex-1 overflow-hidden rounded-[28px]"
+              className="min-h-[156px] flex-1 overflow-hidden rounded-[20px] px-4 py-4"
               style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
             >
               <View
@@ -297,7 +297,7 @@ export default function ProfileScreen() {
                   ? "Hier war besonders viel geschafft."
                   : "Sobald erste Routinen geschafft werden, erscheint hier der stärkste Tag."}
               </Text>
-              <View className="mt-4 flex-row gap-2">
+              <View className="mt-3 flex-row flex-wrap gap-2">
                 <View
                   className="rounded-full px-3 py-1.5"
                   style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
@@ -318,7 +318,7 @@ export default function ProfileScreen() {
             </Card>
 
             <Card
-              className="min-h-[172px] flex-1 overflow-hidden rounded-[28px]"
+              className="min-h-[156px] flex-1 overflow-hidden rounded-[20px] px-4 py-4"
               style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
             >
               <View
@@ -334,7 +334,7 @@ export default function ProfileScreen() {
                   ? "Der letzte eingetragene Fortschrittsmoment."
                   : "Sobald etwas erledigt wird, erscheint hier der letzte aktive Tag."}
               </Text>
-              <View className="mt-4 flex-row gap-2">
+              <View className="mt-3 flex-row flex-wrap gap-2">
                 <View
                   className="rounded-full px-3 py-1.5"
                   style={{ backgroundColor: "rgba(255,255,255,0.76)" }}

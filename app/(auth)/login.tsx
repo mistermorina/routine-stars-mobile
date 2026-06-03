@@ -4,7 +4,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
   LogIn,
-  Sparkles,
   UserRoundPlus,
 } from "lucide-react-native";
 import { Button } from "@/components/ui/button";
@@ -35,7 +34,7 @@ const authModeContent: Record<
   signup: {
     eyebrow: "Neu hier",
     title: "Familienkonto anlegen",
-    description: "Danach geht es direkt in euer Setup fuer Kind, Starter-Routine und Belohnungen.",
+    description: "Danach geht es direkt in euer Setup für Kind, Starter-Routine und Belohnungen.",
     action: "Familienkonto anlegen",
     Icon: UserRoundPlus,
   },
@@ -126,12 +125,12 @@ export default function LoginScreen() {
                     Familienkonto
                   </Text>
                   <Text className="mt-2 text-[30px] font-headline leading-[36px] text-foreground">
-                    Jetzt nur noch Konto waehlen.
+                    Jetzt nur noch Konto wählen.
                   </Text>
                   <Text className="mt-3 text-sm font-body leading-6 text-muted-foreground">
-                    Willkommen war fuer Emotion und Vertrauen. Hier geht es jetzt
+                    Willkommen war für Emotion und Vertrauen. Hier geht es jetzt
                     nur noch darum, ob du neu startest oder zu eurer bestehenden
-                    Familie zurueckkehrst.
+                    Familie zurückkehrst.
                   </Text>
                 </View>
                 <View
@@ -159,7 +158,7 @@ export default function LoginScreen() {
                   </View>
                   <View className="rounded-full bg-white px-3 py-2">
                     <Text className="text-xs font-body-semibold text-foreground">
-                      Anmelden bringt euch zurueck
+                      Anmelden bringt euch zurück
                     </Text>
                   </View>
                 </View>
@@ -178,7 +177,7 @@ export default function LoginScreen() {
               }}
             >
               <Text className="text-lg font-headline text-foreground">
-                Wie moechtest du starten?
+                Wie möchtest du starten?
               </Text>
               <Text className="mt-1 text-sm font-body text-muted-foreground">
                 Registrieren und Anmelden sind jetzt klar getrennt.
@@ -224,8 +223,8 @@ export default function LoginScreen() {
                           </Text>
                           <Text className="mt-1 text-sm font-body text-muted-foreground">
                             {mode === "signup"
-                              ? "Fuer neue Familien. Danach geht es direkt in den Einrichtungsflow."
-                              : "Fuer bestehende Familien. Bei unvollstaendiger Einrichtung startet danach wieder das Onboarding."}
+                              ? "Für neue Familien. Danach geht es direkt in den Einrichtungsflow."
+                              : "Für bestehende Familien. Bei unvollständiger Einrichtung startet danach wieder das Onboarding."}
                           </Text>
                         </View>
                         {isSelected ? (
@@ -359,7 +358,7 @@ export default function LoginScreen() {
                 </Text>{" "}
                 und der{" "}
                 <Text className="font-body-semibold" style={{ color: palette.accentStrong }}>
-                  Datenschutzerklaerung
+                  Datenschutzerklärung
                 </Text>{" "}
                 zu.
               </Text>

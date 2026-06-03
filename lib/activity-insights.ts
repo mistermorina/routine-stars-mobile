@@ -1,4 +1,5 @@
 import type { ActivityLog } from "@/lib/types";
+import { getLocalDateAtNoon, getLocalIsoDate } from "@/lib/local-date";
 
 const WEEKDAY_LABELS = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
 const WEEKDAY_SHORT = ["S", "M", "D", "M", "D", "F", "S"];
@@ -60,7 +61,7 @@ export interface ActivityInsights {
 }
 
 function toLocalDate(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12);
+  return getLocalDateAtNoon(date);
 }
 
 function parseDate(value: string) {
@@ -68,7 +69,7 @@ function parseDate(value: string) {
 }
 
 function formatIsoDate(date: Date) {
-  return date.toISOString().split("T")[0];
+  return getLocalIsoDate(date);
 }
 
 function getDaysInMonth(year: number, month: number) {

@@ -1,4 +1,5 @@
 import { LogBox } from "react-native";
+import "expo-router/entry";
 
 if (__DEV__) {
   const message =
@@ -16,5 +17,3 @@ if (__DEV__) {
     originalWarn(...args);
   };
 }
-
-import "expo-router/entry";

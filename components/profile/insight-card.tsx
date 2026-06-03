@@ -19,7 +19,7 @@ export function InsightCard({
 }: InsightCardProps) {
   return (
     <Card
-      className="min-h-[144px] flex-1 overflow-hidden rounded-[26px]"
+      className="min-h-[132px] flex-1 overflow-hidden rounded-[20px]"
       style={{ backgroundColor }}
     >
       <View
@@ -38,7 +38,7 @@ export function InsightCard({
         <Text className="text-sm font-body-semibold" style={{ color: accentColor }}>
           {label}
         </Text>
-        <Text className="mt-4 text-3xl font-headline text-foreground">
+        <Text className="mt-3 text-3xl font-headline text-foreground">
           {value}
         </Text>
         <Text className="mt-2 text-sm font-body text-muted-foreground">

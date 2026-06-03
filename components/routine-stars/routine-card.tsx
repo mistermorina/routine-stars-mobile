@@ -28,7 +28,7 @@ export function RoutineCard({
 
   return (
     <Card
-      className="mb-4 overflow-hidden rounded-[30px]"
+      className="mb-4 overflow-hidden rounded-[22px]"
       style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
     >
       <View
@@ -57,17 +57,27 @@ export function RoutineCard({
         />
       </CardHeader>
       <CardContent>
-        <View className="gap-3">
-          {routine.tasks.map((task) => (
-            <TaskItem
+        <View
+          className="overflow-hidden rounded-[18px] border"
+          style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.66)" }}
+        >
+          {routine.tasks.map((task, index) => (
+            <View
               key={task.id}
-              task={task}
-              routineColor={routine.color}
-              childTheme={childTheme}
-              isSuggested={highlightTaskId === task.id}
-              onComplete={(bonus) => onTaskComplete(task.id, bonus)}
-              onStartTimer={onStartTimer}
-            />
+              style={{
+                borderTopWidth: index === 0 ? 0 : 1,
+                borderTopColor: palette.accentBorder,
+              }}
+            >
+              <TaskItem
+                task={task}
+                routineColor={routine.color}
+                childTheme={childTheme}
+                isSuggested={highlightTaskId === task.id}
+                onComplete={(bonus) => onTaskComplete(task.id, bonus)}
+                onStartTimer={onStartTimer}
+              />
+            </View>
           ))}
         </View>
       </CardContent>

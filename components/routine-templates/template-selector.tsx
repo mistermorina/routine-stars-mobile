@@ -38,13 +38,13 @@ export function TemplateSelector({
   }, [category]);
 
   return (
-    <View style={{ overflow: "hidden" }}>
+    <View>
       {/* Category filter */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 0, gap: 8 }}
-        className="mb-3"
+        contentContainerStyle={{ paddingHorizontal: 2, paddingRight: 18, gap: 10 }}
+        className="mb-4"
         nestedScrollEnabled
       >
         {categoryFilters.map((f) => (
@@ -80,8 +80,10 @@ export function TemplateSelector({
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingRight: 16 }}
+        contentContainerStyle={{ paddingHorizontal: 2, paddingRight: 24, gap: 18 }}
         nestedScrollEnabled
+        snapToInterval={270}
+        decelerationRate="fast"
       >
         {filtered.map((template) => (
           <TemplateCard

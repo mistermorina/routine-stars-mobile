@@ -60,7 +60,7 @@ export function TaskItem({
       setIsAnimating(false);
       translateX.value = withTiming(0, { duration: 300 });
     }
-  }, [task.completed]);
+  }, [task.completed, translateX]);
 
   useEffect(() => {
     if (reduceMotion || !isSuggested || isCompleted || isAnimating) {
@@ -139,8 +139,8 @@ export function TaskItem({
     })
     .onEnd((event) => {
       if (event.translationX < SWIPE_THRESHOLD) {
-        translateX.value = withTiming(-120, { duration: 200 });
         runOnJS(handlePress)();
+        translateX.value = withTiming(0, { duration: 180 });
       } else {
         translateX.value = withSpring(0, { damping: 15, stiffness: 200 });
       }
@@ -165,14 +165,14 @@ export function TaskItem({
 
   const Icon = getIcon(task.iconName);
   const hasTimer = task.timerInMinutes && task.timerInMinutes > 0;
+  const hasBonus = task.bonusStars && task.bonusStars > 0;
 
-  // Star color: use routineColor, fall back to gold (completed) or gray (incomplete)
-  const starColor = routineColor || (isCompleted ? "#FFD700" : "#737373");
+  const starColor = isCompleted ? "#9A6A00" : routineColor || "#737373";
   const taskSurface = isCompleted
-    ? "rgba(255,255,255,0.58)"
+    ? "#FFFFFF"
     : isSuggested
       ? palette.heroSurface
-      : "rgba(255,255,255,0.78)";
+      : "#FFFFFF";
 
   return (
     <View className="relative">
@@ -199,7 +199,7 @@ export function TaskItem({
       )}
 
       {/* Swipe backdrop with overflow hidden */}
-      <View style={{ borderRadius: 12, overflow: "hidden" }}>
+      <View style={{ overflow: "hidden" }}>
         {/* "Erledigt" backdrop revealed on swipe (only for incomplete tasks) */}
         {!isCompleted && (
           <View
@@ -234,25 +234,30 @@ export function TaskItem({
             style={[
                   rowAnimatedStyle,
                   {
+                    alignSelf: "stretch",
                     flexDirection: "row",
                     alignItems: "center",
-                    borderRadius: 18,
+                    borderRadius: 0,
                     backgroundColor: taskSurface,
                     borderWidth: 1,
-                    borderColor: isSuggested ? palette.accentBorder : "rgba(255,255,255,0.2)",
+                    borderColor: isCompleted
+                      ? "rgba(154,106,0,0.18)"
+                      : isSuggested
+                        ? palette.accentBorder
+                        : "rgba(255,255,255,0.2)",
                     padding: 16,
-                    opacity: isCompleted ? 0.5 : 1,
+                    width: "100%",
                   },
                 ]}
               >
                 {/* Icon */}
                 <View
-                  className="mr-3 h-12 w-12 items-center justify-center rounded-[16px]"
-                  style={{ backgroundColor: isSuggested ? "#FFFFFF" : palette.surface }}
+                  className="mr-3 h-12 w-12 items-center justify-center rounded-[14px]"
+                  style={{ backgroundColor: isCompleted ? palette.tabActiveBg : isSuggested ? "#FFFFFF" : palette.surface }}
                 >
                   <Icon
                     size={24}
-                    color={isCompleted ? "#737373" : routineColor || "#737373"}
+                    color={isCompleted ? "#8A8A8A" : routineColor || "#737373"}
                   />
                 </View>
 
@@ -261,8 +266,9 @@ export function TaskItem({
                   <Text
                     className={cn(
                       "text-base font-body-semibold text-foreground",
-                      isCompleted && "text-muted-foreground line-through"
+                      isCompleted && "line-through"
                     )}
+                    style={isCompleted ? { color: "#6B6B6B" } : undefined}
                     numberOfLines={2}
                   >
                     {task.title}
@@ -286,13 +292,13 @@ export function TaskItem({
                       </Text>
                     </Pressable>
                     <Text className="text-xs font-body text-muted-foreground">
-                      +{task.bonusStars} Bonus
+                      {hasBonus ? `+${task.bonusStars} Bonus` : `${task.timerInMinutes} Min.`}
                     </Text>
                   </View>
                 ) : (
                   <View
                     className="shrink-0 flex-row items-center gap-1 rounded-full px-2.5 py-1"
-                    style={{ backgroundColor: isCompleted ? palette.surface : "rgba(255,255,255,0.82)" }}
+                    style={{ backgroundColor: isCompleted ? palette.tabActiveBg : "rgba(255,255,255,0.82)" }}
                   >
                     <Text
                       className="text-sm font-body-bold"

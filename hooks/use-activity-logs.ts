@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useFocusEffect } from "expo-router";
+import { getLocalIsoDate } from "@/lib/local-date";
 import { storage, KEYS } from "@/lib/storage";
 import type { ActivityLog, Task } from "@/lib/types";
 
@@ -29,7 +30,7 @@ export function useActivityLogs() {
         childId,
         taskId: task.id,
         taskTitle: task.title,
-        date: new Date().toISOString().split("T")[0],
+        date: getLocalIsoDate(),
         stars: totalStars,
       };
 
