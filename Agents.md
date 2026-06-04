@@ -210,6 +210,75 @@
 | `assets/review/stickers-v2/source/routinestars_sticker_v2_weltraum_gute_nacht_sheet_chromakey.png` | Generated source sheet |
 | `assets/review/stickers-v2/contact-sheets/routinestars_stickers_v2_contact_sheet.png` | Visual QA contact sheet |
 
+### Sticker Reward System — V3 Asset Expansion
+
+**Date**: 2026-06-04
+**Status**: 30 additional stickers generated, integrated, and smoke-tested
+
+#### Agent Split
+
+- **Asset und Creative Agent**: generated three 10-sticker sheets for `Magie`, `Fahrzeuge`, and `Natur`; rejected the first vehicle sheet because it mixed in unrelated motifs, then regenerated a vehicle-only sheet.
+- **App Integration Agent**: exported transparent master/app PNGs, added the new IDs to type contracts, and extended the central sticker catalog.
+- **QA Agent**: verified the contact sheet visually and extended `test:stickers` to assert 48 catalog entries plus all generated PNG dimensions and alpha channels.
+
+#### New Theme Worlds
+
+| Theme | Count | Unlock Orders | App Asset Directory | Master Asset Directory |
+|------|------:|---------------|---------------------|------------------------|
+| Magie | 10 | 19-28 | `assets/routinestars_magie_sticker_einzeln` | `assets/sticker-masters/magie` |
+| Fahrzeuge | 10 | 29-38 | `assets/routinestars_fahrzeuge_sticker_einzeln` | `assets/sticker-masters/fahrzeuge` |
+| Natur | 10 | 39-48 | `assets/routinestars_natur_sticker_einzeln` | `assets/sticker-masters/natur` |
+
+#### New Review Assets
+
+| Asset | Purpose |
+|-------|---------|
+| `assets/review/stickers-v3/source/routinestars_sticker_v3_magie_sheet_chromakey.png` | Generated Magie source sheet |
+| `assets/review/stickers-v3/source/routinestars_sticker_v3_fahrzeuge_sheet_chromakey.png` | Generated Fahrzeuge source sheet |
+| `assets/review/stickers-v3/source/routinestars_sticker_v3_natur_sheet_chromakey.png` | Generated Natur source sheet |
+| `assets/review/stickers-v3/transparent-sheets/routinestars_sticker_v3_magie_sheet_alpha.png` | Transparent Magie working sheet |
+| `assets/review/stickers-v3/transparent-sheets/routinestars_sticker_v3_fahrzeuge_sheet_alpha.png` | Transparent Fahrzeuge working sheet |
+| `assets/review/stickers-v3/transparent-sheets/routinestars_sticker_v3_natur_sheet_alpha.png` | Transparent Natur working sheet |
+| `assets/review/stickers-v3/contact-sheets/routinestars_stickers_v3_contact_sheet.png` | Visual QA contact sheet for all 30 V3 stickers |
+
+### Sticker Reward System — V4 Style Expansion
+
+**Date**: 2026-06-04
+**Status**: 50 additional stickers generated, integrated, and smoke-tested
+
+#### Agent Split
+
+- **Produkt und UX Agent**: interpreted `weitere 50 sticker a 10` as five themed packs with 10 stickers each, continuing the existing unlock order after V3.
+- **Asset und Creative Agent**: generated five style-distinct sheets: comic patch, kawaii bento clay, paper collage, flat vinyl, and watercolor gouache.
+- **App Integration Agent**: exported transparent master/app PNGs, added V4 type contracts, and attached a separate `lib/generated-stickers-v4.ts` pack module to the central catalog.
+- **QA Agent**: verified the V4 contact sheet visually and extended `test:stickers` to assert 98 catalog entries plus all generated PNG dimensions and alpha channels.
+
+#### New 10er Packs
+
+| Theme | Count | Unlock Orders | Style Direction | App Asset Directory | Master Asset Directory |
+|------|------:|---------------|-----------------|---------------------|------------------------|
+| Helden | 10 | 49-58 | Comic patch / embroidered badge | `assets/routinestars_helden_sticker_einzeln` | `assets/sticker-masters/helden` |
+| Essen | 10 | 59-68 | Kawaii bento clay | `assets/routinestars_essen_sticker_einzeln` | `assets/sticker-masters/essen` |
+| Musik | 10 | 69-78 | Paper collage / cut-paper | `assets/routinestars_musik_sticker_einzeln` | `assets/sticker-masters/musik` |
+| Sport | 10 | 79-88 | Flat vinyl sticker | `assets/routinestars_sport_sticker_einzeln` | `assets/sticker-masters/sport` |
+| Meer | 10 | 89-98 | Watercolor gouache | `assets/routinestars_meer_sticker_einzeln` | `assets/sticker-masters/meer` |
+
+#### New Review Assets
+
+| Asset | Purpose |
+|-------|---------|
+| `assets/review/stickers-v4/source/routinestars_sticker_v4_helden_sheet_chromakey.png` | Generated Helden source sheet |
+| `assets/review/stickers-v4/source/routinestars_sticker_v4_essen_sheet_chromakey.png` | Generated Essen source sheet |
+| `assets/review/stickers-v4/source/routinestars_sticker_v4_musik_sheet_chromakey.png` | Generated Musik source sheet |
+| `assets/review/stickers-v4/source/routinestars_sticker_v4_sport_sheet_chromakey.png` | Generated Sport source sheet |
+| `assets/review/stickers-v4/source/routinestars_sticker_v4_meer_sheet_chromakey.png` | Generated Meer source sheet |
+| `assets/review/stickers-v4/transparent-sheets/routinestars_sticker_v4_helden_sheet_alpha.png` | Transparent Helden working sheet |
+| `assets/review/stickers-v4/transparent-sheets/routinestars_sticker_v4_essen_sheet_alpha.png` | Transparent Essen working sheet |
+| `assets/review/stickers-v4/transparent-sheets/routinestars_sticker_v4_musik_sheet_alpha.png` | Transparent Musik working sheet |
+| `assets/review/stickers-v4/transparent-sheets/routinestars_sticker_v4_sport_sheet_alpha.png` | Transparent Sport working sheet |
+| `assets/review/stickers-v4/transparent-sheets/routinestars_sticker_v4_meer_sheet_alpha.png` | Transparent Meer working sheet |
+| `assets/review/stickers-v4/contact-sheets/routinestars_stickers_v4_contact_sheet.png` | Visual QA contact sheet for all 50 V4 stickers |
+
 ### Verification Checklist
 
 - [x] `npm run test:stickers`

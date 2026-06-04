@@ -65,7 +65,7 @@ export function StickerWall({
                   Sticker-Galerie
                 </Text>
                 <Text className="mt-1 text-sm font-body text-muted-foreground" numberOfLines={2}>
-                  Sammle freundliche Tiere nach geschafften Routinen.
+                  Sammle Sticker aus vielen Themenwelten nach geschafften Routinen.
                 </Text>
               </View>
             </View>
