@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
-import { StyleSheet, View, Text } from "react-native";
+import { ScrollView, StyleSheet, useWindowDimensions, View, Text } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import Animated, {
@@ -11,7 +12,7 @@ import Animated, {
   withSpring,
   Easing,
 } from "react-native-reanimated";
-import { CircleCheckBig, Sparkles, Star } from "lucide-react-native";
+import { Sparkles, Star } from "lucide-react-native";
 import {
   Dialog,
   DialogContent,
@@ -123,6 +124,12 @@ export function RoutineCompleteDialog({
 }: RoutineCompleteDialogProps) {
   const router = useRouter();
   const palette = getThemePalette(childTheme);
+  const { height: screenHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const availableDialogHeight = Math.max(1, screenHeight - insets.top - insets.bottom - 32);
+  const dialogMaxHeight = Math.min(520, screenHeight * 0.88, availableDialogHeight);
+  const dialogFooterHeight = 124;
+  const dialogBodyMaxHeight = Math.max(180, dialogMaxHeight - dialogFooterHeight);
 
   const starScale = useSharedValue(1);
   const starRotate = useSharedValue(0);
@@ -183,6 +190,7 @@ export function RoutineCompleteDialog({
           style={{
             backgroundColor: "#FFF9F0",
             borderColor: "rgba(255,255,255,0.9)",
+            maxHeight: dialogMaxHeight,
             padding: 0,
             shadowColor: "#2E3A68",
             shadowOpacity: 0.18,
@@ -203,7 +211,19 @@ export function RoutineCompleteDialog({
             ]}
           />
 
-          <View className="w-full items-center px-5 pb-5 pt-6">
+          <ScrollView
+            bounces={false}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            className="w-full"
+            style={{ maxHeight: dialogBodyMaxHeight }}
+            contentContainerStyle={{
+              alignItems: "center",
+              paddingHorizontal: 20,
+              paddingTop: 24,
+              paddingBottom: 12,
+            }}
+          >
             <View
               className="mb-3 rounded-full px-3.5 py-2"
               style={{ backgroundColor: "rgba(255,255,255,0.74)" }}
@@ -237,56 +257,29 @@ export function RoutineCompleteDialog({
               </DialogDescription>
             </DialogHeader>
 
-            <View
-              className="mt-3 w-full rounded-[18px] px-4 py-3"
-              style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
-            >
-              <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
-                Nächster Moment
-              </Text>
-              <Text className="mt-1 text-base font-headline leading-6 text-foreground">
-                Belohnung ansehen oder weiter Routinen erledigen.
-              </Text>
-            </View>
+          </ScrollView>
 
-            <View
-              className="mt-4 h-[54px] w-[54px] items-center justify-center rounded-full"
-              style={{ backgroundColor: "rgba(240,247,236,0.86)" }}
+          <View className="w-full gap-3 px-5 pb-5 pt-2">
+            <Button
+              onPress={handleViewRewards}
+              className="h-12 w-full rounded-[20px]"
+              style={{ backgroundColor: palette.button }}
+              textClassName="text-white"
             >
-              <View
-                className="h-[40px] w-[40px] items-center justify-center rounded-full"
-                style={{
-                  backgroundColor: "#FFFFFF",
-                  borderColor: "#DCEED3",
-                  borderWidth: 1,
-                }}
-              >
-                <CircleCheckBig size={26} color="#7FB565" strokeWidth={3} />
-              </View>
-            </View>
-
-            <View className="mt-4 w-full gap-3">
-              <Button
-                onPress={handleViewRewards}
-                className="h-12 w-full rounded-[20px]"
-                style={{ backgroundColor: palette.button }}
-                textClassName="text-white"
-              >
-                <Text className="text-base font-body-semibold text-center text-white">
-                  Belohnungen ansehen
-                </Text>
-              </Button>
-              <Button
-                variant="outline"
-                onPress={onClose}
-                className="h-12 w-full rounded-[20px]"
-                style={{ borderColor: palette.accent }}
-              >
-                <Text className="text-base font-body-semibold text-center" style={{ color: palette.accent }}>
-                  Sterne sichern
-                </Text>
-              </Button>
-            </View>
+              <Text className="text-base font-body-semibold text-center text-white">
+                Belohnungen ansehen
+              </Text>
+            </Button>
+            <Button
+              variant="outline"
+              onPress={onClose}
+              className="h-12 w-full rounded-[20px]"
+              style={{ borderColor: palette.accent }}
+            >
+              <Text className="text-base font-body-semibold text-center" style={{ color: palette.accent }}>
+                Sterne sichern
+              </Text>
+            </Button>
           </View>
         </DialogContent>
       </Animated.View>
