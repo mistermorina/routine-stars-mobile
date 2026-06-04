@@ -217,7 +217,7 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
               style={{ backgroundColor: palette.accentSoft, borderColor: palette.accentBorder }}
             >
               <Text className="text-2xl">{profile.avatar}</Text>
-              <View className="flex-1">
+              <View className="min-w-0 flex-1">
                 <Text className="text-sm font-headline text-foreground">
                   {profile.name}
                 </Text>
@@ -225,7 +225,13 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
                   {profile.ageGroup} • {profile.theme}
                 </Text>
               </View>
-              <Pressable onPress={() => handleRemoveChild(index)} hitSlop={8}>
+              <Pressable
+                onPress={() => handleRemoveChild(index)}
+                className="h-11 w-11 items-center justify-center rounded-full"
+                accessibilityRole="button"
+                accessibilityLabel={`Kind ${profile.name} entfernen`}
+                hitSlop={4}
+              >
                 <Trash2 size={16} color="#ef4444" />
               </Pressable>
             </View>

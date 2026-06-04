@@ -105,6 +105,19 @@ export interface ChildProgressState {
   lastSeenUnlockIds?: StickerId[];
 }
 
+export type StickerThemeWorld =
+  | "tierfreunde"
+  | "weltraum"
+  | "magie"
+  | "fahrzeuge"
+  | "natur"
+  | "gute-nacht";
+export type StickerCategory = "tiere" | "weltraum" | "magie" | "fahrzeuge" | "natur" | "helden" | "essen" | "gute-nacht";
+export type StickerRarity = "common" | "rare" | "epic";
+export type StickerRewardMode = "routine_complete" | "daily_complete";
+export type StickerSelectionMode = "child_choice";
+export type StickerUnlockReason = StickerRewardMode;
+
 export type AnimalStickerId =
   | "loewe"
   | "giraffe"
@@ -117,19 +130,32 @@ export type AnimalStickerId =
   | "eule"
   | "schildkroete";
 
-export interface StickerWallEntry {
+export type StickerAssetId = AnimalStickerId;
+
+export interface StickerCollectionEntry {
   id: string;
-  stickerId: AnimalStickerId;
+  stickerId: StickerAssetId;
   earnedDate: string;
-  reason: "day_complete";
+  reason: StickerUnlockReason;
+  eventKey: string;
+  routineId?: string;
+  routineName?: string;
   slot: number;
   createdAt: string;
 }
 
-export interface StickerWallState {
-  placedStickers: StickerWallEntry[];
-  claimedDayDates: string[];
+export interface StickerCollectionState {
+  collectedStickers: StickerCollectionEntry[];
+  claimedEventKeys: string[];
 }
+
+export interface StickerRewardSettings {
+  rewardMode: StickerRewardMode;
+  selectionMode: StickerSelectionMode;
+}
+
+export type StickerWallEntry = StickerCollectionEntry;
+export type StickerWallState = StickerCollectionState;
 
 // --- Template Types ---
 export type AgeGroup = '3-5' | '6-8' | '9-12';

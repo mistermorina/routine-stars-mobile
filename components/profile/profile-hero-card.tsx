@@ -142,32 +142,45 @@ export function ProfileHeroCard({
             className="mt-3 rounded-[18px] border px-4 py-3.5"
             style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.76)" }}
           >
-            <View className="flex-row items-center gap-3">
+            <View className="flex-row items-start gap-3">
               <View
-                className="h-12 w-12 items-center justify-center rounded-[18px]"
+                className="h-12 w-12 shrink-0 items-center justify-center rounded-[18px]"
                 style={{ backgroundColor: palette.tabActiveBg }}
               >
                 <Trophy size={20} color={palette.accentStrong} />
               </View>
-              <View className="ml-3 flex-1">
-                <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
-                  Nächster Moment
-                </Text>
-                <Text className="mt-1 text-lg font-headline text-foreground">
-                  {nextReward ? nextReward.title : "Alles freigeschaltet"}
-                </Text>
+              <View className="min-w-0 flex-1">
+                <View className="flex-row items-start gap-2">
+                  <View className="min-w-0 flex-1">
+                    <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+                      Nächster Moment
+                    </Text>
+                    <Text
+                      className="mt-1 min-w-0 text-lg font-headline text-foreground"
+                      numberOfLines={2}
+                    >
+                      {nextReward ? nextReward.title : "Alles freigeschaltet"}
+                    </Text>
+                  </View>
+                  <View
+                    className="max-w-[96px] shrink-0 rounded-full px-2.5 py-1"
+                    style={{ backgroundColor: palette.tabActiveBg }}
+                  >
+                    <Text
+                      className="text-[10px] font-body-semibold"
+                      style={{ color: palette.accentText }}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.85}
+                    >
+                      {nextReward ? `${nextReward.missingStars} offen` : "Bereit"}
+                    </Text>
+                  </View>
+                </View>
                 <Text className="mt-1 text-xs font-body" style={{ color: palette.accentText }}>
                   {nextReward
                     ? `${nextReward.missingStars} Sterne fehlen noch bis zur nächsten Belohnung.`
                     : "Gerade ist alles freigeschaltet und bereit."}
-                </Text>
-              </View>
-              <View
-                className="shrink-0 rounded-full px-2.5 py-1"
-                style={{ backgroundColor: palette.tabActiveBg }}
-              >
-                <Text className="text-[10px] font-body-semibold" style={{ color: palette.accentText }}>
-                  {nextReward ? `${nextReward.missingStars} offen` : "Bereit"}
                 </Text>
               </View>
             </View>

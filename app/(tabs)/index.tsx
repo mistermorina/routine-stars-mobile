@@ -319,11 +319,17 @@ export default function DashboardScreen() {
                 shadowOffset: { width: 0, height: 10 },
               }}
             >
-              <View className="mb-3 flex-row items-center justify-between">
-                <Text className="text-base font-body-semibold text-muted-foreground">
+              <View className="mb-3 flex-row items-center justify-between gap-3">
+                <Text
+                  className="min-w-0 flex-1 text-base font-body-semibold text-muted-foreground"
+                  numberOfLines={1}
+                >
                   Tagesfortschritt
                 </Text>
-                <Text className="text-base font-body-semibold text-foreground">
+                <Text
+                  className="shrink-0 text-base font-body-semibold text-foreground"
+                  numberOfLines={1}
+                >
                   {completedTasks} / {totalTasks}
                 </Text>
               </View>
@@ -478,26 +484,32 @@ export default function DashboardScreen() {
               className="rounded-[22px]"
               style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
             >
-              <View className="flex-row items-center justify-between">
-                <View className="flex-row items-center gap-2">
+              <View className="flex-row items-center justify-between gap-3">
+                <View className="min-w-0 flex-1 flex-row items-center gap-2">
                   <View
-                    className="h-11 w-11 items-center justify-center rounded-[18px]"
+                    className="h-11 w-11 shrink-0 items-center justify-center rounded-[18px]"
                     style={{ backgroundColor: palette.heroSurface }}
                   >
                     <Sparkles size={20} color={palette.accentStrong} />
                   </View>
-                  <View>
-                    <Text className="text-lg font-headline text-foreground">Routinen heute</Text>
+                  <View className="min-w-0 flex-1">
+                    <Text className="text-lg font-headline text-foreground" numberOfLines={1}>
+                      Routinen heute
+                    </Text>
                     <Text className="text-sm font-body text-muted-foreground">
                       {displayRoutines.length} Routinen • {remainingTasks} offene Aufgaben
                     </Text>
                   </View>
                 </View>
                 <View
-                  className="rounded-full px-3 py-1.5"
+                  className="shrink-0 rounded-full px-3 py-1.5"
                   style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
                 >
-                  <Text className="text-xs font-body-semibold" style={{ color: palette.accentText }}>
+                  <Text
+                    className="text-xs font-body-semibold"
+                    style={{ color: palette.accentText }}
+                    numberOfLines={1}
+                  >
                     {remainingTasks === 0 ? "Alles erledigt" : `${remainingTasks} bereit`}
                   </Text>
                 </View>

@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ToastOverlay } from "@/components/ui/toast";
+import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
 import { avatarCategories } from "@/lib/data";
 import { useRoutines } from "@/hooks/use-routines";
 import { useRewards } from "@/hooks/use-rewards";
@@ -77,6 +78,7 @@ export default function ChildrenSettings() {
     () => children.reduce((sum, child) => sum + child.stars, 0),
     [children]
   );
+  const childCountLabel = `${children.length} ${children.length === 1 ? "Kind" : "Kinder"}`;
 
   useEffect(() => {
     if (!__DEV__) return;
@@ -202,36 +204,12 @@ export default function ChildrenSettings() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
       >
-      <Card className="mb-4 overflow-hidden rounded-[30px] border p-0">
-        <View className="rounded-[30px] bg-secondary/70 px-4 py-5">
-          <View className="flex-row items-start justify-between">
-            <View className="mr-4 flex-1">
-              <Text className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground">
-                Kinderprofile
-              </Text>
-              <Text className="mt-2 text-[28px] font-headline text-foreground">
-                Eure kleine Sternen-Crew
-              </Text>
-              <Text className="mt-2 text-sm font-body leading-6 text-muted-foreground">
-                Profile bleiben lokal auf diesem Gerät und wechseln direkt in den Kindermodus
-                zurück.
-              </Text>
-            </View>
-            <View className="items-end gap-2">
-              <View className="rounded-full bg-white/85 px-3 py-1.5">
-                <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-foreground">
-                  {children.length} Kinder
-                </Text>
-              </View>
-              <View className="rounded-full bg-white/85 px-3 py-1.5">
-                <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-foreground">
-                  {totalStars} Sterne
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      </Card>
+      <SettingsHeroCard
+        label="Familie"
+        title="Kinderprofile"
+        description="Profile bleiben lokal auf diesem Gerät und wechseln direkt zurück in den Kindermodus."
+        badges={[{ label: childCountLabel }, { label: `${totalStars} Sterne` }]}
+      />
 
       {/* Children list */}
       {children.length === 0 && !showAddForm && (

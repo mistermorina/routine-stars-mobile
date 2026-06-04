@@ -174,7 +174,19 @@ function RewardItem({
                 size="sm"
                 disabled={isRecentlyRedeemed}
                 onPress={handleRedeem}
-                className="h-10 rounded-[14px] px-4"
+                accessibilityRole="button"
+                accessibilityLabel={
+                  isRecentlyRedeemed
+                    ? `${reward.title} wurde eingelöst`
+                    : `${reward.title} für ${reward.cost} Sterne einlösen`
+                }
+                accessibilityHint={
+                  isRecentlyRedeemed
+                    ? undefined
+                    : "Löst die Belohnung ein und zieht die Sterne vom Konto ab."
+                }
+                accessibilityState={{ disabled: isRecentlyRedeemed }}
+                className="h-11 rounded-[14px] px-4"
                 style={
                   isRecentlyRedeemed
                     ? { backgroundColor: palette.heroSurface }

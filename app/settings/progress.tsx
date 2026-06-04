@@ -5,9 +5,10 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useChildren } from "@/hooks/use-children";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
 import { MonthlyCompletionCalendar } from "@/components/profile/monthly-completion-calendar";
-import { InsightCard } from "@/components/profile/insight-card";
 import { Card } from "@/components/ui/card";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
+import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
+import { SettingsMetricCard } from "@/components/settings/settings-metric-card";
 import { getActivityInsights } from "@/lib/activity-insights";
 import { getThemePalette } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -89,49 +90,13 @@ export default function ProgressSettings() {
         )}
 
         <Animated.View entering={FadeInDown.duration(300)}>
-          <Card
-            className="overflow-hidden rounded-[30px]"
-            style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
-          >
-            <View
-              className="absolute inset-x-0 top-0 h-32"
-              style={{ backgroundColor: palette.heroSurface }}
-            />
-            <View
-              className="absolute right-[-16px] top-[-10px] h-24 w-24 rounded-full"
-              style={{ backgroundColor: palette.motifSecondary, opacity: 0.22 }}
-            />
-            <View className="flex-row items-start justify-between gap-3">
-              <View className="flex-1">
-                <View
-                  className="self-start rounded-full px-3 py-1.5"
-                  style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
-                >
-                  <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
-                    Eltern-Detailansicht
-                  </Text>
-                </View>
-                <Text className="mt-3 text-[30px] font-headline text-foreground">
-                  Fortschritt im Monat
-                </Text>
-                <Text className="mt-2 text-sm font-body leading-6" style={{ color: palette.accentText }}>
-                  Hier sieht man genauer, an welchen Tagen Routinen erledigt wurden und wie sich der Monat entwickelt.
-                </Text>
-              </View>
-              <View
-                className="rounded-[22px] px-3.5 py-3"
-                style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
-              >
-                <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
-                  Dieser Monat
-                </Text>
-                <Text className="mt-1 text-lg font-headline" style={{ color: palette.accentText }}>
-                  {insights.monthlyActiveDays}
-                </Text>
-                <Text className="text-xs font-body text-muted-foreground">aktive Tage</Text>
-              </View>
-            </View>
-          </Card>
+          <SettingsHeroCard
+            label="Eltern-Detailansicht"
+            title="Monatsfortschritt"
+            description="Sieh, an welchen Tagen Routinen erledigt wurden und wie sich der Monat entwickelt."
+            badges={[{ label: `${insights.monthlyActiveDays} aktive Tage` }]}
+            palette={palette}
+          />
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(70).duration(300)} className="mt-4">
@@ -139,18 +104,20 @@ export default function ProgressSettings() {
             className="overflow-hidden rounded-[28px]"
             style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
           >
-            <View className="flex-row items-center justify-between gap-3">
-              <View className="flex-row items-center gap-3">
+            <View className="flex-row items-start justify-between gap-3">
+              <View className="min-w-0 flex-1 flex-row items-center gap-3">
                 <View
                   className="h-11 w-11 items-center justify-center rounded-[18px]"
                   style={{ backgroundColor: palette.heroSurface }}
                 >
                   <CalendarDays size={20} color={palette.accentStrong} />
                 </View>
-                <View className="flex-1">
-                  <Text className="text-lg font-headline text-foreground">{insights.monthLabel}</Text>
-                  <Text className="text-sm font-body text-muted-foreground">
-                    Monat auswählen und Aktivität im Kalender lesen
+                <View className="min-w-0 flex-1">
+                  <Text className="text-lg font-headline text-foreground" numberOfLines={1}>
+                    {insights.monthLabel}
+                  </Text>
+                  <Text className="text-sm font-body leading-5 text-muted-foreground" numberOfLines={2}>
+                    Monat auswählen und Kalender lesen
                   </Text>
                 </View>
               </View>
@@ -158,7 +125,11 @@ export default function ProgressSettings() {
                 className="rounded-full px-3 py-1.5"
                 style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
               >
-                <Text className="text-xs font-body-semibold" style={{ color: palette.accentText }}>
+                <Text
+                  className="text-xs font-body-semibold"
+                  style={{ color: palette.accentText }}
+                  numberOfLines={1}
+                >
                   {insights.monthlyCompletionRate}% Quote
                 </Text>
               </View>
@@ -219,36 +190,40 @@ export default function ProgressSettings() {
         ) : null}
 
         <View className="mt-4 flex-row gap-3">
-          <InsightCard
+          <SettingsMetricCard
             label="Aktive Tage"
             value={`${insights.monthlyActiveDays}`}
-            caption="Tage mit erledigten Routinen im gewählten Monat"
+            caption="Im Monat"
             accentColor={palette.accentText}
             backgroundColor={palette.cardTint}
+            borderColor={palette.accentBorder}
           />
-          <InsightCard
-            label="Monatsquote"
+          <SettingsMetricCard
+            label="Quote"
             value={`${insights.monthlyCompletionRate}%`}
-            caption="Aktive Tage gemessen an den vergangenen Kalendertagen"
+            caption="Bis heute"
             accentColor={palette.chartPrimary}
             backgroundColor={palette.cardTint}
+            borderColor={palette.accentBorder}
           />
         </View>
 
         <View className="mt-3 flex-row gap-3">
-          <InsightCard
+          <SettingsMetricCard
             label="Monatssterne"
             value={`${insights.monthlyStars}`}
-            caption="In diesem Monat durch Aufgaben verdient"
+            caption="Verdient"
             accentColor={palette.chartSecondary}
             backgroundColor={palette.cardTint}
+            borderColor={palette.accentBorder}
           />
-          <InsightCard
-            label="Aktivitätsserie"
+          <SettingsMetricCard
+            label="Serie"
             value={`${insights.currentStreak}`}
-            caption="Aktuelle Serie auf Basis zusammenhängender Tage"
+            caption="Aktuell"
             accentColor={palette.accentStrong}
             backgroundColor={palette.cardTint}
+            borderColor={palette.accentBorder}
           />
         </View>
       </ScrollView>

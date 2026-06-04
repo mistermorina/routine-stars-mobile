@@ -1,5 +1,6 @@
 import React from "react";
-import { Modal, Pressable, Text, View } from "react-native";
+import { Modal, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { X } from "lucide-react-native";
 import type { AnimalSticker } from "@/lib/animal-stickers";
@@ -22,14 +23,29 @@ export function StickerRewardSheet({
   onSelectSticker,
   onClose,
 }: StickerRewardSheetProps) {
+  const { height: screenHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const sheetTopPadding = Math.max(insets.top + 12, 20);
+  const sheetBottomPadding = Math.max(insets.bottom + 12, 20);
+  const availableSheetHeight = Math.max(1, screenHeight - sheetTopPadding - sheetBottomPadding);
+  const sheetMaxHeight = Math.min(screenHeight * 0.88, availableSheetHeight);
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View className="flex-1 justify-end px-4 pb-5" style={{ backgroundColor: "rgba(246,250,255,0.86)" }}>
+      <View
+        className="flex-1 justify-end px-4"
+        style={{
+          backgroundColor: "rgba(246,250,255,0.86)",
+          paddingTop: sheetTopPadding,
+          paddingBottom: sheetBottomPadding,
+        }}
+      >
         <View
           className="overflow-hidden rounded-[30px] border px-4 pb-5 pt-4"
           style={{
             backgroundColor: palette.cardTint,
             borderColor: palette.accentBorder,
+            maxHeight: sheetMaxHeight,
             shadowColor: "#9DB8D8",
             shadowOpacity: 0.22,
             shadowRadius: 28,
@@ -45,9 +61,25 @@ export function StickerRewardSheet({
             style={{ backgroundColor: palette.motifSecondary, opacity: 0.28 }}
           />
 
-          <View className="relative">
-            <View className="flex-row items-start justify-between gap-3">
-              <View className="min-w-0 flex-1">
+          <View className="relative" style={{ flexShrink: 1 }}>
+            <Pressable
+              onPress={onClose}
+              className="absolute right-0 top-0 z-10 h-10 w-10 items-center justify-center rounded-full"
+              style={{ backgroundColor: "rgba(255,255,255,0.82)" }}
+              accessibilityRole="button"
+              accessibilityLabel="Sticker-Auswahl schließen"
+            >
+              <X size={20} color={palette.accentText} />
+            </Pressable>
+
+            <ScrollView
+              bounces={false}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              style={{ flexShrink: 1 }}
+              contentContainerStyle={{ paddingBottom: 4 }}
+            >
+              <View className="min-w-0 pr-12">
                 <View
                   className="self-start rounded-full px-3 py-1.5"
                   style={{ backgroundColor: palette.tabActiveBg }}
@@ -63,48 +95,39 @@ export function StickerRewardSheet({
                   {childName} hat heute alles geschafft. Dieser Sticker landet direkt auf der Sticker-Wall.
                 </Text>
               </View>
-              <Pressable
-                onPress={onClose}
-                className="h-10 w-10 items-center justify-center rounded-full"
-                style={{ backgroundColor: "rgba(255,255,255,0.82)" }}
-                accessibilityRole="button"
-                accessibilityLabel="Sticker-Auswahl schließen"
-              >
-                <X size={20} color={palette.accentText} />
-              </Pressable>
-            </View>
 
-            <View className="mt-5 flex-row flex-wrap justify-between gap-y-3">
-              {stickers.slice(0, 6).map((sticker) => (
-                <Pressable
-                  key={sticker.id}
-                  onPress={() => onSelectSticker(sticker)}
-                  className="w-[48%] overflow-hidden rounded-[22px] border px-3 py-3 active:opacity-90"
-                  style={{
-                    backgroundColor: "rgba(255,255,255,0.8)",
-                    borderColor: palette.accentBorder,
-                  }}
-                >
-                  <View
-                    className="mx-auto h-24 w-24 items-center justify-center rounded-[24px]"
-                    style={{ backgroundColor: `${sticker.accent}18` }}
+              <View className="mt-5 flex-row flex-wrap justify-between gap-y-3">
+                {stickers.slice(0, 6).map((sticker) => (
+                  <Pressable
+                    key={sticker.id}
+                    onPress={() => onSelectSticker(sticker)}
+                    className="w-[48%] overflow-hidden rounded-[22px] border px-3 py-3 active:opacity-90"
+                    style={{
+                      backgroundColor: "rgba(255,255,255,0.8)",
+                      borderColor: palette.accentBorder,
+                    }}
                   >
-                    <Image
-                      source={sticker.asset}
-                      style={{ width: 82, height: 82 }}
-                      contentFit="contain"
-                      transition={160}
-                    />
-                  </View>
-                  <Text className="mt-3 text-center text-sm font-headline text-foreground" numberOfLines={1}>
-                    {sticker.title}
-                  </Text>
-                  <Text className="mt-1 text-center text-xs font-body text-muted-foreground" numberOfLines={1}>
-                    {sticker.mood}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+                    <View
+                      className="mx-auto h-24 w-24 items-center justify-center rounded-[24px]"
+                      style={{ backgroundColor: `${sticker.accent}18` }}
+                    >
+                      <Image
+                        source={sticker.asset}
+                        style={{ width: 82, height: 82 }}
+                        contentFit="contain"
+                        transition={160}
+                      />
+                    </View>
+                    <Text className="mt-3 text-center text-sm font-headline text-foreground" numberOfLines={1}>
+                      {sticker.title}
+                    </Text>
+                    <Text className="mt-1 text-center text-xs font-body text-muted-foreground" numberOfLines={1}>
+                      {sticker.mood}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </ScrollView>
           </View>
         </View>
       </View>

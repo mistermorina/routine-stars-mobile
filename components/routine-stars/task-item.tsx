@@ -172,6 +172,16 @@ export function TaskItem({
     : isSuggested
       ? palette.heroSurface
       : "#FFFFFF";
+  const taskAccessibilityLabel = isCompleted
+    ? `${task.title}, erledigt`
+    : hasTimer
+      ? `${task.title}, Timer starten`
+      : `${task.title}, Aufgabe erledigen`;
+  const taskAccessibilityHint = isCompleted
+    ? undefined
+    : hasTimer
+      ? "Öffnet den Timer für diese Aufgabe."
+      : "Tippen oder nach links wischen, um die Aufgabe zu erledigen.";
 
   return (
     <View className="relative">
@@ -234,6 +244,10 @@ export function TaskItem({
               onPressIn={handlePressIn}
               onPressOut={handlePressOut}
               disabled={isCompleted || isAnimating}
+              accessibilityRole="button"
+              accessibilityLabel={taskAccessibilityLabel}
+              accessibilityHint={taskAccessibilityHint}
+              accessibilityState={{ disabled: isCompleted || isAnimating, checked: isCompleted }}
             >
               <Animated.View
             style={[
@@ -302,8 +316,11 @@ export function TaskItem({
                         e.stopPropagation?.();
                         onStartTimer(task);
                       }}
-                      className="flex-row items-center gap-1.5 rounded-full px-3 py-1.5"
+                      className="h-10 flex-row items-center gap-1.5 rounded-full px-3"
                       style={{ backgroundColor: palette.button }}
+                      hitSlop={6}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Timer für ${task.title} starten`}
                     >
                       <Clock size={14} color="#FFFFFF" />
                       <Text className="text-sm font-body-semibold text-white">

@@ -4,10 +4,12 @@ import {
   Text,
   Pressable,
   Modal,
+  ScrollView,
   StyleSheet,
   useWindowDimensions,
   type ImageSourcePropType,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import Animated, {
   useSharedValue,
@@ -130,6 +132,7 @@ export function TaskTimerModal({
   const [showConfetti, setShowConfetti] = useState(false);
   const [timerState, setTimerState] = useState<TimerState>("running");
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   const circleProgress = useSharedValue(0);
   const contentScale = useSharedValue(0.8);
@@ -138,20 +141,28 @@ export function TaskTimerModal({
   const palette = getThemePalette(childTheme);
   const isCompactLayout = screenHeight < 760;
   const isVeryCompactLayout = screenHeight < 700;
+  const modalPaddingTop = Math.max(insets.top + 12, isCompactLayout ? 18 : 34);
+  const modalPaddingBottom = Math.max(insets.bottom + 12, isCompactLayout ? 18 : 34);
+  const availableModalHeight = Math.max(1, screenHeight - modalPaddingTop - modalPaddingBottom);
+  const modalMaxHeight = Math.min(screenHeight * 0.9, availableModalHeight);
   const circleSize = Math.min(
     screenWidth * 0.6,
     isCompactLayout ? screenHeight * 0.27 : screenHeight * 0.31,
     isCompactLayout ? 188 : 224
   );
-  const circleRadius = Math.max(66, Math.min(88, circleSize / 2 - 14));
+  const circleRadius = Math.max(
+    isVeryCompactLayout ? 44 : 58,
+    Math.min(isCompactLayout ? 78 : 88, circleSize / 2 - 14)
+  );
   const circumference = 2 * Math.PI * circleRadius;
   const viewBox = `0 0 ${circleRadius * 2 + 24} ${circleRadius * 2 + 24}`;
   const center = circleRadius + 12;
-  const timerTextFontSize = isCompactLayout ? 40 : 48;
-  const timerTextLineHeight = isCompactLayout ? 48 : 56;
+  const timerTextFontSize = isCompactLayout ? 36 : 42;
+  const timerTextLineHeight = isCompactLayout ? 44 : 50;
+  const timerTextMaxFontMultiplier = isVeryCompactLayout ? 1.15 : isCompactLayout ? 1.25 : 1.35;
   const timerVisualOffset = isCompactLayout ? 8 : 6;
-  const timerArtFrameSize = isCompactLayout ? 72 : 84;
-  const timerArtImageSize = isCompactLayout ? 96 : 112;
+  const timerArtFrameSize = isCompactLayout ? 64 : 74;
+  const timerArtImageSize = isCompactLayout ? 86 : 98;
   const modalMaxWidth = Math.min(screenWidth - 34, 372);
 
   useEffect(() => {
@@ -264,8 +275,8 @@ export function TaskTimerModal({
         className="flex-1 px-4"
         style={{
           backgroundColor: "rgba(16, 24, 48, 0.42)",
-          paddingTop: isCompactLayout ? 18 : 34,
-          paddingBottom: isCompactLayout ? 18 : 34,
+          paddingTop: modalPaddingTop,
+          paddingBottom: modalPaddingBottom,
         }}
       >
         {showConfetti && <Confetti colors={palette.celebrationColors} />}
@@ -277,6 +288,7 @@ export function TaskTimerModal({
               contentAnimatedStyle,
               {
                 maxWidth: modalMaxWidth,
+                maxHeight: modalMaxHeight,
                 shadowColor: "#2E3A68",
                 shadowOpacity: 0.2,
                 shadowRadius: 30,
@@ -289,6 +301,7 @@ export function TaskTimerModal({
               style={{
                 backgroundColor: "#FBFAFF",
                 borderColor: "rgba(255,255,255,0.88)",
+                maxHeight: modalMaxHeight,
                 shadowColor: "#9DB8D8",
                 shadowOpacity: 0.18,
                 shadowRadius: 28,
@@ -307,318 +320,333 @@ export function TaskTimerModal({
                   { backgroundColor: "rgba(255,255,255,0.12)" },
                 ]}
               />
-              <View
-                className={cn(
-                  "w-full items-center justify-center",
-                  cardPaddingClass
-                )}
-                style={{ backgroundColor: "rgba(255,255,255,0.12)" }}
+              <ScrollView
+                bounces={false}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+                style={{ maxHeight: modalMaxHeight }}
+                contentContainerStyle={{ flexGrow: 1 }}
               >
-              {timerState === "running" && (
-                <>
-                  <ModalBadge label="Bonus-Challenge" />
-                  <View className="items-center">
-                    <Text
-                      className={cn(
-                        "max-w-[318px] font-headline text-center",
-                        isCompactLayout ? "mb-2 text-[25px] leading-[30px]" : "mb-2 text-[30px] leading-[35px]"
-                      )}
-                      numberOfLines={2}
-                      adjustsFontSizeToFit
-                      minimumFontScale={0.68}
-                      style={{ color: MODAL_NAVY }}
-                    >
-                      {task.title}
-                    </Text>
-                    <Text
-                      className={cn(
-                        "max-w-[260px] font-body text-center",
-                        isCompactLayout ? "mb-4 text-[15px] leading-5" : "mb-5 text-[17px] leading-6"
-                      )}
-                      style={{ color: MODAL_MUTED }}
-                    >
-                      Schaffst du es rechtzeitig?
-                    </Text>
-                  </View>
-
-                  <View
-                    style={{ width: circleSize, height: circleSize + timerVisualOffset }}
-                    className={cn(
-                      "items-center justify-center",
-                      isCompactLayout ? "mb-5" : "mb-6"
-                    )}
-                  >
-                    <Svg
-                      width={circleSize}
-                      height={circleSize}
-                      viewBox={viewBox}
-                      style={{
-                        position: "absolute",
-                        top: timerVisualOffset / 2,
-                        transform: [{ rotate: "-90deg" }],
-                      }}
-                    >
-                      <Circle
-                        cx={center}
-                        cy={center}
-                        r={circleRadius}
-                        fill="none"
-                        stroke="rgba(205,191,248,0.58)"
-                        strokeWidth={12}
-                      />
-                      <AnimatedCircle
-                        cx={center}
-                        cy={center}
-                        r={circleRadius}
-                        fill="none"
-                        stroke={MODAL_BLUE}
-                        strokeWidth={12}
-                        strokeLinecap="round"
-                        strokeDasharray={circumference}
-                        animatedProps={circleAnimatedProps}
-                      />
-                    </Svg>
-                    <View className="items-center" style={{ paddingTop: timerVisualOffset }}>
-                      <View
-                        className="items-center justify-center rounded-full"
-                        style={{
-                          width: timerArtFrameSize,
-                          height: timerArtFrameSize,
-                          backgroundColor: "rgba(255,247,231,0.82)",
-                          borderColor: "rgba(255,255,255,0.92)",
-                          borderWidth: 3,
-                        }}
-                      >
-                        <Image
-                          source={timerArtImage}
-                          style={{
-                            width: timerArtImageSize,
-                            height: timerArtImageSize,
-                          }}
-                          contentFit="contain"
-                          transition={160}
-                        />
-                      </View>
+                <View
+                  className={cn(
+                    "w-full items-center justify-center",
+                    cardPaddingClass
+                  )}
+                  style={{ backgroundColor: "rgba(255,255,255,0.12)" }}
+                >
+                {timerState === "running" && (
+                  <>
+                    <ModalBadge label="Bonus-Challenge" />
+                    <View className="items-center">
                       <Text
-                        className="font-body-bold"
-                        allowFontScaling={false}
+                        className={cn(
+                          "max-w-[318px] font-headline text-center",
+                          isCompactLayout ? "mb-2 text-[25px] leading-[30px]" : "mb-2 text-[30px] leading-[35px]"
+                        )}
+                        numberOfLines={2}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.68}
+                        style={{ color: MODAL_NAVY }}
+                      >
+                        {task.title}
+                      </Text>
+                      <Text
+                        className={cn(
+                          "max-w-[260px] font-body text-center",
+                          isCompactLayout ? "mb-4 text-[15px] leading-5" : "mb-5 text-[17px] leading-6"
+                        )}
+                        style={{ color: MODAL_MUTED }}
+                      >
+                        Schaffst du es rechtzeitig?
+                      </Text>
+                    </View>
+
+                    <View
+                      style={{ width: circleSize, height: circleSize + timerVisualOffset }}
+                      className={cn(
+                        "items-center justify-center",
+                        isCompactLayout ? "mb-5" : "mb-6"
+                      )}
+                    >
+                      <Svg
+                        width={circleSize}
+                        height={circleSize}
+                        viewBox={viewBox}
                         style={{
-                          fontSize: timerTextFontSize,
-                          lineHeight: timerTextLineHeight,
-                          color: MODAL_NAVY,
-                          marginTop: -2,
+                          position: "absolute",
+                          top: timerVisualOffset / 2,
+                          transform: [{ rotate: "-90deg" }],
                         }}
                       >
-                        {formatTime(timeLeft)}
-                      </Text>
+                        <Circle
+                          cx={center}
+                          cy={center}
+                          r={circleRadius}
+                          fill="none"
+                          stroke="rgba(205,191,248,0.58)"
+                          strokeWidth={12}
+                        />
+                        <AnimatedCircle
+                          cx={center}
+                          cy={center}
+                          r={circleRadius}
+                          fill="none"
+                          stroke={MODAL_BLUE}
+                          strokeWidth={12}
+                          strokeLinecap="round"
+                          strokeDasharray={circumference}
+                          animatedProps={circleAnimatedProps}
+                        />
+                      </Svg>
+                      <View className="items-center" style={{ paddingTop: timerVisualOffset }}>
+                        <View
+                          className="items-center justify-center rounded-full"
+                          style={{
+                            width: timerArtFrameSize,
+                            height: timerArtFrameSize,
+                            backgroundColor: "rgba(255,247,231,0.82)",
+                            borderColor: "rgba(255,255,255,0.92)",
+                            borderWidth: 3,
+                          }}
+                        >
+                          <Image
+                            source={timerArtImage}
+                            style={{
+                              width: timerArtImageSize,
+                              height: timerArtImageSize,
+                            }}
+                            contentFit="contain"
+                            transition={160}
+                          />
+                        </View>
+                        <Text
+                          className="font-body-bold"
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.72}
+                          maxFontSizeMultiplier={timerTextMaxFontMultiplier}
+                          style={{
+                            fontSize: timerTextFontSize,
+                            lineHeight: timerTextLineHeight,
+                            color: MODAL_NAVY,
+                            marginTop: -2,
+                          }}
+                        >
+                          {formatTime(timeLeft)}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
 
-                  <Button
-                    onPress={handleChildFinished}
-                    className={cn(
-                      "mb-4 w-full max-w-[320px] rounded-[22px]",
-                      isCompactLayout ? "h-[54px]" : "h-[60px]"
-                    )}
-                    size="lg"
-                    style={{
-                      backgroundColor: MODAL_BLUE,
-                      shadowColor: MODAL_BLUE,
-                      shadowOpacity: 0.26,
-                      shadowRadius: 12,
-                      shadowOffset: { width: 0, height: 8 },
-                    }}
-                    textClassName="text-white"
-                  >
-                    <View className="flex-row items-center gap-3">
-                      <Check size={22} color="#FFFFFF" />
-                      <Text className="text-lg font-body-bold leading-6 text-white">
-                        Fertig!
-                      </Text>
-                    </View>
-                  </Button>
-
-                  {visibleBonusStars > 0 ? (
-                    <View className="flex-row items-center gap-2">
-                      <Award size={19} color={MODAL_GOLD} />
-                      <Text className="text-sm font-body-semibold leading-5" style={{ color: "#5364A9" }}>
-                        +{visibleBonusStars} Bonus-Sterne
-                      </Text>
-                    </View>
-                  ) : null}
-                </>
-              )}
-
-              {timerState === "confirming" && (
-                <>
-                  <ModalBadge label="Eltern-Check" />
-                  <Text
-                    className={cn(
-                      "mb-3 max-w-[318px] text-center font-headline",
-                      isCompactLayout ? "text-[27px] leading-[32px]" : "text-[31px] leading-[36px]"
-                    )}
-                    style={{ color: MODAL_NAVY }}
-                    numberOfLines={3}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.72}
-                  >
-                    Hat {childName} die Aufgabe geschafft?
-                  </Text>
-                  <Text
-                    className={cn(
-                      "max-w-[286px] text-center font-body",
-                      isCompactLayout ? "mb-5 text-[15px] leading-5" : "mb-7 text-[17px] leading-6"
-                    )}
-                    style={{ color: MODAL_MUTED }}
-                  >
-                    Bestätige, ob die Aufgabe rechtzeitig erledigt wurde.
-                  </Text>
-
-                  <View
-                    className={cn(
-                      "items-center justify-center",
-                      isCompactLayout ? "mb-5 h-[146px] w-[190px]" : "mb-7 h-[168px] w-[214px]"
-                    )}
-                  >
-                    <Image
-                      source={parentCheckImage}
-                      style={{
-                        width: isCompactLayout ? 206 : 232,
-                        height: isCompactLayout ? 206 : 232,
-                      }}
-                      contentFit="contain"
-                      transition={160}
-                    />
-                    <Sparkles
-                      size={18}
-                      color="#B9AAF2"
-                      style={{ position: "absolute", right: 4, top: 18 }}
-                    />
-                    <Star
-                      size={13}
-                      color="#B9AAF2"
-                      fill="#B9AAF2"
-                      style={{ position: "absolute", left: 10, bottom: 26 }}
-                    />
-                  </View>
-                  <View className="w-full max-w-[320px] flex-row gap-3">
-                    <Pressable
-                      onPress={() => handleParentConfirmation(true)}
-                      className="h-[58px] flex-1 items-center justify-center rounded-[20px]"
+                    <Button
+                      onPress={handleChildFinished}
+                      className={cn(
+                        "mb-4 w-full max-w-[320px] rounded-[22px]",
+                        isCompactLayout ? "h-[54px]" : "h-[60px]"
+                      )}
+                      size="lg"
                       style={{
                         backgroundColor: MODAL_BLUE,
                         shadowColor: MODAL_BLUE,
-                        shadowOpacity: 0.24,
-                        shadowRadius: 10,
-                        shadowOffset: { width: 0, height: 7 },
+                        shadowOpacity: 0.26,
+                        shadowRadius: 12,
+                        shadowOffset: { width: 0, height: 8 },
                       }}
+                      textClassName="text-white"
                     >
-                      <View className="flex-row items-center gap-2">
-                        <ThumbsUp size={24} color="#FFFFFF" />
+                      <View className="flex-row items-center gap-3">
+                        <Check size={22} color="#FFFFFF" />
                         <Text className="text-lg font-body-bold leading-6 text-white">
-                          Ja!
+                          Fertig!
                         </Text>
                       </View>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => handleParentConfirmation(false)}
-                      className="h-[58px] flex-1 items-center justify-center rounded-[20px] border"
-                      style={{ backgroundColor: "#FFFFFF", borderColor: "rgba(7,26,73,0.28)" }}
-                    >
-                      <View className="flex-row items-center gap-2">
-                        <ThumbsDown size={24} color={MODAL_BLUE} />
-                        <Text
-                          className="text-lg font-body-bold leading-6"
-                          style={{ color: MODAL_BLUE }}
-                        >
-                          Nein
-                        </Text>
-                      </View>
-                    </Pressable>
-                  </View>
-                </>
-              )}
+                    </Button>
 
-              {timerState === "success" && (
-                <>
-                  <View
-                    className={cn(
-                      "items-center justify-center",
-                      isCompactLayout ? "mb-4 h-[156px]" : "mb-5 h-[178px]"
-                    )}
-                  >
-                    <View
-                      className="absolute h-32 w-32 rounded-full"
-                      style={{ backgroundColor: "#DDD3FF", opacity: 0.8 }}
-                    />
-                    <Sparkles
-                      size={18}
-                      color="#B9AAF2"
-                      style={{ position: "absolute", left: 24, top: 22 }}
-                    />
-                    <Star
-                      size={14}
-                      color={MODAL_GOLD}
-                      fill={MODAL_GOLD}
-                      style={{ position: "absolute", right: 34, top: 18 }}
-                    />
-                    <Image
-                      source={successStarImage}
-                      style={{
-                        width: isCompactLayout ? 150 : 172,
-                        height: isCompactLayout ? 150 : 172,
-                      }}
-                      contentFit="contain"
-                      transition={160}
-                    />
-                  </View>
-                  <Text
-                    className={cn(
-                      "mb-2 text-center font-headline",
-                      isCompactLayout ? "text-[42px] leading-[46px]" : "text-[50px] leading-[54px]"
-                    )}
-                    style={{ color: MODAL_NAVY }}
-                  >
-                    Super!
-                  </Text>
-                  <Text
-                    className="mb-6 max-w-[270px] text-center text-[17px] font-body leading-6"
-                    style={{ color: MODAL_MUTED }}
-                  >
-                    Aufgabe geschafft. Der Fortschritt wird jetzt gespeichert.
-                  </Text>
-                  <View
-                    className="mb-1 h-[58px] w-[58px] items-center justify-center rounded-full"
-                    style={{ backgroundColor: "#F0F7EC" }}
-                  >
-                    <View
-                      className="h-[42px] w-[42px] items-center justify-center rounded-full"
-                      style={{
-                        backgroundColor: "#FFFFFF",
-                        borderColor: "#DCEED3",
-                        borderWidth: 1,
-                      }}
+                    {visibleBonusStars > 0 ? (
+                      <View className="flex-row items-center gap-2">
+                        <Award size={19} color={MODAL_GOLD} />
+                        <Text className="text-sm font-body-semibold leading-5" style={{ color: "#5364A9" }}>
+                          +{visibleBonusStars} Bonus-Sterne
+                        </Text>
+                      </View>
+                    ) : null}
+                  </>
+                )}
+
+                {timerState === "confirming" && (
+                  <>
+                    <ModalBadge label="Eltern-Check" />
+                    <Text
+                      className={cn(
+                        "mb-3 max-w-[318px] text-center font-headline",
+                        isCompactLayout ? "text-[27px] leading-[32px]" : "text-[31px] leading-[36px]"
+                      )}
+                      style={{ color: MODAL_NAVY }}
+                      numberOfLines={3}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.72}
                     >
-                      <CircleCheckBig size={27} color="#7FB565" strokeWidth={3} />
+                      Hat {childName} die Aufgabe geschafft?
+                    </Text>
+                    <Text
+                      className={cn(
+                        "max-w-[286px] text-center font-body",
+                        isCompactLayout ? "mb-5 text-[15px] leading-5" : "mb-7 text-[17px] leading-6"
+                      )}
+                      style={{ color: MODAL_MUTED }}
+                    >
+                      Bestätige, ob die Aufgabe rechtzeitig erledigt wurde.
+                    </Text>
+
+                    <View
+                      className={cn(
+                        "items-center justify-center",
+                        isCompactLayout ? "mb-5 h-[146px] w-[190px]" : "mb-7 h-[168px] w-[214px]"
+                      )}
+                    >
+                      <Image
+                        source={parentCheckImage}
+                        style={{
+                          width: isCompactLayout ? 206 : 232,
+                          height: isCompactLayout ? 206 : 232,
+                        }}
+                        contentFit="contain"
+                        transition={160}
+                      />
+                      <Sparkles
+                        size={18}
+                        color="#B9AAF2"
+                        style={{ position: "absolute", right: 4, top: 18 }}
+                      />
+                      <Star
+                        size={13}
+                        color="#B9AAF2"
+                        fill="#B9AAF2"
+                        style={{ position: "absolute", left: 10, bottom: 26 }}
+                      />
                     </View>
-                  </View>
-                  {visibleBonusStars > 0 ? (
-                    <View
-                      className="mt-3 flex-row items-center gap-3 rounded-full px-4 py-2.5"
-                      style={{ backgroundColor: MODAL_LAVENDER_SOFT }}
-                    >
-                      <Award size={28} color={MODAL_GOLD} />
-                      <Text
-                        className="text-center text-base font-body-bold leading-6"
-                        style={{ color: "#5364A9" }}
+                    <View className="w-full max-w-[320px] flex-row gap-3">
+                      <Pressable
+                        onPress={() => handleParentConfirmation(true)}
+                        className="h-[58px] flex-1 items-center justify-center rounded-[20px]"
+                        style={{
+                          backgroundColor: MODAL_BLUE,
+                          shadowColor: MODAL_BLUE,
+                          shadowOpacity: 0.24,
+                          shadowRadius: 10,
+                          shadowOffset: { width: 0, height: 7 },
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${childName} hat die Aufgabe geschafft`}
                       >
-                        +{visibleBonusStars} Bonus-Sterne!
-                      </Text>
+                        <View className="flex-row items-center gap-2">
+                          <ThumbsUp size={24} color="#FFFFFF" />
+                          <Text className="text-lg font-body-bold leading-6 text-white">
+                            Ja!
+                          </Text>
+                        </View>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => handleParentConfirmation(false)}
+                        className="h-[58px] flex-1 items-center justify-center rounded-[20px] border"
+                        style={{ backgroundColor: "#FFFFFF", borderColor: "rgba(7,26,73,0.28)" }}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${childName} hat die Aufgabe nicht geschafft`}
+                      >
+                        <View className="flex-row items-center gap-2">
+                          <ThumbsDown size={24} color={MODAL_BLUE} />
+                          <Text
+                            className="text-lg font-body-bold leading-6"
+                            style={{ color: MODAL_BLUE }}
+                          >
+                            Nein
+                          </Text>
+                        </View>
+                      </Pressable>
                     </View>
-                  ) : null}
-                </>
-              )}
-              </View>
+                  </>
+                )}
+
+                {timerState === "success" && (
+                  <>
+                    <View
+                      className={cn(
+                        "items-center justify-center",
+                        isCompactLayout ? "mb-4 h-[156px]" : "mb-5 h-[178px]"
+                      )}
+                    >
+                      <View
+                        className="absolute h-32 w-32 rounded-full"
+                        style={{ backgroundColor: "#DDD3FF", opacity: 0.8 }}
+                      />
+                      <Sparkles
+                        size={18}
+                        color="#B9AAF2"
+                        style={{ position: "absolute", left: 24, top: 22 }}
+                      />
+                      <Star
+                        size={14}
+                        color={MODAL_GOLD}
+                        fill={MODAL_GOLD}
+                        style={{ position: "absolute", right: 34, top: 18 }}
+                      />
+                      <Image
+                        source={successStarImage}
+                        style={{
+                          width: isCompactLayout ? 150 : 172,
+                          height: isCompactLayout ? 150 : 172,
+                        }}
+                        contentFit="contain"
+                        transition={160}
+                      />
+                    </View>
+                    <Text
+                      className={cn(
+                        "mb-2 text-center font-headline",
+                        isCompactLayout ? "text-[42px] leading-[46px]" : "text-[50px] leading-[54px]"
+                      )}
+                      style={{ color: MODAL_NAVY }}
+                    >
+                      Super!
+                    </Text>
+                    <Text
+                      className="mb-6 max-w-[270px] text-center text-[17px] font-body leading-6"
+                      style={{ color: MODAL_MUTED }}
+                    >
+                      Aufgabe geschafft. Der Fortschritt wird jetzt gespeichert.
+                    </Text>
+                    <View
+                      className="mb-1 h-[58px] w-[58px] items-center justify-center rounded-full"
+                      style={{ backgroundColor: "#F0F7EC" }}
+                    >
+                      <View
+                        className="h-[42px] w-[42px] items-center justify-center rounded-full"
+                        style={{
+                          backgroundColor: "#FFFFFF",
+                          borderColor: "#DCEED3",
+                          borderWidth: 1,
+                        }}
+                      >
+                        <CircleCheckBig size={27} color="#7FB565" strokeWidth={3} />
+                      </View>
+                    </View>
+                    {visibleBonusStars > 0 ? (
+                      <View
+                        className="mt-3 flex-row items-center gap-3 rounded-full px-4 py-2.5"
+                        style={{ backgroundColor: MODAL_LAVENDER_SOFT }}
+                      >
+                        <Award size={28} color={MODAL_GOLD} />
+                        <Text
+                          className="text-center text-base font-body-bold leading-6"
+                          style={{ color: "#5364A9" }}
+                        >
+                          +{visibleBonusStars} Bonus-Sterne!
+                        </Text>
+                      </View>
+                    ) : null}
+                  </>
+                )}
+                </View>
+              </ScrollView>
             </View>
 
             <Pressable

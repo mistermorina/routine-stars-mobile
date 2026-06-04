@@ -159,13 +159,29 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
             isActive && "opacity-80"
           )}
         >
-          <Pressable onLongPress={drag} hitSlop={8}>
+          <Pressable
+            onLongPress={drag}
+            className="h-11 w-11 items-center justify-center rounded-full"
+            accessibilityRole="button"
+            accessibilityLabel="Aufgabe verschieben"
+            hitSlop={4}
+          >
             <GripVertical size={20} color="#737373" />
           </Pressable>
-          <Text className="flex-1 text-base font-body text-foreground">
+          <Text
+            className="min-w-0 flex-1 text-base font-body text-foreground"
+            numberOfLines={2}
+            ellipsizeMode="tail"
+          >
             {item.title}
           </Text>
-          <Pressable onPress={() => handleRemoveTask(item.id)} hitSlop={8}>
+          <Pressable
+            onPress={() => handleRemoveTask(item.id)}
+            className="h-11 w-11 items-center justify-center rounded-full"
+            accessibilityRole="button"
+            accessibilityLabel={`Aufgabe ${item.title} entfernen`}
+            hitSlop={4}
+          >
             <Trash2 size={18} color="#ef4444" />
           </Pressable>
         </View>
@@ -190,15 +206,25 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
               className="flex-row items-center rounded-lg bg-[#87CEEB]/10 border border-[#87CEEB] p-3 gap-3"
             >
               <Check size={18} color="#87CEEB" />
-              <View className="flex-1">
-                <Text className="text-sm font-headline text-foreground">
+              <View className="min-w-0 flex-1">
+                <Text
+                  className="text-sm font-headline text-foreground"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
                   {routine.name}
                 </Text>
                 <Text className="text-xs font-body text-muted-foreground">
                   {routine.tasks.length} Aufgaben
                 </Text>
               </View>
-              <Pressable onPress={() => handleRemoveRoutine(routine.id)} hitSlop={8}>
+              <Pressable
+                onPress={() => handleRemoveRoutine(routine.id)}
+                className="h-11 w-11 items-center justify-center rounded-full"
+                accessibilityRole="button"
+                accessibilityLabel={`Routine ${routine.name} entfernen`}
+                hitSlop={4}
+              >
                 <Trash2 size={16} color="#ef4444" />
               </Pressable>
             </View>
@@ -246,7 +272,11 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerClassName="pt-4"
+                contentContainerStyle={{ paddingTop: 16, paddingRight: 4, gap: 12 }}
+                nestedScrollEnabled
+                snapToInterval={264}
+                snapToAlignment="start"
+                decelerationRate="fast"
               >
                 {recommendedTemplates.map((template) => (
                   <TemplateCard
@@ -347,7 +377,10 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                       size="icon"
                       onPress={handleAddTask}
                       disabled={!newTask.trim()}
+                      className="h-11 w-11"
                       style={{ backgroundColor: palette.button }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Aufgabe hinzufügen"
                     >
                       <Plus size={20} color="#FFFFFF" />
                     </Button>
@@ -360,11 +393,18 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                     variant="outline"
                     onPress={handleSaveRoutine}
                     disabled={tasks.length === 0 || !routineName.trim()}
+                    className="min-h-12 px-3"
                     style={{ borderColor: palette.accent }}
                   >
-                    <Text className="text-sm font-body-semibold" style={{ color: palette.accent }}>
+                    <Text
+                      className="text-center text-sm font-body-semibold"
+                      style={{ color: palette.accent }}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.76}
+                    >
                       {savedRoutines.length > 0
-                        ? "Routine speichern und weitere hinzufügen"
+                        ? "Speichern + weitere"
                         : "Starter-Routine speichern"}
                     </Text>
                   </Button>

@@ -120,8 +120,11 @@ export function MonthlyCompletionCalendar({
                   {item.label}
                 </Text>
                 <View
-                  className="mt-2 h-10 w-10 items-center justify-center rounded-[14px] border"
+                  className="mt-2 items-center justify-center rounded-[14px] border"
                   style={{
+                    width: "92%",
+                    maxWidth: 40,
+                    aspectRatio: 1,
                     backgroundColor: item.isActive ? palette.heroSurface : "#FFFFFF",
                     borderColor: item.isToday
                       ? palette.accent
@@ -143,7 +146,7 @@ export function MonthlyCompletionCalendar({
                   )}
                 </View>
                 <Text
-                  className="mt-1 h-4 text-[10px] font-body-semibold"
+                  className="mt-1 h-4 self-stretch text-center text-[10px] font-body-semibold"
                   style={{ color: item.isActive ? palette.accentText : "#A3A3A3" }}
                   numberOfLines={1}
                 >
@@ -190,8 +193,11 @@ export function MonthlyCompletionCalendar({
                   style={{ width: CALENDAR_CELL_WIDTH }}
                 >
                   <View
-                    className="h-11 w-11 items-center justify-center rounded-[15px] border"
+                    className="items-center justify-center rounded-[15px] border"
                     style={{
+                      width: "92%",
+                      maxWidth: 44,
+                      aspectRatio: 1,
                       backgroundColor: cell.isActive
                         ? palette.heroSurface
                         : "rgba(255,255,255,0.6)",
@@ -219,7 +225,7 @@ export function MonthlyCompletionCalendar({
                   </View>
                   {cell.isActive ? (
                     <Text
-                      className="mt-1 h-4 text-[10px] font-body-semibold"
+                      className="mt-1 h-4 self-stretch text-center text-[10px] font-body-semibold"
                       style={{ color: palette.accentText }}
                       numberOfLines={1}
                     >

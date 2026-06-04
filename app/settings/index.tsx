@@ -14,7 +14,7 @@ import {
   Rocket,
 } from "lucide-react-native";
 import { storage } from "@/lib/storage";
-import { Card } from "@/components/ui/card";
+import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
 
 const settingsItems = [
   {
@@ -98,36 +98,12 @@ export default function SettingsIndex() {
   return (
     <ScrollView className="flex-1 bg-background">
       <View className="p-4 gap-3">
-        <Card className="overflow-hidden rounded-[30px] border-dashed p-0">
-          <View className="rounded-[30px] bg-secondary/70 px-4 py-5">
-            <View className="flex-row items-start justify-between">
-              <View className="mr-4 flex-1">
-                <Text className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground">
-                  Elternbereich
-                </Text>
-                <Text className="mt-2 text-[28px] font-headline text-foreground">
-                  Klar, lokal und kontrollierbar
-                </Text>
-                <Text className="mt-2 text-sm font-body leading-6 text-muted-foreground">
-                  Profile, Fortschritt und Elternschutz bleiben auf diesem Gerät. Bereiche,
-                  die noch nicht live sind, werden bewusst als lokal oder geplant markiert.
-                </Text>
-              </View>
-              <View className="items-end gap-2">
-                <View className="rounded-full bg-white/85 px-3 py-1.5">
-                  <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-foreground">
-                    Lokal
-                  </Text>
-                </View>
-                <View className="rounded-full bg-white/85 px-3 py-1.5">
-                  <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-foreground">
-                    PIN
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        </Card>
+        <SettingsHeroCard
+          label="Elternbereich"
+          title="Lokal geschützt"
+          description="Profile, Fortschritt und Elternschutz bleiben auf diesem Gerät. Geplante Bereiche sind klar markiert."
+          badges={[{ label: "Lokal" }, { label: "PIN" }]}
+        />
 
         <View className="mt-1">
           <Text className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground">
@@ -153,24 +129,30 @@ export default function SettingsIndex() {
               <View className="h-12 w-12 items-center justify-center rounded-[18px] bg-secondary">
                 <Icon size={22} color="#1a1a2e" />
               </View>
-              <View className="ml-3 flex-1 pr-3">
-                <View className="flex-row items-center gap-2">
-                  <Text className="text-base font-body-semibold text-foreground">
+              <View className="ml-3 min-w-0 flex-1 pr-3">
+                <View className="flex-row items-start justify-between gap-2">
+                  <Text
+                    className="min-w-0 flex-1 text-base font-body-semibold text-foreground"
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.86}
+                  >
                     {item.label}
                   </Text>
                   <View
-                    className="rounded-full px-2 py-0.5"
+                    className="shrink-0 rounded-full px-2 py-0.5"
                     style={{ backgroundColor: badgeColors.backgroundColor }}
                   >
                     <Text
                       className="text-[10px] font-body-semibold uppercase tracking-[0.6px]"
                       style={{ color: badgeColors.color }}
+                      numberOfLines={1}
                     >
                       {item.status}
                     </Text>
                   </View>
                 </View>
-                <Text className="mt-1 text-xs font-body text-muted-foreground">
+                <Text className="mt-1 text-xs font-body leading-5 text-muted-foreground" numberOfLines={2}>
                   {item.description}
                 </Text>
               </View>
@@ -205,24 +187,30 @@ export default function SettingsIndex() {
               <View className="h-11 w-11 items-center justify-center rounded-[16px] bg-secondary/80">
                 <Icon size={20} color="#1a1a2e" />
               </View>
-              <View className="ml-3 flex-1 pr-3">
-                <View className="flex-row items-center gap-2">
-                  <Text className="text-base font-body-semibold text-foreground">
+              <View className="ml-3 min-w-0 flex-1 pr-3">
+                <View className="flex-row items-start justify-between gap-2">
+                  <Text
+                    className="min-w-0 flex-1 text-base font-body-semibold text-foreground"
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.86}
+                  >
                     {item.label}
                   </Text>
                   <View
-                    className="rounded-full px-2 py-0.5"
+                    className="shrink-0 rounded-full px-2 py-0.5"
                     style={{ backgroundColor: badgeColors.backgroundColor }}
                   >
                     <Text
                       className="text-[10px] font-body-semibold uppercase tracking-[0.6px]"
                       style={{ color: badgeColors.color }}
+                      numberOfLines={1}
                     >
                       {item.status}
                     </Text>
                   </View>
                 </View>
-                <Text className="mt-1 text-xs font-body text-muted-foreground">
+                <Text className="mt-1 text-xs font-body leading-5 text-muted-foreground" numberOfLines={2}>
                   {item.description}
                 </Text>
               </View>

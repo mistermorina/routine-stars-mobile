@@ -4,9 +4,10 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { BarChart3, Sparkles, Star } from "lucide-react-native";
 import { useChildren } from "@/hooks/use-children";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
-import { InsightCard } from "@/components/profile/insight-card";
 import { Card } from "@/components/ui/card";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
+import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
+import { SettingsMetricCard } from "@/components/settings/settings-metric-card";
 import { formatFriendlyDate, getActivityInsights } from "@/lib/activity-insights";
 import { getThemePalette } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -77,49 +78,13 @@ export default function StatsSettings() {
         )}
 
         <Animated.View entering={FadeInDown.duration(300)}>
-          <Card
-            className="overflow-hidden rounded-[30px]"
-            style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
-          >
-            <View
-              className="absolute inset-x-0 top-0 h-32"
-              style={{ backgroundColor: palette.heroSurface }}
-            />
-            <View
-              className="absolute right-[-16px] top-[-10px] h-24 w-24 rounded-full"
-              style={{ backgroundColor: palette.motifPrimary, opacity: 0.2 }}
-            />
-            <View className="flex-row items-start justify-between gap-3">
-              <View className="flex-1">
-                <View
-                  className="self-start rounded-full px-3 py-1.5"
-                  style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
-                >
-                  <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
-                    Eltern-Detailansicht
-                  </Text>
-                </View>
-                <Text className="mt-3 text-[30px] font-headline text-foreground">
-                  Statistiken & Trends
-                </Text>
-                <Text className="mt-2 text-sm font-body leading-6" style={{ color: palette.accentText }}>
-                  Die letzten Aktivitätstage, Tageshöhen und gesammelten Sterne im Überblick.
-                </Text>
-              </View>
-              <View
-                className="rounded-[22px] px-3.5 py-3"
-                style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
-              >
-                <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
-                  Zuletzt
-                </Text>
-                <Text className="mt-1 text-lg font-headline" style={{ color: palette.accentText }}>
-                  {recentSummaries.length}
-                </Text>
-                <Text className="text-xs font-body text-muted-foreground">Tage im Blick</Text>
-              </View>
-            </View>
-          </Card>
+          <SettingsHeroCard
+            label="Eltern-Detailansicht"
+            title="Statistiken"
+            description="Aktivitätstage, Tageshöhen und gesammelte Sterne aus den lokalen Daten."
+            badges={[{ label: `${recentSummaries.length} Tage` }]}
+            palette={palette}
+          />
         </Animated.View>
 
         {groupedLogs.length === 0 ? (
@@ -147,36 +112,40 @@ export default function StatsSettings() {
         ) : null}
 
         <View className="mt-4 flex-row gap-3">
-          <InsightCard
-            label="Verdiente Sterne"
+          <SettingsMetricCard
+            label="Sterne"
             value={`${insights.totalStars}`}
-            caption="Alle Sterne aus gespeicherten Aktivitäten"
+            caption="Aus Aufgaben"
             accentColor={palette.chartPrimary}
             backgroundColor={palette.cardTint}
+            borderColor={palette.accentBorder}
           />
-          <InsightCard
+          <SettingsMetricCard
             label="Aktivitäten"
             value={`${insights.totalActivities}`}
-            caption="So viele Aufgaben wurden insgesamt geloggt"
+            caption="Erledigte Aufgaben"
             accentColor={palette.chartSecondary}
             backgroundColor={palette.cardTint}
+            borderColor={palette.accentBorder}
           />
         </View>
 
         <View className="mt-3 flex-row gap-3">
-          <InsightCard
+          <SettingsMetricCard
             label="Aktive Tage"
             value={`${insights.activeDays}`}
-            caption="Tage mit mindestens einer erledigten Aufgabe"
+            caption="Mit Aktivität"
             accentColor={palette.accentStrong}
             backgroundColor={palette.cardTint}
+            borderColor={palette.accentBorder}
           />
-          <InsightCard
-            label="Beste Serie"
+          <SettingsMetricCard
+            label="Serie"
             value={`${insights.currentStreak}`}
-            caption="Aktuelle Serie zusammenhängender Aktivitätstage"
+            caption="Zusammenhängend"
             accentColor={palette.accentText}
             backgroundColor={palette.cardTint}
+            borderColor={palette.accentBorder}
           />
         </View>
 
@@ -196,8 +165,10 @@ export default function StatsSettings() {
               >
                 <BarChart3 size={20} color={palette.accentStrong} />
               </View>
-              <View>
-                <Text className="text-lg font-headline text-foreground">Letzte 7 Tage</Text>
+              <View className="min-w-0 flex-1">
+                <Text className="text-lg font-headline text-foreground" numberOfLines={1}>
+                  Letzte 7 Tage
+                </Text>
                 <Text className="text-sm font-body text-muted-foreground">
                   Tageshöhen anhand verdienter Sterne
                 </Text>

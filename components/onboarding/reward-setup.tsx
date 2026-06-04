@@ -111,24 +111,35 @@ export function RewardSetup({ onNext, onBack, formData }: RewardSetupProps) {
                 </View>
               </View>
 
-              <View className="mt-4 flex-row flex-wrap gap-2">
+              <View className="mt-4 gap-2">
                 {starterRewards.map((reward) => {
                   const Icon = getIcon(reward.iconName);
 
                   return (
                     <View
                       key={reward.id}
-                      className="flex-row items-center gap-1.5 rounded-full border px-3 py-1.5"
+                      className="max-w-full min-w-0 flex-row items-center rounded-2xl border px-3 py-2"
                       style={{
                         borderColor: palette.accentBorder,
                         backgroundColor: "#FFFFFF",
                       }}
                     >
-                      <Icon size={14} color={palette.accentStrong} />
-                      <Text className="text-xs font-body-semibold text-foreground">
-                        {reward.title}
-                      </Text>
-                      <Text className="text-xs font-body text-muted-foreground">
+                      <View
+                        className="h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                        style={{ backgroundColor: palette.accentSoft }}
+                      >
+                        <Icon size={14} color={palette.accentStrong} />
+                      </View>
+                      <View className="ml-2 min-w-0 flex-1">
+                        <Text
+                          className="text-xs font-body-semibold leading-4 text-foreground"
+                          numberOfLines={2}
+                          ellipsizeMode="tail"
+                        >
+                          {reward.title}
+                        </Text>
+                      </View>
+                      <Text className="ml-2 shrink-0 text-xs font-body text-muted-foreground">
                         {reward.cost}⭐
                       </Text>
                     </View>
@@ -165,26 +176,43 @@ export function RewardSetup({ onNext, onBack, formData }: RewardSetupProps) {
                     <Text className="text-sm font-body-semibold text-muted-foreground mb-2">
                       Gewählt ({selectedRewards.length})
                     </Text>
-                    <View className="flex-row flex-wrap gap-2">
+                    <View className="gap-2">
                       {selectedRewards.map((reward) => {
                         const Icon = getIcon(reward.iconName);
                         return (
                           <View
                             key={reward.id}
-                            className="flex-row items-center gap-1.5 rounded-full border px-3 py-1.5"
+                            className="max-w-full min-w-0 flex-row items-center rounded-2xl border px-3 py-2"
                             style={{
                               borderColor: palette.accentBorder,
                               backgroundColor: palette.accentSoft,
                             }}
                           >
-                            <Icon size={14} color={palette.accentStrong} />
-                            <Text className="text-xs font-body-semibold text-foreground">
-                              {reward.title}
-                            </Text>
-                            <Text className="text-xs font-body text-muted-foreground">
+                            <View
+                              className="h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                              style={{ backgroundColor: palette.surface }}
+                            >
+                              <Icon size={14} color={palette.accentStrong} />
+                            </View>
+                            <View className="ml-2 min-w-0 flex-1">
+                              <Text
+                                className="text-xs font-body-semibold leading-4 text-foreground"
+                                numberOfLines={2}
+                                ellipsizeMode="tail"
+                              >
+                                {reward.title}
+                              </Text>
+                            </View>
+                            <Text className="ml-2 shrink-0 text-xs font-body text-muted-foreground">
                               {reward.cost}⭐
                             </Text>
-                            <Pressable onPress={() => handleRemoveReward(reward.id)} hitSlop={8}>
+                            <Pressable
+                              onPress={() => handleRemoveReward(reward.id)}
+                              className="ml-1 h-11 w-11 shrink-0 items-center justify-center rounded-full"
+                              accessibilityRole="button"
+                              accessibilityLabel={`Belohnung ${reward.title} entfernen`}
+                              hitSlop={4}
+                            >
                               <X size={14} color="#737373" />
                             </Pressable>
                           </View>

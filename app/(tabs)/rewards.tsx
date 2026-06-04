@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { View, Text, ScrollView } from "react-native";
-import { ChevronRight } from "lucide-react-native";
+import { Image } from "expo-image";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { getIcon, Trophy, Star, Sparkles } from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
@@ -14,6 +14,7 @@ import { ThemedScreenBackground } from "@/components/ui/themed-screen-background
 import { triggerFeedback } from "@/lib/feedback";
 import { getThemePalette } from "@/lib/theme";
 import type { Reward } from "@/lib/types";
+import rewardStarGiftImage from "@/assets/images/reward-star-gift-soft.png";
 
 export default function RewardsScreen() {
   const {
@@ -138,6 +139,20 @@ export default function RewardsScreen() {
                 className="absolute left-[-8px] bottom-10 h-20 w-20 rounded-full"
                 style={{ backgroundColor: palette.motifPrimary, opacity: 0.18 }}
               />
+              <Image
+                source={rewardStarGiftImage}
+                style={{
+                  position: "absolute",
+                  right: -24,
+                  top: 20,
+                  width: 128,
+                  height: 128,
+                  opacity: 0.34,
+                }}
+                contentFit="contain"
+                transition={180}
+                accessible={false}
+              />
 
               <View className="relative">
                 <View>
@@ -207,7 +222,6 @@ export default function RewardsScreen() {
                           : "Lege im Onboarding oder in den Einstellungen Belohnungen an."}
                       </Text>
                     </View>
-                    <ChevronRight size={18} color={palette.accentStrong} />
                   </View>
                 </View>
 

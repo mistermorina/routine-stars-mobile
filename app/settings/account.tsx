@@ -10,6 +10,7 @@ import { storage, KEYS } from "@/lib/storage";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
+import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
 import { getThemePalette } from "@/lib/theme";
 
 export default function AccountSettings() {
@@ -56,48 +57,13 @@ export default function AccountSettings() {
   return (
     <ThemedScreenBackground theme={selectedChild?.theme}>
       <ScrollView className="flex-1" contentContainerClassName="p-4 pb-8">
-        <Card
-          className="mb-4 overflow-hidden rounded-[30px]"
-          style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
-        >
-          <View
-            className="absolute inset-x-0 top-0 h-32"
-            style={{ backgroundColor: palette.heroSurface }}
-          />
-          <View
-            className="absolute right-[-16px] top-[-10px] h-24 w-24 rounded-full"
-            style={{ backgroundColor: palette.motifSecondary, opacity: 0.22 }}
-          />
-          <View className="flex-row items-start justify-between gap-3">
-            <View className="flex-1">
-              <View
-                className="self-start rounded-full px-3 py-1.5"
-                style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
-              >
-                <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
-                  Lokal & geschützt
-                </Text>
-              </View>
-              <Text className="mt-3 text-[30px] font-headline text-foreground">
-                Gerät & Elternschutz
-              </Text>
-              <Text className="mt-2 text-sm font-body leading-6" style={{ color: palette.accentText }}>
-                Kinderprofile, Routinen und Belohnungen bleiben lokal auf diesem Gerät. Der Elternbereich wird zusätzlich per PIN geschützt.
-              </Text>
-            </View>
-            <View
-              className="rounded-[22px] px-3.5 py-3"
-              style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
-            >
-              <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
-                PIN
-              </Text>
-              <Text className="mt-1 text-base font-headline" style={{ color: palette.accentText }}>
-                {pinConfigured ? "aktiv" : "offen"}
-              </Text>
-            </View>
-          </View>
-        </Card>
+        <SettingsHeroCard
+          label="Lokal & geschützt"
+          title="Lokal geschützt"
+          description="Kinderprofile, Routinen und Belohnungen bleiben auf diesem Gerät. Der Elternbereich ist per PIN geschützt."
+          badges={[{ label: pinConfigured ? "PIN aktiv" : "PIN offen" }]}
+          palette={palette}
+        />
 
         <Card
           className="mb-4 rounded-[28px]"
@@ -111,10 +77,15 @@ export default function AccountSettings() {
               <Smartphone size={20} color={palette.accentStrong} />
             </View>
             <View className="ml-3 flex-1">
-              <Text className="text-base font-body-semibold text-foreground">
+              <Text
+                className="text-base font-body-semibold text-foreground"
+                numberOfLines={2}
+                adjustsFontSizeToFit
+                minimumFontScale={0.9}
+              >
                 Daten bleiben auf diesem Gerät
               </Text>
-              <Text className="mt-1 text-sm font-body text-muted-foreground">
+              <Text className="mt-1 text-sm font-body leading-5 text-muted-foreground">
                 Routine Stars speichert Kinder, Routinen und Belohnungen lokal. Cloud-Konten und Synchronisierung kommen später.
               </Text>
             </View>
@@ -131,11 +102,17 @@ export default function AccountSettings() {
           >
             <View className="flex-row items-center gap-2">
               <Sparkles size={16} color={palette.accentStrong} />
-              <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>
+              <Text
+                className="text-sm font-body-semibold"
+                style={{ color: palette.accentText }}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.86}
+              >
                 Kein Cloud-Konto aktiv
               </Text>
             </View>
-            <Text className="mt-2 text-sm font-body text-muted-foreground">
+            <Text className="mt-2 text-sm font-body leading-5 text-muted-foreground">
               Diese App arbeitet aktuell komplett lokal auf diesem Gerät. PIN-Schutz und Sitzung betreffen nur diesen lokalen Elternbereich.
             </Text>
           </View>
