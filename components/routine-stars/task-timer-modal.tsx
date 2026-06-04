@@ -24,7 +24,6 @@ import {
   Award,
   ThumbsUp,
   ThumbsDown,
-  ShieldCheck,
   Sparkles,
   Star,
   CircleCheckBig,
@@ -38,6 +37,7 @@ import type { ChildTheme, Task } from "@/lib/types";
 import timerChallengeBackground from "@/assets/images/timer-challenge-bg.png";
 import parentCheckBackground from "@/assets/images/parent-check-bg.png";
 import taskSuccessBackground from "@/assets/images/task-success-bg.png";
+import parentCheckImage from "@/assets/images/parent-check-soft.png";
 import successStarImage from "@/assets/images/reward-star-gift-soft.png";
 import timerMorningImage from "@/assets/images/routine-morning-sun-soft.png";
 import timerEveningImage from "@/assets/images/routine-evening-moon-soft.png";
@@ -215,9 +215,7 @@ export function TaskTimerModal({
         setTimerState("success");
         setShowConfetti(true);
         void triggerFeedback("stars_added");
-        contentScale.value = withSpring(1.1, { damping: 10, stiffness: 200 }, () => {
-          contentScale.value = withSpring(1, { damping: 15, stiffness: 200 });
-        });
+        contentScale.value = withSpring(1, { damping: 15, stiffness: 200 });
         setTimeout(() => {
           onClose(true);
         }, 2500);
@@ -479,35 +477,18 @@ export function TaskTimerModal({
                   <View
                     className={cn(
                       "items-center justify-center",
-                      isCompactLayout ? "mb-5 h-[104px] w-[132px]" : "mb-7 h-[126px] w-[154px]"
+                      isCompactLayout ? "mb-5 h-[146px] w-[190px]" : "mb-7 h-[168px] w-[214px]"
                     )}
                   >
-                    <View
-                      className="absolute h-24 w-32 rounded-full"
-                      style={{ backgroundColor: "#ECE7FF", opacity: 0.92 }}
-                    />
-                    <View
-                      className="absolute bottom-0 h-12 w-44 rounded-full"
-                      style={{ backgroundColor: "#E7E2FF", opacity: 0.48 }}
-                    />
-                    <View
-                      className="items-center justify-center rounded-[28px]"
+                    <Image
+                      source={parentCheckImage}
                       style={{
-                        width: isCompactLayout ? 88 : 104,
-                        height: isCompactLayout ? 88 : 104,
-                        backgroundColor: "#9C8AF4",
-                        shadowColor: "#7865D7",
-                        shadowOpacity: 0.28,
-                        shadowRadius: 16,
-                        shadowOffset: { width: 0, height: 10 },
+                        width: isCompactLayout ? 206 : 232,
+                        height: isCompactLayout ? 206 : 232,
                       }}
-                    >
-                      <ShieldCheck
-                        size={isCompactLayout ? 58 : 68}
-                        color="#FFFFFF"
-                        strokeWidth={2.8}
-                      />
-                    </View>
+                      contentFit="contain"
+                      transition={160}
+                    />
                     <Sparkles
                       size={18}
                       color="#B9AAF2"
