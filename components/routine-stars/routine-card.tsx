@@ -6,11 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { TaskItem } from "./task-item";
 import { getThemePalette } from "@/lib/theme";
+import { getRoutineVisual } from "@/lib/routine-visuals";
 import type { ChildTheme, Routine, Task } from "@/lib/types";
-import routineMorningSunImage from "@/assets/images/routine-morning-sun-soft.png";
-import routineEveningMoonImage from "@/assets/images/routine-evening-moon-soft.png";
-import routineTrophyImage from "@/assets/images/routine-trophy-soft.png";
-import rewardStarGiftImage from "@/assets/images/reward-star-gift-soft.png";
+
+const ROUTINE_HEADER_ART_SIZE = 88;
 
 interface RoutineCardProps {
   routine: Routine;
@@ -18,41 +17,6 @@ interface RoutineCardProps {
   onStartTimer: (task: Task) => void;
   childTheme?: ChildTheme;
   highlightTaskId?: string;
-}
-
-function getRoutineVisual(routine: Routine, fallbackAccent: string) {
-  const name = routine.name.toLowerCase();
-
-  if (name.includes("abend") || name.includes("nacht")) {
-    return {
-      accent: "#7C55E7",
-      accentSoft: "#F3EEFF",
-      art: routineEveningMoonImage,
-      completionArt: rewardStarGiftImage,
-      completionTitle: "Gut gemacht!",
-      completionText: "Schlaf schön und träum was Wunderbares!",
-    };
-  }
-
-  if (name.includes("morgen") || name.includes("schule")) {
-    return {
-      accent: "#F7941D",
-      accentSoft: "#FFF4DD",
-      art: routineMorningSunImage,
-      completionArt: routineTrophyImage,
-      completionTitle: "Fantastisch!",
-      completionText: "Du hast deine Morgenroutine abgeschlossen!",
-    };
-  }
-
-  return {
-    accent: routine.color || fallbackAccent,
-    accentSoft: "#F6FAFF",
-    art: null,
-    completionArt: rewardStarGiftImage,
-    completionTitle: "Stark gemacht!",
-    completionText: "Diese Routine ist komplett geschafft.",
-  };
 }
 
 export function RoutineCard({
@@ -68,7 +32,6 @@ export function RoutineCard({
   const palette = getThemePalette(childTheme);
   const visual = getRoutineVisual(routine, palette.chartPrimary);
   const isComplete = totalTasks > 0 && completedTasks === totalTasks;
-  const hasHeroArt = Boolean(visual.art);
 
   return (
     <Card
@@ -99,11 +62,11 @@ export function RoutineCard({
           source={visual.art}
           style={{
             position: "absolute",
-            right: -10,
-            top: -18,
-            width: 142,
-            height: 142,
-            opacity: 0.78,
+            right: 8,
+            top: 2,
+            width: ROUTINE_HEADER_ART_SIZE,
+            height: ROUTINE_HEADER_ART_SIZE,
+            opacity: 0.84,
           }}
           contentFit="contain"
           transition={160}
@@ -111,20 +74,18 @@ export function RoutineCard({
       ) : null}
 
       <View className="relative">
-        <View className={hasHeroArt ? "min-h-[94px] pr-28" : "min-h-[74px] pr-0"}>
+        <View className="min-h-[76px] pr-[74px]">
           <Text
-            className={hasHeroArt
-              ? "text-[24px] font-headline leading-[30px]"
-              : "text-[25px] font-headline leading-[31px]"}
+            className="text-[16px] font-headline leading-[21px]"
             style={{ color: visual.accent }}
-            numberOfLines={hasHeroArt ? 2 : 1}
+            numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.82}
           >
             {routine.name}
           </Text>
           <View
-            className="mt-3 self-start flex-row items-center gap-1.5 rounded-full px-3 py-1.5"
+            className="mt-2 self-start flex-row items-center gap-1.5 rounded-full px-3 py-1.5"
             style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
           >
             <Star size={14} color={visual.accent} fill={visual.accent} />
