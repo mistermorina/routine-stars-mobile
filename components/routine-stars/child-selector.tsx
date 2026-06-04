@@ -5,6 +5,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from "react-native-reanimated";
+import { AvatarImage } from "@/components/ui/avatar-image";
 import { cn } from "@/lib/utils";
 import type { Child } from "@/lib/types";
 
@@ -53,7 +54,13 @@ function ChildAvatar({
             : "border-2 border-transparent"
         )}
       >
-        <Text className="text-4xl">{child.avatar}</Text>
+        <AvatarImage
+          avatar={child.avatar}
+          size={76}
+          borderRadius={38}
+          backgroundColor="transparent"
+          accessibilityLabel={`${child.name} Avatar`}
+        />
       </Animated.View>
       <Text
         className={cn(

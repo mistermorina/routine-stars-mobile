@@ -365,26 +365,24 @@ export default function RoutinesSettingsScreen() {
       <ScrollView className="flex-1" contentContainerClassName="p-4 pb-10">
         <Card className="overflow-hidden rounded-[30px] border p-0">
           <View className="rounded-[30px] bg-secondary/70 px-4 py-5">
-            <View className="flex-row items-start justify-between">
-              <View className="mr-4 flex-1">
+            <View className="gap-3">
+              <View className="flex-row flex-wrap items-center gap-2">
                 <Text className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground">
                   Familienroutinen
                 </Text>
-                <Text className="mt-2 text-[28px] font-headline text-foreground">
-                  Routinen wirklich pflegen
-                </Text>
-                <Text className="mt-2 text-sm font-body leading-6 text-muted-foreground">
-                  Hier bearbeitest du Namen, Aufgaben, Sterne, Timer und Bonuswerte fuer
-                  alle Kinder in eurer Familie.
-                </Text>
-              </View>
-              <View className="items-end gap-2">
                 <View className="rounded-full bg-white/85 px-3 py-1.5">
                   <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-foreground">
                     {isLoading ? "..." : `${routines.length} Routinen`}
                   </Text>
                 </View>
               </View>
+              <Text className="text-[32px] font-headline leading-[38px] text-foreground">
+                Routinen wirklich pflegen
+              </Text>
+              <Text className="text-sm font-body leading-6 text-muted-foreground">
+                Hier bearbeitest du Namen, Aufgaben, Sterne, Timer und Bonuswerte fuer alle
+                Kinder in eurer Familie.
+              </Text>
             </View>
           </View>
         </Card>

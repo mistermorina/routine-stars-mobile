@@ -80,7 +80,10 @@ export default function ProfileScreen() {
 
   if (isLoading) {
     return (
-      <ThemedScreenBackground theme={selectedChild?.theme}>
+      <ThemedScreenBackground
+        theme={selectedChild?.theme}
+        backgroundSkin={selectedChild?.backgroundSkin}
+      >
         <View className="flex-1 items-center justify-center">
           <Text className="font-body text-muted-foreground">Laden...</Text>
         </View>
@@ -104,7 +107,10 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ThemedScreenBackground theme={selectedChild.theme}>
+    <ThemedScreenBackground
+      theme={selectedChild.theme}
+      backgroundSkin={selectedChild.backgroundSkin}
+    >
       <SafeAreaView className="flex-1" edges={["top"]}>
         <ScrollView
           className="flex-1"

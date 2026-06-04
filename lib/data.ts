@@ -1,5 +1,7 @@
 import type { Routine, Reward } from "@/lib/types";
 
+export { avatarCategories } from "@/lib/avatars";
+
 export const mockRoutines: Routine[] = [
   {
     id: "morning",
@@ -55,24 +57,3 @@ export const mockRewards: Reward[] = [
   { id: "r3", title: "Später ins Bett", cost: 15, iconName: "bed" },
   { id: "r4", title: "Extra Geschichte", cost: 8, iconName: "book-open" },
 ];
-
-export const avatarCategories = {
-  Tiere: [
-    { id: "a1", label: "Löwe", emoji: "🦁" },
-    { id: "a2", label: "Hase", emoji: "🐰" },
-    { id: "a3", label: "Bär", emoji: "🐻" },
-    { id: "a4", label: "Fuchs", emoji: "🦊" },
-  ],
-  Plüschis: [
-    { id: "a5", label: "Teddy", emoji: "🧸" },
-    { id: "a6", label: "Einhorn", emoji: "🦄" },
-    { id: "a7", label: "Dino", emoji: "🦕" },
-    { id: "a8", label: "Ente", emoji: "🐥" },
-  ],
-  Stars: [
-    { id: "a9", label: "Stern", emoji: "⭐" },
-    { id: "a10", label: "Rakete", emoji: "🚀" },
-    { id: "a11", label: "Regenbogen", emoji: "🌈" },
-    { id: "a12", label: "Sonne", emoji: "☀️" },
-  ],
-};

@@ -8,6 +8,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { ChevronDown, ChevronUp, Star, Settings } from "lucide-react-native";
+import { AvatarImage } from "@/components/ui/avatar-image";
 import { cn } from "@/lib/utils";
 import { getThemePalette } from "@/lib/theme";
 import type { Child } from "@/lib/types";
@@ -74,7 +75,13 @@ export function Header({
                 className="h-10 w-10 items-center justify-center rounded-[14px]"
                 style={{ backgroundColor: palette.heroSurface }}
               >
-                <Text className="text-[22px]">{child.avatar}</Text>
+                <AvatarImage
+                  avatar={child.avatar}
+                  size={40}
+                  borderRadius={14}
+                  backgroundColor="transparent"
+                  accessibilityLabel={`${child.name} Avatar`}
+                />
               </View>
               <View className="min-w-0 flex-1">
                 <Text
@@ -158,7 +165,13 @@ export function Header({
                 className="h-[50px] w-[50px] items-center justify-center rounded-[18px]"
                 style={{ backgroundColor: palette.heroSurface }}
               >
-                <Text className="text-[26px]">{child.avatar}</Text>
+                <AvatarImage
+                  avatar={child.avatar}
+                  size={50}
+                  borderRadius={18}
+                  backgroundColor="transparent"
+                  accessibilityLabel={`${child.name} Avatar`}
+                />
               </View>
               <View className="flex-1">
                 <View className="flex-row flex-wrap items-center gap-2">
@@ -267,7 +280,12 @@ export function Header({
                           }
                     }
                   >
-                    <Text className="text-sm">{c.avatar}</Text>
+                    <AvatarImage
+                      avatar={c.avatar}
+                      size={24}
+                      borderRadius={12}
+                      accessibilityLabel={`${c.name} Avatar`}
+                    />
                     <Text
                       className={cn(
                         "text-sm font-body-semibold",

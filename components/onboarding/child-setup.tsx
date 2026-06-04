@@ -1,15 +1,21 @@
 import React, { useMemo, useState } from "react";
-import { View, Text, Pressable, ScrollView } from "react-native";
+import { Alert, View, Text, Pressable, ScrollView } from "react-native";
 import { Image } from "expo-image";
-import { Star, PawPrint, Rocket, Trash2 } from "lucide-react-native";
+import { ImagePlus, Star, PawPrint, Rocket, Trash2 } from "lucide-react-native";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { avatarCategories } from "@/lib/data";
+import { AvatarImage } from "@/components/ui/avatar-image";
+import {
+  areAvatarValuesEqual,
+  avatarCategories,
+  DEFAULT_AVATAR_VALUE,
+} from "@/lib/avatars";
+import { pickAvatarPhotoAsync } from "@/lib/avatar-photo-picker";
 import { triggerFeedback } from "@/lib/feedback";
 import { getThemePalette } from "@/lib/theme";
-import type { AgeGroup, ChildProfile, ChildTheme } from "@/lib/types";
+import type { AgeGroup, AvatarValue, ChildProfile, ChildTheme } from "@/lib/types";
 import onboardingHeroImage from "@/assets/images/onboarding-hero.png";
 
 interface ChildSetupProps {
@@ -50,7 +56,6 @@ const ageGroupOptions: { id: AgeGroup; label: string; hint: string }[] = [
   { id: "9-12", label: "9–12 Jahre", hint: "Mehr Eigenständigkeit und Verantwortung" },
 ];
 
-const defaultAvatar = avatarCategories.Tiere[0].emoji;
 const avatarCategoryNames = Object.keys(avatarCategories) as (keyof typeof avatarCategories)[];
 
 function ThemePreview({
@@ -83,7 +88,7 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
     formData.children || []
   );
   const [childName, setChildName] = useState("");
-  const [selectedAvatar, setSelectedAvatar] = useState(defaultAvatar);
+  const [selectedAvatar, setSelectedAvatar] = useState<AvatarValue>(DEFAULT_AVATAR_VALUE);
   const [selectedTheme, setSelectedTheme] = useState<ChildTheme>("sterne");
   const [selectedAgeGroup, setSelectedAgeGroup] = useState<AgeGroup>(
     formData.children[0]?.ageGroup ?? "6-8"
@@ -100,10 +105,26 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
 
   const resetForm = () => {
     setChildName("");
-    setSelectedAvatar(defaultAvatar);
+    setSelectedAvatar(DEFAULT_AVATAR_VALUE);
     setSelectedTheme("sterne");
     setSelectedAgeGroup("6-8");
     setSelectedAvatarCategory("Tiere");
+  };
+
+  const handlePickAvatarPhoto = async () => {
+    const result = await pickAvatarPhotoAsync();
+
+    if (result.status === "selected") {
+      setSelectedAvatar(result.avatar);
+      return;
+    }
+
+    if (result.status === "denied") {
+      Alert.alert(
+        "Zugriff auf Fotos benötigt",
+        "Erlaube den Zugriff auf deine Fotomediathek, um ein eigenes Profilbild auszuwählen."
+      );
+    }
   };
 
   const handleAddChild = () => {
@@ -216,7 +237,7 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
               className="flex-row items-center rounded-[20px] border p-3 gap-3"
               style={{ backgroundColor: palette.accentSoft, borderColor: palette.accentBorder }}
             >
-              <Text className="text-2xl">{profile.avatar}</Text>
+              <AvatarImage avatar={profile.avatar} size={36} borderRadius={14} />
               <View className="min-w-0 flex-1">
                 <Text className="text-sm font-headline text-foreground">
                   {profile.name}
@@ -402,10 +423,10 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                 {avatarOptions.map((avatar) => (
                   <Pressable
                     key={avatar.id}
-                    onPress={() => setSelectedAvatar(avatar.emoji)}
+                    onPress={() => setSelectedAvatar(avatar.value)}
                     className="h-14 w-14 items-center justify-center rounded-full border-2"
                     style={
-                      selectedAvatar === avatar.emoji
+                      areAvatarValuesEqual(selectedAvatar, avatar.value)
                         ? {
                             borderColor: palette.accent,
                             backgroundColor: palette.accentSoft,
@@ -413,13 +434,35 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                         : {
                             borderColor: "rgba(255,255,255,0.2)",
                             backgroundColor: "rgba(255,255,255,0.72)",
-                          }
+                        }
                     }
                   >
-                    <Text className="text-2xl">{avatar.emoji}</Text>
+                    <AvatarImage
+                      avatar={avatar.value}
+                      size={48}
+                      borderRadius={24}
+                      backgroundColor="transparent"
+                      accessibilityLabel={avatar.label}
+                    />
                   </Pressable>
                 ))}
               </View>
+
+              <Pressable
+                onPress={handlePickAvatarPhoto}
+                className="mt-1 flex-row items-center justify-center rounded-[18px] border px-4 py-3"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.76)",
+                  borderColor: palette.accentBorder,
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Eigenes Foto aus der Fotomediathek auswählen"
+              >
+                <ImagePlus size={18} color={palette.accentStrong} />
+                <Text className="ml-2 text-sm font-body-semibold" style={{ color: palette.accentText }}>
+                  Eigenes Foto auswählen
+                </Text>
+              </Pressable>
             </View>
 
             {/* Live preview */}
@@ -438,7 +481,12 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                   className="h-14 w-14 items-center justify-center rounded-full"
                   style={{ backgroundColor: palette.surface }}
                 >
-                  <Text className="text-3xl">{selectedAvatar}</Text>
+                  <AvatarImage
+                    avatar={selectedAvatar}
+                    size={56}
+                    borderRadius={28}
+                    backgroundColor={palette.surface}
+                  />
                 </View>
                 <View className="ml-3 flex-1">
                 <Text className="text-lg font-headline text-foreground">

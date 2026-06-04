@@ -2,11 +2,15 @@ import { useState, useEffect, useCallback } from "react";
 import { useFocusEffect } from "expo-router";
 import { storage, KEYS } from "@/lib/storage";
 import type { Child } from "@/lib/types";
+import { normalizeAvatarValue } from "@/lib/avatars";
+import { normalizeBackgroundSkin } from "@/lib/background-skins";
 import { normalizeChildTheme } from "@/lib/theme";
 
 function normalizeChild(child: Child): Child {
   return {
     ...child,
+    avatar: normalizeAvatarValue(child.avatar),
+    backgroundSkin: normalizeBackgroundSkin(child.backgroundSkin),
     theme: normalizeChildTheme(child.theme),
   };
 }

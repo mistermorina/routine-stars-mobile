@@ -86,7 +86,10 @@ export default function LegalSettings() {
   }
 
   return (
-    <ThemedScreenBackground theme={selectedChild?.theme}>
+    <ThemedScreenBackground
+      theme={selectedChild?.theme}
+      backgroundSkin={selectedChild?.backgroundSkin}
+    >
       <ScrollView className="flex-1" contentContainerClassName="p-4 pb-8">
         <Card
           className="mb-4 overflow-hidden rounded-[30px]"

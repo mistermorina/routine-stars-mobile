@@ -295,7 +295,10 @@ export default function DashboardScreen() {
   if (isLoading || routinesLoading) {
     return (
       <SafeAreaView className="flex-1">
-        <ThemedScreenBackground theme={selectedChild?.theme}>
+        <ThemedScreenBackground
+          theme={selectedChild?.theme}
+          backgroundSkin={selectedChild?.backgroundSkin}
+        >
           <View className="flex-1 items-center justify-center">
             <ActivityIndicator size="large" color={palette.chartPrimary} />
           </View>
@@ -322,7 +325,10 @@ export default function DashboardScreen() {
   }
 
   return (
-    <ThemedScreenBackground theme={selectedChild.theme}>
+    <ThemedScreenBackground
+      theme={selectedChild.theme}
+      backgroundSkin={selectedChild.backgroundSkin}
+    >
       <View className="flex-1">
         <Header
           child={selectedChild}

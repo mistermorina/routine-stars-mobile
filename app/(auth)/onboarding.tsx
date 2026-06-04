@@ -92,6 +92,7 @@ export default function OnboardingScreen() {
             avatar: profile.avatar,
             stars: 0,
             theme: profile.theme,
+            backgroundSkin: "none",
             ageGroup: profile.ageGroup,
           }));
 

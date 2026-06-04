@@ -1,5 +1,6 @@
 import React from "react";
-import { View, type ViewStyle } from "react-native";
+import { StyleSheet, View, type ViewStyle } from "react-native";
+import { Image } from "expo-image";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -10,9 +11,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { PawPrint, Sparkles, Star } from "lucide-react-native";
 import { cn } from "@/lib/utils";
+import { getBackgroundSkinOption } from "@/lib/background-skins";
 import { getThemePalette } from "@/lib/theme";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
-import type { ChildTheme } from "@/lib/types";
+import type { BackgroundSkinId, ChildTheme } from "@/lib/types";
 
 interface FloatingShapeProps {
   delay: number;
@@ -77,14 +79,18 @@ function FloatingShape({
 
 export function ThemedScreenBackground({
   theme,
+  backgroundSkin,
   children,
   className,
 }: {
   theme?: ChildTheme | string | null;
+  backgroundSkin?: BackgroundSkinId | string | null;
   children: React.ReactNode;
   className?: string;
 }) {
   const palette = getThemePalette(theme);
+  const skin = getBackgroundSkinOption(backgroundSkin);
+  const hasSkin = skin.id !== "none" && Boolean(skin.image);
 
   const renderMotif = () => {
     if (theme === "tiere") {
@@ -187,7 +193,34 @@ export function ThemedScreenBackground({
         className="absolute bottom-10 right-[-40px] h-72 w-72 rounded-full"
         style={{ backgroundColor: palette.screenGradient[2], opacity: 0.22 }}
       />
-      {renderMotif()}
+      {hasSkin ? (
+        <>
+          <Image
+            source={skin.image}
+            contentFit="cover"
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFillObject,
+              {
+                opacity: skin.imageOpacity,
+              },
+            ]}
+            transition={160}
+          />
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFillObject,
+              {
+                backgroundColor: palette.backgroundBase,
+                opacity: 0.08,
+              },
+            ]}
+          />
+        </>
+      ) : (
+        renderMotif()
+      )}
       <View className="flex-1">{children}</View>
     </View>
   );

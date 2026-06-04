@@ -10,6 +10,7 @@ import { useCollapsibleHeader } from "@/hooks/use-collapsible-header";
 import { Header } from "@/components/routine-stars/header";
 import { RewardsOverview } from "@/components/routine-stars/rewards-overview";
 import { Card } from "@/components/ui/card";
+import { SoftHeroWash } from "@/components/ui/soft-hero-wash";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { triggerFeedback } from "@/lib/feedback";
 import { getThemePalette } from "@/lib/theme";
@@ -79,7 +80,10 @@ export default function RewardsScreen() {
 
   if (isLoading || rewardsLoading) {
     return (
-      <ThemedScreenBackground theme={selectedChild?.theme}>
+      <ThemedScreenBackground
+        theme={selectedChild?.theme}
+        backgroundSkin={selectedChild?.backgroundSkin}
+      >
         <View className="flex-1 items-center justify-center">
           <Text className="font-body text-muted-foreground">Laden...</Text>
         </View>
@@ -103,7 +107,10 @@ export default function RewardsScreen() {
   }
 
   return (
-    <ThemedScreenBackground theme={selectedChild?.theme}>
+    <ThemedScreenBackground
+      theme={selectedChild?.theme}
+      backgroundSkin={selectedChild?.backgroundSkin}
+    >
       <View className="flex-1">
         {selectedChild && (
           <Header
@@ -127,9 +134,10 @@ export default function RewardsScreen() {
               className="overflow-hidden rounded-[22px] px-4 pb-4 pt-4"
               style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
             >
-              <View
-                className="absolute inset-x-0 top-0 h-36 rounded-[22px]"
-                style={{ backgroundColor: palette.heroSurface }}
+              <SoftHeroWash
+                surfaceColor={palette.heroSurface}
+                baseColor={palette.cardTint}
+                holdOffset="48%"
               />
               <View
                 className="absolute right-[-16px] top-[-8px] h-24 w-24 rounded-full"
@@ -266,14 +274,14 @@ export default function RewardsScreen() {
               style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
             >
               <View className="flex-row items-center justify-between gap-3">
-                <View className="flex-row items-center gap-3">
+                <View className="min-w-0 flex-1 flex-row items-center gap-3">
                   <View
-                    className="h-11 w-11 items-center justify-center rounded-[18px]"
+                    className="h-11 w-11 shrink-0 items-center justify-center rounded-[18px]"
                     style={{ backgroundColor: palette.heroSurface }}
                   >
                     <Sparkles size={20} color={palette.accentStrong} />
                   </View>
-                  <View className="flex-1">
+                  <View className="min-w-0 flex-1">
                     <Text className="text-lg font-headline text-foreground">Belohnungen zum Freispielen</Text>
                     <Text className="text-sm font-body text-muted-foreground">
                       Einlösen, wenn genug Sterne gesammelt wurden.
@@ -281,10 +289,16 @@ export default function RewardsScreen() {
                   </View>
                 </View>
                 <View
-                  className="rounded-full px-3 py-1.5"
+                  className="max-w-[96px] shrink-0 rounded-full px-3 py-1.5"
                   style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
                 >
-                  <Text className="text-xs font-body-semibold" style={{ color: palette.accentText }}>
+                  <Text
+                    className="text-xs font-body-semibold"
+                    style={{ color: palette.accentText }}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.78}
+                  >
                     {sortedRewards.length} Wünsche
                   </Text>
                 </View>

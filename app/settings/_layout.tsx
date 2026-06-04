@@ -63,6 +63,10 @@ export default function SettingsLayout() {
         options={{ title: "Kinder verwalten" }}
       />
       <Stack.Screen
+        name="background"
+        options={{ title: "Hintergrund-Skins" }}
+      />
+      <Stack.Screen
         name="routines"
         options={{ title: "Routinen bearbeiten" }}
       />

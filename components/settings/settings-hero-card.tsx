@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text } from "react-native";
 import { Card } from "@/components/ui/card";
+import { SoftHeroWash } from "@/components/ui/soft-hero-wash";
 import type { ThemePalette } from "@/lib/theme";
 
 type HeroBadge = {
@@ -34,7 +35,11 @@ export function SettingsHeroCard({
       className="mb-4 overflow-hidden rounded-[28px] px-4 py-4"
       style={{ backgroundColor: cardBackground, borderColor }}
     >
-      <View className="absolute inset-x-0 top-0 h-28" style={{ backgroundColor: heroSurface }} />
+      <SoftHeroWash
+        surfaceColor={heroSurface}
+        baseColor={cardBackground}
+        holdOffset="64%"
+      />
       <View
         className="absolute right-[-18px] top-[-16px] h-24 w-24 rounded-full"
         style={{ backgroundColor: motifColor, opacity: 0.2 }}
@@ -78,10 +83,10 @@ export function SettingsHeroCard({
       </View>
 
       <Text
-        className="mt-4 text-[40px] font-headline leading-[44px] text-foreground"
-        numberOfLines={2}
+        className="mt-5 text-[38px] font-headline leading-[42px] text-foreground"
+        numberOfLines={1}
         adjustsFontSizeToFit
-        minimumFontScale={0.74}
+        minimumFontScale={0.66}
       >
         {title}
       </Text>

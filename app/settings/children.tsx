@@ -24,6 +24,7 @@ import {
   Sparkles,
   Star,
   Palette,
+  ImagePlus,
 } from "lucide-react-native";
 import { useChildren } from "@/hooks/use-children";
 import { useToast } from "@/hooks/use-toast";
@@ -33,13 +34,19 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ToastOverlay } from "@/components/ui/toast";
 import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
-import { avatarCategories } from "@/lib/data";
+import { AvatarImage } from "@/components/ui/avatar-image";
+import {
+  areAvatarValuesEqual,
+  avatarCategories,
+  DEFAULT_AVATAR_VALUE,
+} from "@/lib/avatars";
+import { pickAvatarPhotoAsync } from "@/lib/avatar-photo-picker";
 import { useRoutines } from "@/hooks/use-routines";
 import { useRewards } from "@/hooks/use-rewards";
 import { getIcon } from "@/lib/icons";
 import { getThemePalette } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import type { AgeGroup, Child, ChildTheme } from "@/lib/types";
+import type { AgeGroup, AvatarValue, Child, ChildTheme } from "@/lib/types";
 
 const THEME_OPTIONS: { value: ChildTheme; label: string; emoji: string }[] = [
   { value: "sterne", label: "Sterne", emoji: "⭐" },
@@ -66,7 +73,7 @@ export default function ChildrenSettings() {
   const [showAvatarPicker, setShowAvatarPicker] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newChildName, setNewChildName] = useState("");
-  const [newChildAvatar, setNewChildAvatar] = useState("🦁");
+  const [newChildAvatar, setNewChildAvatar] = useState<AvatarValue>(DEFAULT_AVATAR_VALUE);
   const [newChildTheme, setNewChildTheme] = useState<ChildTheme>("sterne");
   const [newChildAgeGroup, setNewChildAgeGroup] = useState<AgeGroup>("6-8");
   const newChildNameInputRef = useRef<RNTextInput>(null);
@@ -164,21 +171,58 @@ export default function ChildrenSettings() {
       avatar: newChildAvatar,
       stars: 0,
       theme: newChildTheme,
+      backgroundSkin: "none",
       ageGroup: newChildAgeGroup,
     };
     await addChild(newChild);
     toast({ title: `${newChild.name} wurde hinzugefügt` });
     setNewChildName("");
-    setNewChildAvatar("🦁");
+    setNewChildAvatar(DEFAULT_AVATAR_VALUE);
     setNewChildTheme("sterne");
     setNewChildAgeGroup("6-8");
     setShowAddForm(false);
   }
 
-  async function selectAvatar(childId: string, emoji: string) {
-    await updateChild(childId, { avatar: emoji });
+  async function selectAvatar(childId: string, avatar: AvatarValue) {
+    await updateChild(childId, { avatar });
     setShowAvatarPicker(null);
     toast({ title: "Avatar aktualisiert" });
+  }
+
+  async function pickExistingChildPhoto(childId: string) {
+    const result = await pickAvatarPhotoAsync();
+
+    if (result.status === "selected") {
+      await updateChild(childId, { avatar: result.avatar });
+      setShowAvatarPicker(null);
+      toast({ title: "Profilbild aktualisiert" });
+      return;
+    }
+
+    if (result.status === "denied") {
+      toast({
+        title: "Fotozugriff benötigt",
+        description: "Erlaube den Zugriff auf deine Fotomediathek, um ein eigenes Profilbild zu wählen.",
+        variant: "destructive",
+      });
+    }
+  }
+
+  async function pickNewChildPhoto() {
+    const result = await pickAvatarPhotoAsync();
+
+    if (result.status === "selected") {
+      setNewChildAvatar(result.avatar);
+      return;
+    }
+
+    if (result.status === "denied") {
+      toast({
+        title: "Fotozugriff benötigt",
+        description: "Erlaube den Zugriff auf deine Fotomediathek, um ein eigenes Profilbild zu wählen.",
+        variant: "destructive",
+      });
+    }
   }
 
   async function selectTheme(childId: string, theme: ChildTheme) {
@@ -257,7 +301,13 @@ export default function ChildrenSettings() {
                 className="h-14 w-14 items-center justify-center rounded-[20px]"
                 style={{ backgroundColor: "rgba(255,255,255,0.8)" }}
               >
-                <Text className="text-3xl">{child.avatar}</Text>
+                <AvatarImage
+                  avatar={child.avatar}
+                  size={56}
+                  borderRadius={20}
+                  backgroundColor="transparent"
+                  accessibilityLabel={`${child.name} Avatar`}
+                />
               </View>
               <View className="ml-3 flex-1">
                 <Text className="text-lg font-headline text-foreground">
@@ -394,24 +444,43 @@ export default function ChildrenSettings() {
                                   <Pressable
                                     key={avatar.id}
                                     onPress={() =>
-                                      selectAvatar(child.id, avatar.emoji)
+                                      selectAvatar(child.id, avatar.value)
                                     }
                                     className={cn(
                                       "h-12 w-12 items-center justify-center rounded-xl",
-                                      child.avatar === avatar.emoji
+                                      areAvatarValuesEqual(child.avatar, avatar.value)
                                         ? "bg-primary/40 border-2 border-primary"
                                         : "bg-secondary"
                                     )}
                                   >
-                                    <Text className="text-2xl">
-                                      {avatar.emoji}
-                                    </Text>
+                                    <AvatarImage
+                                      avatar={avatar.value}
+                                      size={44}
+                                      borderRadius={12}
+                                      backgroundColor="transparent"
+                                      accessibilityLabel={avatar.label}
+                                    />
                                   </Pressable>
                                 ))}
                               </View>
                             </View>
                           ))}
                         </ScrollView>
+                        <Pressable
+                          onPress={() => pickExistingChildPhoto(child.id)}
+                          className="flex-row items-center justify-center rounded-[18px] border px-4 py-3"
+                          style={{
+                            backgroundColor: "rgba(255,255,255,0.78)",
+                            borderColor: childPalette.accentBorder,
+                          }}
+                          accessibilityRole="button"
+                          accessibilityLabel="Eigenes Foto aus der Fotomediathek auswählen"
+                        >
+                          <ImagePlus size={18} color={childPalette.accentStrong} />
+                          <Text className="ml-2 text-sm font-body-semibold" style={{ color: childPalette.accentText }}>
+                            Eigenes Foto auswählen
+                          </Text>
+                        </Pressable>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -426,7 +495,12 @@ export default function ChildrenSettings() {
                         className="flex-row items-center justify-between rounded-lg border border-input bg-card px-4 py-3"
                       >
                         <View className="flex-row items-center gap-2">
-                          <Text className="text-2xl">{child.avatar}</Text>
+                          <AvatarImage
+                            avatar={child.avatar}
+                            size={34}
+                            borderRadius={12}
+                            accessibilityLabel={`${child.name} Avatar`}
+                          />
                           <Text className="text-base font-body text-foreground">
                             Aktueller Avatar
                           </Text>
@@ -689,7 +763,13 @@ export default function ChildrenSettings() {
                     className="h-16 w-16 items-center justify-center rounded-[22px]"
                     style={{ backgroundColor: "rgba(255,255,255,0.8)" }}
                   >
-                    <Text className="text-3xl">{newChildAvatar}</Text>
+                    <AvatarImage
+                      avatar={newChildAvatar}
+                      size={64}
+                      borderRadius={22}
+                      backgroundColor="transparent"
+                      accessibilityLabel="Avatar Vorschau"
+                    />
                   </View>
                   <View className="ml-3 flex-1">
                     <Text className="text-xl font-headline text-foreground">
@@ -792,21 +872,42 @@ export default function ChildrenSettings() {
                         {avatars.map((avatar) => (
                           <Pressable
                             key={avatar.id}
-                            onPress={() => setNewChildAvatar(avatar.emoji)}
+                            onPress={() => setNewChildAvatar(avatar.value)}
                             className={cn(
                               "h-12 w-12 items-center justify-center rounded-xl",
-                              newChildAvatar === avatar.emoji
+                              areAvatarValuesEqual(newChildAvatar, avatar.value)
                                 ? "bg-primary/40 border-2 border-primary"
                                 : "bg-secondary"
                             )}
                           >
-                            <Text className="text-2xl">{avatar.emoji}</Text>
+                            <AvatarImage
+                              avatar={avatar.value}
+                              size={44}
+                              borderRadius={12}
+                              backgroundColor="transparent"
+                              accessibilityLabel={avatar.label}
+                            />
                           </Pressable>
                         ))}
                       </View>
                     </View>
                   ))}
                 </ScrollView>
+                <Pressable
+                  onPress={pickNewChildPhoto}
+                  className="mt-3 flex-row items-center justify-center rounded-[18px] border px-4 py-3"
+                  style={{
+                    backgroundColor: "rgba(255,255,255,0.78)",
+                    borderColor: newChildPalette.accentBorder,
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Eigenes Foto aus der Fotomediathek auswählen"
+                >
+                  <ImagePlus size={18} color={newChildPalette.accentStrong} />
+                  <Text className="ml-2 text-sm font-body-semibold" style={{ color: newChildPalette.accentText }}>
+                    Eigenes Foto auswählen
+                  </Text>
+                </Pressable>
               </View>
 
               <View className="flex-row gap-3">
@@ -815,7 +916,7 @@ export default function ChildrenSettings() {
                   onPress={() => {
                     setShowAddForm(false);
                     setNewChildName("");
-                    setNewChildAvatar("🦁");
+                    setNewChildAvatar(DEFAULT_AVATAR_VALUE);
                     setNewChildTheme("sterne");
                     setNewChildAgeGroup("6-8");
                   }}

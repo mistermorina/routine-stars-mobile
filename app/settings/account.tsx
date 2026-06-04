@@ -55,7 +55,10 @@ export default function AccountSettings() {
   }
 
   return (
-    <ThemedScreenBackground theme={selectedChild?.theme}>
+    <ThemedScreenBackground
+      theme={selectedChild?.theme}
+      backgroundSkin={selectedChild?.backgroundSkin}
+    >
       <ScrollView className="flex-1" contentContainerClassName="p-4 pb-8">
         <SettingsHeroCard
           label="Lokal & geschützt"

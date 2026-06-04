@@ -5,6 +5,7 @@ import { BarChart3, Sparkles, Star } from "lucide-react-native";
 import { useChildren } from "@/hooks/use-children";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
 import { Card } from "@/components/ui/card";
+import { AvatarImage } from "@/components/ui/avatar-image";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
 import { SettingsMetricCard } from "@/components/settings/settings-metric-card";
@@ -37,7 +38,10 @@ export default function StatsSettings() {
   );
 
   return (
-    <ThemedScreenBackground theme={selectedChild?.theme}>
+    <ThemedScreenBackground
+      theme={selectedChild?.theme}
+      backgroundSkin={selectedChild?.backgroundSkin}
+    >
       <ScrollView className="flex-1" contentContainerClassName="p-4 pb-8">
         {children.length > 1 && (
           <ScrollView
@@ -63,7 +67,13 @@ export default function StatsSettings() {
                     : { backgroundColor: "rgba(255,255,255,0.78)" }
                 }
               >
-                <Text className="mr-1.5 text-lg">{child.avatar}</Text>
+                <AvatarImage
+                  avatar={child.avatar}
+                  size={24}
+                  borderRadius={12}
+                  className="mr-1.5"
+                  accessibilityLabel={`${child.name} Avatar`}
+                />
                 <Text
                   className="text-sm font-body-semibold"
                   style={{

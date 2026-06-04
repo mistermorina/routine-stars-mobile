@@ -1,15 +1,34 @@
+export type AvatarAssetId =
+  | "superheld_junge_blau"
+  | "superheld_junge_gruen"
+  | "superheld_junge_rot"
+  | "superheld_junge_tuerkis"
+  | "superheld_junge_lila"
+  | "superheld_maedchen_pink"
+  | "superheld_maedchen_tuerkis"
+  | "superheld_maedchen_gelb"
+  | "superheld_maedchen_blau"
+  | "superheld_maedchen_lila";
+
+export type AvatarValue =
+  | string
+  | { type: "emoji"; emoji: string }
+  | { type: "asset"; id: AvatarAssetId }
+  | { type: "photo"; uri: string };
+
 export interface Child {
   id: string;
   name: string;
-  avatar: string;
+  avatar: AvatarValue;
   stars: number;
   theme: ChildTheme;
+  backgroundSkin?: BackgroundSkinId;
   ageGroup?: AgeGroup;
 }
 
 export interface ChildProfile {
   name: string;
-  avatar: string;
+  avatar: AvatarValue;
   theme: ChildTheme;
   ageGroup: AgeGroup;
 }
@@ -268,6 +287,7 @@ export type AgeGroup = '3-5' | '6-8' | '9-12';
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'flexible';
 export type RoutineCategory = 'hygiene' | 'school' | 'household' | 'meals' | 'sport' | 'evening' | 'weekend' | 'special';
 export type ChildTheme = 'sterne' | 'tiere' | 'galaxy';
+export type BackgroundSkinId = "none" | "space" | "animals" | "magic" | "nature" | "heroes";
 
 export interface TaskTemplate {
   title: string;

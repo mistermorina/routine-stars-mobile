@@ -10,6 +10,7 @@ import {
   CreditCard,
   FileText,
   ChevronRight,
+  Palette,
   RefreshCcw,
   Rocket,
   Sparkles,
@@ -24,6 +25,13 @@ const settingsItems = [
     status: "Live",
     icon: Users,
     route: "/settings/children" as const,
+  },
+  {
+    label: "Hintergrund-Skins",
+    description: "Freie Flächen pro Kinderprofil gestalten",
+    status: "Neu",
+    icon: Palette,
+    route: "/settings/background" as const,
   },
   {
     label: "Fortschritt",
@@ -78,6 +86,7 @@ const settingsItems = [
 
 const featuredRoutes = new Set([
   "/settings/children",
+  "/settings/background",
   "/settings/progress",
   "/settings/stickers",
   "/settings/stats",

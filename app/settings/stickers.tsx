@@ -5,6 +5,8 @@ import { CalendarDays, CheckCircle2, ShieldCheck, Sparkles } from "lucide-react-
 import { useChildren } from "@/hooks/use-children";
 import { useStickerWall } from "@/hooks/use-sticker-wall";
 import { Card } from "@/components/ui/card";
+import { AvatarImage } from "@/components/ui/avatar-image";
+import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
 import { SettingsMetricCard } from "@/components/settings/settings-metric-card";
 import { StickerWall } from "@/components/stickers/sticker-wall";
@@ -67,57 +69,67 @@ export default function StickerSettingsScreen() {
   );
 
   return (
-    <ScrollView
-      className="flex-1 bg-background"
-      contentContainerClassName="p-4 pb-10"
-      showsVerticalScrollIndicator={false}
+    <ThemedScreenBackground
+      theme={selectedChild?.theme}
+      backgroundSkin={selectedChild?.backgroundSkin}
     >
-      <SettingsHeroCard
-        label="Sticker-System"
-        title="Belohnungslogik"
-        description="Hier siehst du, welche Sticker bereits gesammelt wurden und wann neue Sticker freigeschaltet werden."
-        badges={[
-          { label: "Aktiv", value: rewardModeLabel },
-          { label: "Sticker", value: `${uniqueCollectedCount}/${STICKER_CATALOG.length}` },
-        ]}
-        palette={palette}
-      />
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="p-4 pb-10"
+        showsVerticalScrollIndicator={false}
+      >
+        <SettingsHeroCard
+          label="Sticker-System"
+          title="Belohnungslogik"
+          description="Hier siehst du, welche Sticker bereits gesammelt wurden und wann neue Sticker freigeschaltet werden."
+          badges={[
+            { label: "Aktiv", value: rewardModeLabel },
+            { label: "Sticker", value: `${uniqueCollectedCount}/${STICKER_CATALOG.length}` },
+          ]}
+          palette={palette}
+        />
 
-      {children.length > 1 ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="mb-4"
-          contentContainerClassName="gap-2"
-        >
-          {children.map((child) => {
-            const childPalette = getThemePalette(child.theme);
-            const isSelected = selectedChildId === child.id;
+        {children.length > 1 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="mb-4"
+            contentContainerClassName="gap-2"
+          >
+            {children.map((child) => {
+              const childPalette = getThemePalette(child.theme);
+              const isSelected = selectedChildId === child.id;
 
-            return (
-              <Pressable
-                key={child.id}
-                onPress={() => selectChild(child.id)}
-                className="flex-row items-center rounded-full border px-4 py-2"
-                style={{
-                  backgroundColor: isSelected ? childPalette.tabActiveBg : "rgba(255,255,255,0.78)",
-                  borderColor: isSelected ? childPalette.accent : "rgba(157,184,216,0.32)",
-                }}
-              >
-                <Text className="mr-1.5 text-lg">{child.avatar}</Text>
-                <Text
-                  className="text-sm font-body-semibold"
-                  style={{ color: isSelected ? childPalette.accentText : "#1a1a2e" }}
+              return (
+                <Pressable
+                  key={child.id}
+                  onPress={() => selectChild(child.id)}
+                  className="flex-row items-center rounded-full border px-4 py-2"
+                  style={{
+                    backgroundColor: isSelected ? childPalette.tabActiveBg : "rgba(255,255,255,0.78)",
+                    borderColor: isSelected ? childPalette.accent : "rgba(157,184,216,0.32)",
+                  }}
                 >
-                  {child.name}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      ) : null}
+                  <AvatarImage
+                    avatar={child.avatar}
+                    size={24}
+                    borderRadius={12}
+                    className="mr-1.5"
+                    accessibilityLabel={`${child.name} Avatar`}
+                  />
+                  <Text
+                    className="text-sm font-body-semibold"
+                    style={{ color: isSelected ? childPalette.accentText : "#1a1a2e" }}
+                  >
+                    {child.name}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        ) : null}
 
-      <View className="flex-row gap-3">
+        <View className="flex-row gap-3">
         <SettingsMetricCard
           label="Gesammelt"
           value={`${uniqueCollectedCount}`}
@@ -306,6 +318,7 @@ export default function StickerSettingsScreen() {
           )}
         </Card>
       </Animated.View>
-    </ScrollView>
+      </ScrollView>
+    </ThemedScreenBackground>
   );
 }

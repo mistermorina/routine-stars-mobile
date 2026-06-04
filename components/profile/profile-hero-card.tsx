@@ -3,6 +3,8 @@ import { Pressable, ScrollView, View, Text } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Settings, Star, Flame, Trophy, Sparkles } from "lucide-react-native";
 import { Card } from "@/components/ui/card";
+import { AvatarImage } from "@/components/ui/avatar-image";
+import { SoftHeroWash } from "@/components/ui/soft-hero-wash";
 import type { ThemePalette } from "@/lib/theme";
 import type { Child } from "@/lib/types";
 
@@ -35,9 +37,10 @@ export function ProfileHeroCard({
         className="overflow-hidden rounded-[24px] px-4 pb-4 pt-4"
         style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
       >
-        <View
-          className="absolute inset-x-0 top-0 h-44 rounded-[24px]"
-          style={{ backgroundColor: palette.heroSurface }}
+        <SoftHeroWash
+          surfaceColor={palette.heroSurface}
+          baseColor={palette.cardTint}
+          holdOffset="48%"
         />
         <View
           className="absolute right-[-30px] top-[-26px] h-36 w-36 rounded-full"
@@ -54,7 +57,13 @@ export function ProfileHeroCard({
                 className="h-[92px] w-[92px] items-center justify-center rounded-[26px]"
                 style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
               >
-                <Text className="text-[48px]">{child.avatar}</Text>
+                <AvatarImage
+                  avatar={child.avatar}
+                  size={92}
+                  borderRadius={26}
+                  backgroundColor="transparent"
+                  accessibilityLabel={`${child.name} Avatar`}
+                />
               </View>
               <View className="ml-4 min-w-0 flex-1">
                 <View className="flex-row flex-wrap items-center gap-2">
@@ -210,7 +219,13 @@ export function ProfileHeroCard({
                       accessibilityRole="button"
                       accessibilityLabel={`${entry.name} auswählen`}
                     >
-                      <Text className="text-2xl">{entry.avatar}</Text>
+                      <AvatarImage
+                        avatar={entry.avatar}
+                        size={48}
+                        borderRadius={24}
+                        backgroundColor="transparent"
+                        accessibilityLabel={`${entry.name} Avatar`}
+                      />
                     </Pressable>
                   );
                 })}

@@ -27,7 +27,13 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Routine Stars benötigt Zugriff auf deine Fotomediathek, damit du ein eigenes Profilbild auswählen kannst."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
