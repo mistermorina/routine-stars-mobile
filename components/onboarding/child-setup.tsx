@@ -78,7 +78,7 @@ function ThemePreview({
   );
 }
 
-export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
+export function ChildSetup({ onNext, formData }: ChildSetupProps) {
   const [childProfiles, setChildProfiles] = useState<ChildProfile[]>(
     formData.children || []
   );
@@ -162,15 +162,15 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
           className="mb-3 self-start rounded-full px-3 py-1.5"
           style={{ backgroundColor: palette.heroSurface }}
         >
-          <Text className="text-xs font-body-semibold uppercase tracking-[0.8px]" style={{ color: palette.accentText }}>
+          <Text className="text-xs font-body-semibold uppercase" style={{ color: palette.accentText }}>
             Erster Start
           </Text>
         </View>
         <Text className="text-xl font-headline text-foreground">
-          Wir bauen jetzt eure erste Familienwelt
+          Wir bauen eure erste Sternenwelt
         </Text>
         <Text className="mt-2 text-sm font-body text-muted-foreground">
-          Erst ein Profil, dann passende Routinen fuer Alltag, Zaehneputzen,
+          Erst ein Profil, dann passende Routinen für Alltag, Zähneputzen,
           Lernen und eure kleinen Familienmomente.
         </Text>
         <View
@@ -186,7 +186,7 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
           />
         </View>
         <View className="mt-3 flex-row flex-wrap gap-2">
-          {["Alltag", "Zaehne", "Lernen", "Zusammen"].map((moment) => (
+          {["Alltag", "Zähne", "Lernen", "Zusammen"].map((moment) => (
             <View
               key={moment}
               className="rounded-full border px-3 py-1.5"
@@ -196,7 +196,7 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
               }}
             >
               <Text
-                className="text-[11px] font-body-semibold uppercase tracking-[0.7px]"
+                className="text-[11px] font-body-semibold uppercase"
                 style={{ color: palette.accentText }}
               >
                 {moment}
@@ -242,12 +242,12 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
       <Card>
         <CardHeader>
           <CardTitle>
-            {childProfiles.length > 0 ? "Noch ein Kind? Optional." : "Dein erstes Kind"}
+            {childProfiles.length > 0 ? "Noch ein Kind? Optional." : "Wer sammelt Sterne?"}
           </CardTitle>
           <CardDescription>
             {childProfiles.length > 0
               ? "Du kannst direkt weitermachen oder noch ein Profil ergänzen."
-              : "Nur Name, Alter, Theme und ein Avatar, dann geht es weiter."}
+              : "Ein kurzer Start reicht: Name, Alter, Avatar und eine kleine Welt."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -268,7 +268,7 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
             <View className="gap-3">
               <Label>Alter</Label>
               <Text className="text-xs font-body text-muted-foreground">
-                Damit die erste Routine gut passt.
+                So passen Vorlagen und Texte besser zu deinem Kind.
               </Text>
               <View className="flex-row gap-2">
                 {ageGroupOptions.map((option) => {
@@ -307,7 +307,7 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
             <View className="gap-3">
               <Label>Look & Feel</Label>
               <Text className="text-xs font-body text-muted-foreground">
-                Jede Welt färbt die App später etwas anders ein.
+                Die Welt färbt die App später warm und kindgerecht ein.
               </Text>
               <View className="flex-row gap-2">
                 {themes.map((theme) => {
@@ -348,7 +348,7 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
                           className="mt-1 rounded-full px-2 py-0.5"
                           style={{ backgroundColor: "rgba(255,255,255,0.74)" }}
                         >
-                          <Text className="text-[10px] font-body-semibold uppercase tracking-[0.6px]" style={{ color: themePalette.accentText }}>
+                          <Text className="text-[10px] font-body-semibold uppercase" style={{ color: themePalette.accentText }}>
                             {theme.badge}
                           </Text>
                         </View>
@@ -430,7 +430,7 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
                 backgroundColor: palette.accentSoft,
               }}
             >
-              <Text className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground">
+              <Text className="text-xs font-body-semibold uppercase text-muted-foreground">
                 Vorschau
               </Text>
               <View className="mt-3 flex-row items-center">
@@ -454,8 +454,8 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
                 style={{ backgroundColor: "#FFFFFF" }}
               >
                 <Text className="text-sm font-body text-muted-foreground">
-                  Routine Stars schlägt im nächsten Schritt passende Starter-Routinen für
-                  dieses Alter vor.
+                  Im nächsten Schritt schlagen wir passende Starter-Routinen vor.
+                  Du kannst alles sofort anpassen.
                 </Text>
               </View>
             </View>
@@ -466,7 +466,7 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
                 style={{ backgroundColor: "rgba(255,255,255,0.74)" }}
               >
                 <Text className="text-sm font-body" style={{ color: palette.accentText }}>
-                  Bitte gib einen Namen ein, damit wir mit der ersten Routine weitermachen können.
+                  Bitte gib einen Namen ein. Dann kann die erste Routine entstehen.
                 </Text>
               </View>
             ) : null}
@@ -492,7 +492,7 @@ export function ChildSetup({ onNext, onBack, formData }: ChildSetupProps) {
                 className="min-w-[120px]"
                 style={{ backgroundColor: palette.button }}
               >
-                {isFirstChildFlow ? "Weiter zu Routinen" : "Weiter zu Routinen"}
+                Weiter: Routinen wählen
               </Button>
             </View>
           </View>

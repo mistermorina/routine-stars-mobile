@@ -25,6 +25,12 @@ import { Button } from "@/components/ui/button";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { triggerFeedback } from "@/lib/feedback";
 import { getActivityInsights } from "@/lib/activity-insights";
+import { getLocalIsoDate } from "@/lib/local-date";
+import {
+  canClaimStickerRewardEvent,
+  createStickerRewardEvent,
+  type StickerRewardEvent,
+} from "@/lib/sticker-reward-logic";
 import { getThemePalette } from "@/lib/theme";
 import type { AnimalSticker } from "@/lib/animal-stickers";
 import type { Routine, Task } from "@/lib/types";
@@ -61,14 +67,17 @@ export default function DashboardScreen() {
     clearRecentUnlocks,
   } = useChildProgression(selectedChildId);
   const {
-    availableDailyStickers,
-    hasClaimedToday,
-    claimDailySticker,
+    availableStickers,
+    claimedEventKeys,
+    claimStickerReward,
+    settings: stickerRewardSettings,
   } = useStickerWall(selectedChildId);
   const [timerTask, setTimerTask] = useState<Task | null>(null);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showStickerRewardSheet, setShowStickerRewardSheet] = useState(false);
+  const [pendingStickerRewardEvent, setPendingStickerRewardEvent] =
+    useState<StickerRewardEvent | null>(null);
   const {
     handleHeaderScroll,
     isHeaderCollapsed,
@@ -111,7 +120,7 @@ export default function DashboardScreen() {
         missingStars: Math.max(nextReward.cost - selectedChild.stars, 0),
       }
     : undefined;
-  const canClaimDailySticker = totalTasks > 0 && remainingTasks === 0 && !hasClaimedToday;
+  const hasPendingStickerReward = Boolean(pendingStickerRewardEvent);
 
   useEffect(() => {
     if (!isLoading && children.length === 0) {
@@ -148,12 +157,18 @@ export default function DashboardScreen() {
       if (!task || task.completed) return;
 
       const previousInsights = getActivityInsights(getLogsForChild(selectedChildId));
-      const openTasksBeforeCompletion = routines.reduce(
-        (count, routine) => count + routine.tasks.filter((entry) => !entry.completed).length,
-        0
-      );
-      const isCompletingDay =
-        openTasksBeforeCompletion === 1 && totalTasks > 0 && !hasClaimedToday;
+      const totalRoutineCountToday = routines.filter((routine) => routine.tasks.length > 0).length;
+      const completedRoutineCountToday = routines.reduce((count, routine) => {
+        if (routine.tasks.length === 0) {
+          return count;
+        }
+
+        const isRoutineComplete = routine.tasks.every((entry) =>
+          routine.id === parentRoutine.id && entry.id === taskId ? true : entry.completed
+        );
+
+        return count + (isRoutineComplete ? 1 : 0);
+      }, 0);
 
       await toggleTaskCompletion(parentRoutine.id, taskId);
 
@@ -177,6 +192,19 @@ export default function DashboardScreen() {
       const allCompleted = parentRoutine.tasks.every((entry) =>
         entry.id === taskId ? true : entry.completed
       );
+      const stickerRewardEvent = createStickerRewardEvent({
+        childId: selectedChildId,
+        routineId: parentRoutine.id,
+        routineName: parentRoutine.name,
+        date: getLocalIsoDate(),
+        completedRoutineCountToday,
+        totalRoutineCountToday,
+        settings: stickerRewardSettings,
+      });
+      const canClaimStickerReward = canClaimStickerRewardEvent(
+        claimedEventKeys,
+        stickerRewardEvent?.eventKey
+      );
 
       if (progressionResult.unlockedStickerIds.length > 0) {
         void triggerFeedback("sticker_unlocked");
@@ -188,7 +216,8 @@ export default function DashboardScreen() {
 
       if (allCompleted) {
         setShowConfetti(true);
-        if (isCompletingDay) {
+        if (stickerRewardEvent && canClaimStickerReward) {
+          setPendingStickerRewardEvent(stickerRewardEvent);
           setShowStickerRewardSheet(true);
         } else {
           setShowCompleteDialog(true);
@@ -209,12 +238,12 @@ export default function DashboardScreen() {
       addStars,
       evaluateProgressAfterTaskCompletion,
       getLogsForChild,
-      hasClaimedToday,
+      claimedEventKeys,
       logActivity,
       routines,
       selectedChild,
       selectedChildId,
-      totalTasks,
+      stickerRewardSettings,
       toggleTaskCompletion,
     ]
   );
@@ -228,8 +257,10 @@ export default function DashboardScreen() {
   }, [router]);
 
   const handleOpenStickerReward = useCallback(() => {
-    setShowStickerRewardSheet(true);
-  }, []);
+    if (pendingStickerRewardEvent) {
+      setShowStickerRewardSheet(true);
+    }
+  }, [pendingStickerRewardEvent]);
 
   const handleTimerClose = useCallback(
     (success: boolean) => {
@@ -243,8 +274,9 @@ export default function DashboardScreen() {
 
   const handleSelectDailySticker = useCallback(
     async (sticker: AnimalSticker) => {
-      const placedSticker = await claimDailySticker(sticker.id);
+      const placedSticker = await claimStickerReward(pendingStickerRewardEvent, sticker.id);
       setShowStickerRewardSheet(false);
+      setPendingStickerRewardEvent(null);
 
       if (!placedSticker) {
         return;
@@ -257,7 +289,7 @@ export default function DashboardScreen() {
         router.push("/sticker-album");
       }, 360);
     },
-    [claimDailySticker, router]
+    [claimStickerReward, pendingStickerRewardEvent, router]
   );
 
   if (isLoading || routinesLoading) {
@@ -440,7 +472,7 @@ export default function DashboardScreen() {
             />
           </View>
 
-          {canClaimDailySticker ? (
+          {hasPendingStickerReward ? (
             <Animated.View entering={FadeInDown.delay(80).duration(320)} className="mx-4 mt-4">
               <Card
                 className="overflow-hidden rounded-[22px] px-4 py-4"
@@ -459,10 +491,12 @@ export default function DashboardScreen() {
                   </View>
                   <View className="min-w-0 flex-1">
                     <Text className="text-lg font-headline text-foreground">
-                      Dein Tagessticker wartet
+                      Dein Sticker wartet
                     </Text>
                     <Text className="mt-1 text-sm font-body text-muted-foreground">
-                      Such dir ein Tier für deine Sticker-Wall aus.
+                      {pendingStickerRewardEvent?.reason === "daily_complete"
+                        ? "Such dir ein Tier für deine Sticker-Galerie aus."
+                        : `${pendingStickerRewardEvent?.routineName ?? "Die Routine"} ist geschafft.`}
                     </Text>
                   </View>
                   <Button
@@ -591,8 +625,9 @@ export default function DashboardScreen() {
         <StickerRewardSheet
           visible={showStickerRewardSheet}
           childName={selectedChild.name}
-          stickers={availableDailyStickers}
+          stickers={availableStickers}
           palette={palette}
+          rewardEvent={pendingStickerRewardEvent}
           onSelectSticker={handleSelectDailySticker}
           onClose={() => setShowStickerRewardSheet(false)}
         />

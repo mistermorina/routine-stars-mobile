@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
-import { GripVertical, Plus, Trash2, Check, ChevronDown, Sparkles } from "lucide-react-native";
+import { GripVertical, Plus, Trash2, Check, ChevronDown, Sparkles, Star } from "lucide-react-native";
 import DraggableFlatList, {
   ScaleDecorator,
   RenderItemParams,
@@ -196,6 +196,32 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
       showsVerticalScrollIndicator={false}
       contentContainerClassName="pb-8"
     >
+      <View
+        className="mb-4 rounded-[24px] border px-4 py-4"
+        style={{
+          borderColor: palette.accentBorder,
+          backgroundColor: palette.heroSurface,
+        }}
+      >
+        <View className="flex-row items-center gap-3">
+          <View
+            className="h-11 w-11 items-center justify-center rounded-full"
+            style={{ backgroundColor: "#FFFFFF" }}
+          >
+            <Star size={20} color={palette.chartPrimary} fill={palette.chartPrimary} />
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text className="text-base font-body-semibold leading-5 text-foreground">
+              Kleine Schritte zählen sofort.
+            </Text>
+            <Text className="mt-1 text-xs font-body leading-5 text-muted-foreground">
+              Eine gute Routine hat wenige klare Aufgaben. Dein Kind sammelt Sterne,
+              sobald ein Schritt geschafft ist.
+            </Text>
+          </View>
+        </View>
+      </View>
+
       {/* Saved routines */}
       {savedRoutines.length > 0 && (
         <View className="mb-4 gap-2">
@@ -240,7 +266,7 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
           <CardDescription>
             Wir schlagen passende Vorlagen für{" "}
             {formData.children.length === 1 ? formData.children[0].name : "deine Familie"}{" "}
-            vor. Du kannst sie danach noch anpassen.
+            vor. Du kannst jeden Schritt danach anpassen.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -261,10 +287,10 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                 </View>
                 <View className="ml-3 flex-1">
                   <Text className="text-base font-body-semibold text-foreground">
-                    Empfohlen für {primaryChild?.name || "dein Kind"}
+                    Sanfter Start für {primaryChild?.name || "dein Kind"}
                   </Text>
                   <Text className="text-xs font-body" style={{ color: palette.accentText }}>
-                    Alter {primaryChild?.ageGroup ?? "6-8"} • passend zur Tageszeit
+                    Alter {primaryChild?.ageGroup ?? "6-8"} • wenige klare Aufgaben
                   </Text>
                 </View>
               </View>
@@ -299,7 +325,7 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                   Alle Vorlagen ansehen
                 </Text>
                 <Text className="mt-0.5 text-xs font-body text-muted-foreground">
-                  Morgen, Abend, Schule, Haushalt und mehr
+                  Morgen, Abend, Schule, Haushalt und besondere Momente
                 </Text>
               </View>
               <ChevronDown
@@ -326,7 +352,7 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                 style={{ borderColor: palette.accent }}
               >
                 <Text className="text-sm font-body-semibold" style={{ color: palette.accent }}>
-                  Eigene Routine anpassen
+                  Eigene Routine erstellen
                 </Text>
               </Button>
             ) : null}
@@ -357,7 +383,7 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                   ) : (
                     <View className="rounded-xl bg-secondary/50 py-4 items-center">
                       <Text className="text-sm font-body text-muted-foreground">
-                        Wähle oben eine Vorlage oder füge eigene Aufgaben hinzu.
+                        Wähle eine Vorlage oder füge den ersten eigenen Schritt hinzu.
                       </Text>
                     </View>
                   )}
@@ -368,7 +394,7 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                       <Input
                         value={newTask}
                         onChangeText={setNewTask}
-                        placeholder="Neue Aufgabe hinzufügen"
+                        placeholder="Zum Beispiel Schlafanzug anziehen"
                         returnKeyType="done"
                         onSubmitEditing={handleAddTask}
                       />
@@ -404,11 +430,22 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                       minimumFontScale={0.76}
                     >
                       {savedRoutines.length > 0
-                        ? "Speichern + weitere"
+                        ? "Routine speichern"
                         : "Starter-Routine speichern"}
                     </Text>
                   </Button>
                 ) : null}
+              </View>
+            ) : null}
+
+            {!canProceed ? (
+              <View
+                className="rounded-[18px] px-4 py-3"
+                style={{ backgroundColor: palette.heroSurface }}
+              >
+                <Text className="text-sm font-body leading-5" style={{ color: palette.accentText }}>
+                  Wähle eine Vorlage oder erstelle eine eigene Routine. Eine Routine reicht für den Start.
+                </Text>
               </View>
             ) : null}
 
@@ -423,7 +460,7 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                 className="min-w-[100px]"
                 style={{ backgroundColor: palette.button }}
               >
-                Weiter
+                Weiter: Belohnungen
               </Button>
             </View>
           </View>

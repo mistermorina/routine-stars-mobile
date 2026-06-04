@@ -12,7 +12,7 @@ import { getThemePalette } from "@/lib/theme";
 export default function StickerAlbumScreen() {
   const router = useRouter();
   const { selectedChild, selectedChildId, isLoading } = useChildren();
-  const { placedStickers } = useStickerWall(selectedChildId);
+  const { collectedEntries } = useStickerWall(selectedChildId);
   const palette = getThemePalette(selectedChild?.theme);
 
   if (isLoading) {
@@ -60,10 +60,10 @@ export default function StickerAlbumScreen() {
 
             <View className="flex-1">
               <Text className="text-center text-[28px] font-headline text-foreground">
-                Sticker-Wall
+                Sticker-Galerie
               </Text>
               <Text className="text-center text-sm font-body" style={{ color: palette.accentText }}>
-                {selectedChild.name}s gesammelte Tagessticker
+                {selectedChild.name}s gesammelte Routine-Sticker
               </Text>
             </View>
 
@@ -82,7 +82,7 @@ export default function StickerAlbumScreen() {
           showsVerticalScrollIndicator={false}
         >
           <StickerWall
-            entries={placedStickers}
+            entries={collectedEntries}
             palette={palette}
           />
         </ScrollView>

@@ -44,7 +44,7 @@ Run: `node scripts/check-sticker-reward-logic.mjs`
 
 Expected: FAIL because `lib/sticker-reward-logic.ts` does not exist yet.
 
-- [ ] **Step 3: Implement pure reward rules**
+- [x] **Step 3: Implement pure reward rules**
 
 Add exported helpers:
 
@@ -59,7 +59,7 @@ export function canClaimStickerRewardEvent(claimedEventKeys: string[], eventKey?
 export function getStickerRewardModeLabel(mode: StickerRewardMode) { ... }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `node scripts/check-sticker-reward-logic.mjs`
 
@@ -73,11 +73,11 @@ Expected: PASS.
 - Modify: `lib/storage.ts`
 - Modify: `hooks/use-sticker-wall.ts`
 
-- [ ] **Step 1: Extend types**
+- [x] **Step 1: Extend types**
 
 Add `StickerThemeWorld`, `StickerRarity`, `StickerCollectionEntry`, `StickerCollectionState`, `StickerRewardSettings`, and use the existing `AnimalStickerId` values as `StickerAssetId`.
 
-- [ ] **Step 2: Expand animal sticker registry**
+- [x] **Step 2: Expand animal sticker registry**
 
 Add catalog metadata to each sticker:
 
@@ -92,11 +92,11 @@ masterSize: { width: number; height: number };
 hasTransparentBackground: true;
 ```
 
-- [ ] **Step 3: Update storage keys**
+- [x] **Step 3: Update storage keys**
 
 Add `STICKER_COLLECTION` and `STICKER_REWARD_SETTINGS` while reading legacy `STICKER_WALL` for migration.
 
-- [ ] **Step 4: Update hook API**
+- [x] **Step 4: Update hook API**
 
 Expose:
 
@@ -118,15 +118,15 @@ Keep legacy names (`placedStickers`, `availableDailyStickers`, `claimDailySticke
 - Modify: `app/(tabs)/index.tsx`
 - Modify: `components/stickers/sticker-reward-sheet.tsx`
 
-- [ ] **Step 1: Detect just-completed routine**
+- [x] **Step 1: Detect just-completed routine**
 
 When a task completion makes its parent routine complete, call `createStickerRewardEvent` with selected child, routine id, routine name, current local date, routine counts, and current settings.
 
-- [ ] **Step 2: Show sticker selector from event**
+- [x] **Step 2: Show sticker selector from event**
 
 If `canClaimStickerRewardEvent` succeeds, show the selection sheet with copy tied to the completed routine. On selection, persist a collection entry and navigate to the gallery.
 
-- [ ] **Step 3: Keep legacy whole-day mode**
+- [x] **Step 3: Keep legacy whole-day mode**
 
 If parents choose `daily_complete`, only show sticker reward after all routines are complete.
 
@@ -137,15 +137,15 @@ If parents choose `daily_complete`, only show sticker reward after all routines 
 - Modify: `app/sticker-album.tsx`
 - Modify: `app/(tabs)/star-account.tsx`
 
-- [ ] **Step 1: Rename UI language from wall to gallery where visible**
+- [x] **Step 1: Rename UI language from wall to gallery where visible**
 
 Use "Sticker-Galerie" for the route and child-facing headers.
 
-- [ ] **Step 2: Render collection cards with metadata**
+- [x] **Step 2: Render collection cards with metadata**
 
 Show collected count, theme badge, rarity badge, earned date, and locked slots using the catalog order.
 
-- [ ] **Step 3: Preserve compact profile preview**
+- [x] **Step 3: Preserve compact profile preview**
 
 The profile tab keeps a compact preview and routes into `/sticker-album`.
 
@@ -156,15 +156,15 @@ The profile tab keeps a compact preview and routes into `/sticker-album`.
 - Modify: `app/settings/_layout.tsx`
 - Modify: `app/settings/index.tsx`
 
-- [ ] **Step 1: Add settings route**
+- [x] **Step 1: Add settings route**
 
 Add a parent-protected Sticker route in the settings stack and menu.
 
-- [ ] **Step 2: Add overview**
+- [x] **Step 2: Add overview**
 
 Show selected child, collected count, remaining count, theme pack, and the last unlocked stickers.
 
-- [ ] **Step 3: Add control**
+- [x] **Step 3: Add control**
 
 Let parents choose between "Jede abgeschlossene Routine" and "Ganzer Tag abgeschlossen"; persist with `useStickerWall`.
 
@@ -175,15 +175,15 @@ Let parents choose between "Jede abgeschlossene Routine" and "Ganzer Tag abgesch
 - Modify: `Agents.md`
 - Modify: `package.json`
 
-- [ ] **Step 1: Document decisions**
+- [x] **Step 1: Document decisions**
 
 Document V1 asset choice, storage model, unlock logic, parent controls, and the complete user journey.
 
-- [ ] **Step 2: Add smoke script to npm**
+- [x] **Step 2: Add smoke script to npm**
 
 Add `test:stickers` and include it in the final verification command list.
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run:
 

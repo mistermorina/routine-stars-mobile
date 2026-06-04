@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { ANIMAL_STICKERS } from "@/lib/animal-stickers";
+import { STICKER_CATALOG } from "@/lib/animal-stickers";
 import { getLocalIsoDate } from "@/lib/local-date";
 import {
   DEFAULT_STICKER_REWARD_SETTINGS,
@@ -11,7 +11,7 @@ import {
 } from "@/lib/sticker-reward-logic";
 import { KEYS, storage } from "@/lib/storage";
 import type {
-  AnimalStickerId,
+  StickerAssetId,
   StickerCollectionEntry,
   StickerCollectionState,
   StickerRewardSettings,
@@ -43,23 +43,23 @@ function getDailyEventKey(date: string) {
 }
 
 function normalizeCollectionState(value?: StoredStickerState | null): StickerCollectionState {
-  const validStickerIds = new Set(ANIMAL_STICKERS.map((sticker) => sticker.id));
+  const validStickerIds = new Set(STICKER_CATALOG.map((sticker) => sticker.id));
   const sourceStickers = value?.collectedStickers ?? value?.placedStickers ?? [];
   const collectedStickers = sourceStickers
     .map((entry): StickerCollectionEntry | null => {
-      const isValidEntry = Boolean(
-        entry &&
-          typeof entry.id === "string" &&
-          typeof entry.earnedDate === "string" &&
-          typeof entry.createdAt === "string" &&
-          typeof entry.slot === "number" &&
-          validStickerIds.has(entry.stickerId as AnimalStickerId)
-      );
-
-      if (!isValidEntry || !entry.stickerId) {
+      if (
+        !entry ||
+        typeof entry.id !== "string" ||
+        typeof entry.earnedDate !== "string" ||
+        typeof entry.createdAt !== "string" ||
+        typeof entry.slot !== "number" ||
+        !entry.stickerId ||
+          !validStickerIds.has(entry.stickerId as StickerAssetId)
+      ) {
         return null;
       }
 
+      const { id, stickerId, earnedDate, slot, createdAt } = entry;
       const reason =
         entry.reason === "routine_complete" || entry.reason === "daily_complete"
           ? entry.reason
@@ -68,19 +68,19 @@ function normalizeCollectionState(value?: StoredStickerState | null): StickerCol
         typeof entry.eventKey === "string" && entry.eventKey.length > 0
           ? entry.eventKey
           : reason === "daily_complete"
-            ? getDailyEventKey(entry.earnedDate)
-            : `${entry.earnedDate}:${entry.routineId ?? entry.slot}`;
+            ? getDailyEventKey(earnedDate)
+            : `${earnedDate}:${entry.routineId ?? slot}`;
 
       return {
-        id: entry.id,
-        stickerId: entry.stickerId as AnimalStickerId,
-        earnedDate: entry.earnedDate,
+        id,
+        stickerId: stickerId as StickerAssetId,
+        earnedDate,
         reason,
         eventKey,
         routineId: typeof entry.routineId === "string" ? entry.routineId : undefined,
         routineName: typeof entry.routineName === "string" ? entry.routineName : undefined,
-        slot: entry.slot,
-        createdAt: entry.createdAt,
+        slot,
+        createdAt,
       };
     })
     .filter((entry): entry is StickerCollectionEntry => Boolean(entry))
@@ -173,22 +173,26 @@ export function useStickerWall(selectedChildId?: string) {
     [collectionState.collectedStickers]
   );
   const availableStickers = useMemo(() => {
-    const freshStickers = ANIMAL_STICKERS.filter(
+    const freshStickers = STICKER_CATALOG.filter(
       (sticker) => !collectedStickerIds.has(sticker.id)
     );
-    return freshStickers.length > 0 ? freshStickers : ANIMAL_STICKERS;
+    return freshStickers.length > 0 ? freshStickers : STICKER_CATALOG;
   }, [collectedStickerIds]);
   const todayEventKey = getDailyEventKey(today);
   const hasClaimedToday = collectionState.claimedEventKeys.includes(todayEventKey);
 
   const claimStickerReward = useCallback(
-    async (event: StickerRewardEvent | null, stickerId: AnimalStickerId) => {
+    async (event: StickerRewardEvent | null, stickerId: StickerAssetId) => {
       if (!selectedChildId || !event || event.childId !== selectedChildId) {
         return null;
       }
 
-      const storedMap = await storage.getItem<StoredStickerMap>(KEYS.STICKER_COLLECTION);
-      const current = normalizeCollectionState(storedMap?.[selectedChildId]);
+      const [storedMap, legacyMap] = await Promise.all([
+        storage.getItem<StoredStickerMap>(KEYS.STICKER_COLLECTION),
+        storage.getItem<StoredStickerMap>(KEYS.STICKER_WALL),
+      ]);
+      const normalizedMap = normalizeCollectionMap(storedMap, legacyMap);
+      const current = normalizeCollectionState(normalizedMap[selectedChildId]);
 
       if (!canClaimStickerRewardEvent(current.claimedEventKeys, event.eventKey)) {
         return null;
@@ -210,7 +214,7 @@ export function useStickerWall(selectedChildId?: string) {
         claimedEventKeys: unique([...current.claimedEventKeys, event.eventKey]).sort(),
       };
       const nextMap = {
-        ...normalizeCollectionMap(storedMap),
+        ...normalizedMap,
         [selectedChildId]: nextState,
       };
 
@@ -222,7 +226,7 @@ export function useStickerWall(selectedChildId?: string) {
   );
 
   const claimDailySticker = useCallback(
-    async (stickerId: AnimalStickerId) =>
+    async (stickerId: StickerAssetId) =>
       claimStickerReward(
         selectedChildId
           ? {

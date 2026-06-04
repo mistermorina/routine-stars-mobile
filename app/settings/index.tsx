@@ -12,6 +12,7 @@ import {
   ChevronRight,
   RefreshCcw,
   Rocket,
+  Sparkles,
 } from "lucide-react-native";
 import { storage } from "@/lib/storage";
 import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
@@ -30,6 +31,13 @@ const settingsItems = [
     status: "Live",
     icon: CalendarDays,
     route: "/settings/progress" as const,
+  },
+  {
+    label: "Sticker-System",
+    description: "Sticker-Galerie prüfen und Freischaltlogik steuern",
+    status: "Live",
+    icon: Sparkles,
+    route: "/settings/stickers" as const,
   },
   {
     label: "Statistiken",
@@ -71,6 +79,7 @@ const settingsItems = [
 const featuredRoutes = new Set([
   "/settings/children",
   "/settings/progress",
+  "/settings/stickers",
   "/settings/stats",
 ]);
 

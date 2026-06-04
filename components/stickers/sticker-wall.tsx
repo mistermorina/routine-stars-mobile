@@ -4,12 +4,16 @@ import { Image } from "expo-image";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { ChevronRight, Sparkles } from "lucide-react-native";
 import { Card } from "@/components/ui/card";
-import { getAnimalSticker } from "@/lib/animal-stickers";
+import {
+  STICKER_CATALOG,
+  getStickerRarityLabel,
+  getStickerThemeWorldLabel,
+} from "@/lib/animal-stickers";
 import type { ThemePalette } from "@/lib/theme";
-import type { StickerWallEntry } from "@/lib/types";
+import type { StickerCollectionEntry } from "@/lib/types";
 
 interface StickerWallProps {
-  entries: StickerWallEntry[];
+  entries: StickerCollectionEntry[];
   palette: ThemePalette;
   compact?: boolean;
   onOpenWall?: () => void;
@@ -26,11 +30,10 @@ export function StickerWall({
   compact = false,
   onOpenWall,
 }: StickerWallProps) {
-  const visibleSlots = compact ? 8 : Math.max(12, Math.ceil((entries.length + 1) / 4) * 4);
-  const slotEntries = Array.from({ length: visibleSlots }, (_, slot) =>
-    entries.find((entry) => entry.slot === slot)
-  );
+  const catalogStickers = compact ? STICKER_CATALOG.slice(0, 8) : STICKER_CATALOG;
+  const entriesByStickerId = new Map(entries.map((entry) => [entry.stickerId, entry]));
   const filledCount = entries.length;
+  const totalCount = STICKER_CATALOG.length;
 
   return (
     <Animated.View entering={FadeInDown.delay(155).duration(320)} className="mt-4">
@@ -47,7 +50,7 @@ export function StickerWall({
           onPress={onOpenWall}
           className="active:opacity-95"
           accessibilityRole={onOpenWall ? "button" : undefined}
-          accessibilityLabel={onOpenWall ? "Sticker-Wall öffnen" : undefined}
+          accessibilityLabel={onOpenWall ? "Sticker-Galerie öffnen" : undefined}
         >
           <View className="flex-row items-start justify-between gap-3">
             <View className="min-w-0 flex-1 flex-row items-center gap-3">
@@ -59,10 +62,10 @@ export function StickerWall({
               </View>
               <View className="min-w-0 flex-1">
                 <Text className="text-lg font-headline text-foreground" numberOfLines={1}>
-                  Sticker-Wall
+                  Sticker-Galerie
                 </Text>
                 <Text className="mt-1 text-sm font-body text-muted-foreground" numberOfLines={2}>
-                  Jeder komplett geschaffte Tag bekommt einen Platz.
+                  Sammle freundliche Tiere nach geschafften Routinen.
                 </Text>
               </View>
             </View>
@@ -75,7 +78,7 @@ export function StickerWall({
                   Gesammelt
                 </Text>
                 <Text className="mt-1 text-sm font-headline" style={{ color: palette.accentText }}>
-                  {filledCount}
+                  {Math.min(filledCount, totalCount)}/{totalCount}
                 </Text>
               </View>
               {onOpenWall ? (
@@ -94,21 +97,21 @@ export function StickerWall({
           className="mt-4 flex-row flex-wrap justify-between rounded-[22px] border px-3 py-3"
           style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.62)" }}
         >
-          {slotEntries.map((entry, index) => {
-            const sticker = entry ? getAnimalSticker(entry.stickerId) : null;
+          {catalogStickers.map((sticker) => {
+            const entry = entriesByStickerId.get(sticker.id);
             return (
               <View
-                key={entry?.id ?? `empty-${index}`}
+                key={sticker.id}
                 className="mb-3 w-[23%] items-center"
               >
                 <View
                   className="h-[70px] w-full items-center justify-center rounded-[18px] border"
                   style={{
-                    backgroundColor: sticker ? `${sticker.accent}14` : "rgba(255,255,255,0.58)",
-                    borderColor: sticker ? `${sticker.accent}55` : "rgba(157,184,216,0.32)",
+                    backgroundColor: entry ? `${sticker.accent}14` : "rgba(255,255,255,0.58)",
+                    borderColor: entry ? `${sticker.accent}55` : "rgba(157,184,216,0.32)",
                   }}
                 >
-                  {sticker && entry ? (
+                  {entry ? (
                     <Image
                       source={sticker.asset}
                       style={{ width: 58, height: 58 }}
@@ -116,16 +119,26 @@ export function StickerWall({
                       transition={160}
                     />
                   ) : (
-                    <Text className="text-lg font-headline text-muted-foreground">+</Text>
+                    <Text className="text-lg font-headline text-muted-foreground">?</Text>
                   )}
                 </View>
                 <Text
                   className="mt-1 h-4 text-[10px] font-body-semibold"
-                  style={{ color: sticker ? palette.accentText : "#A3A3A3" }}
+                  style={{ color: entry ? palette.accentText : "#A3A3A3" }}
                   numberOfLines={1}
                 >
-                  {entry ? formatDateLabel(entry.earnedDate) : "frei"}
+                  {entry ? formatDateLabel(entry.earnedDate) : getStickerRarityLabel(sticker.rarity)}
                 </Text>
+                {!compact ? (
+                  <Text
+                    className="h-4 text-[9px] font-body text-muted-foreground"
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.78}
+                  >
+                    {entry?.routineName ?? getStickerThemeWorldLabel(sticker.themeWorld)}
+                  </Text>
+                ) : null}
               </View>
             );
           })}

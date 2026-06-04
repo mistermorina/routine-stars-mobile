@@ -71,7 +71,7 @@ export function DailyMissionCard({
                   className="text-[10px] font-body-semibold"
                   style={{ color: palette.accentText }}
                 >
-                  Album
+                  Ziel
                 </Text>
               </View>
             </View>
@@ -117,8 +117,8 @@ export function DailyMissionCard({
             />
             <Text className="min-w-0 flex-1 text-sm font-body-semibold leading-5 text-foreground">
               {isMissionComplete
-                ? "Mission geschafft. Heute wartet ein neuer Sticker-Moment."
-                : "Wenn du fertig bist, wartet ein neuer Sticker im Album."}
+                ? "Mission geschafft. Der nächste Meilenstein rückt näher."
+                : "Wenn du fertig bist, wächst dein Tagesfortschritt weiter."}
             </Text>
           </View>
 
@@ -128,7 +128,7 @@ export function DailyMissionCard({
               style={{ backgroundColor: palette.heroSurface }}
             >
               <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
-                Neu im Album
+                Neue Meilensteine
               </Text>
               <Text className="mt-1 text-sm font-headline text-foreground">
                 {recentUnlocks.map((sticker) => sticker.title).join(" • ")}

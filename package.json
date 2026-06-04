@@ -10,6 +10,7 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx",
+    "test:stickers": "node scripts/check-sticker-reward-logic.mjs",
     "test:smoke": "node scripts/check-task-timer-modal-order.mjs",
     "test:progress-smoke": "node scripts/check-local-day-progress.mjs",
     "test:contrast-smoke": "node scripts/check-color-contrast.mjs"

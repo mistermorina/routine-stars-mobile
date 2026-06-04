@@ -113,7 +113,7 @@ export type StickerThemeWorld =
   | "natur"
   | "gute-nacht";
 export type StickerCategory = "tiere" | "weltraum" | "magie" | "fahrzeuge" | "natur" | "helden" | "essen" | "gute-nacht";
-export type StickerRarity = "common" | "rare" | "epic";
+export type StickerRarity = "common" | "uncommon" | "rare" | "epic";
 export type StickerRewardMode = "routine_complete" | "daily_complete";
 export type StickerSelectionMode = "child_choice";
 export type StickerUnlockReason = StickerRewardMode;
@@ -130,7 +130,17 @@ export type AnimalStickerId =
   | "eule"
   | "schildkroete";
 
-export type StickerAssetId = AnimalStickerId;
+export type GeneratedStickerId =
+  | "weltraum_rakete"
+  | "weltraum_planet"
+  | "weltraum_astronautenhelm"
+  | "weltraum_mondrover"
+  | "gute_nacht_schlafmond"
+  | "gute_nacht_traumwolke"
+  | "gute_nacht_sternenbuch"
+  | "gute_nacht_pyjama_baer";
+
+export type StickerAssetId = AnimalStickerId | GeneratedStickerId;
 
 export interface StickerCollectionEntry {
   id: string;

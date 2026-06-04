@@ -3,7 +3,12 @@ import { Modal, Pressable, ScrollView, Text, useWindowDimensions, View } from "r
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { X } from "lucide-react-native";
-import type { AnimalSticker } from "@/lib/animal-stickers";
+import {
+  getStickerRarityLabel,
+  getStickerThemeWorldLabel,
+  type AnimalSticker,
+} from "@/lib/animal-stickers";
+import type { StickerRewardEvent } from "@/lib/sticker-reward-logic";
 import type { ThemePalette } from "@/lib/theme";
 
 interface StickerRewardSheetProps {
@@ -11,6 +16,7 @@ interface StickerRewardSheetProps {
   childName: string;
   stickers: AnimalSticker[];
   palette: ThemePalette;
+  rewardEvent?: StickerRewardEvent | null;
   onSelectSticker: (sticker: AnimalSticker) => void;
   onClose: () => void;
 }
@@ -20,6 +26,7 @@ export function StickerRewardSheet({
   childName,
   stickers,
   palette,
+  rewardEvent,
   onSelectSticker,
   onClose,
 }: StickerRewardSheetProps) {
@@ -29,6 +36,9 @@ export function StickerRewardSheet({
   const sheetBottomPadding = Math.max(insets.bottom + 12, 20);
   const availableSheetHeight = Math.max(1, screenHeight - sheetTopPadding - sheetBottomPadding);
   const sheetMaxHeight = Math.min(screenHeight * 0.88, availableSheetHeight);
+  const isDailyReward = rewardEvent?.reason === "daily_complete";
+  const eyebrow = isDailyReward ? "Tag geschafft" : "Routine geschafft";
+  const rewardSource = rewardEvent?.routineName ?? "deine Routine";
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -85,19 +95,21 @@ export function StickerRewardSheet({
                   style={{ backgroundColor: palette.tabActiveBg }}
                 >
                   <Text className="text-xs font-body-semibold uppercase tracking-[0.7px]" style={{ color: palette.accentText }}>
-                    Tag geschafft
+                    {eyebrow}
                   </Text>
                 </View>
                 <Text className="mt-3 text-[26px] font-headline leading-[31px] text-foreground">
                   Such dir einen Sticker aus
                 </Text>
                 <Text className="mt-2 text-sm font-body leading-5 text-muted-foreground">
-                  {childName} hat heute alles geschafft. Dieser Sticker landet direkt auf der Sticker-Wall.
+                  {isDailyReward
+                    ? `${childName} hat heute alles geschafft. Dieser Sticker landet direkt in der Sticker-Galerie.`
+                    : `${childName} hat "${rewardSource}" abgeschlossen. Dieser Sticker landet direkt in der Sticker-Galerie.`}
                 </Text>
               </View>
 
               <View className="mt-5 flex-row flex-wrap justify-between gap-y-3">
-                {stickers.slice(0, 6).map((sticker) => (
+                {stickers.map((sticker) => (
                   <Pressable
                     key={sticker.id}
                     onPress={() => onSelectSticker(sticker)}
@@ -124,6 +136,28 @@ export function StickerRewardSheet({
                     <Text className="mt-1 text-center text-xs font-body text-muted-foreground" numberOfLines={1}>
                       {sticker.mood}
                     </Text>
+                    <View className="mt-2 flex-row justify-center gap-1.5">
+                      <View
+                        className="rounded-full px-2 py-1"
+                        style={{ backgroundColor: `${sticker.accent}14` }}
+                      >
+                        <Text
+                          className="text-[9px] font-body-semibold"
+                          style={{ color: palette.accentText }}
+                          numberOfLines={1}
+                        >
+                          {getStickerThemeWorldLabel(sticker.themeWorld)}
+                        </Text>
+                      </View>
+                      <View
+                        className="rounded-full px-2 py-1"
+                        style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
+                      >
+                        <Text className="text-[9px] font-body-semibold text-muted-foreground" numberOfLines={1}>
+                          {getStickerRarityLabel(sticker.rarity)}
+                        </Text>
+                      </View>
+                    </View>
                   </Pressable>
                 ))}
               </View>

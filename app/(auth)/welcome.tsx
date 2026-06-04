@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
@@ -7,160 +7,174 @@ import {
   ArrowRight,
   Check,
   ChevronLeft,
-  LockKeyhole,
+  Gift,
+  Heart,
+  ListChecks,
   Shield,
   Sparkles,
   Star,
 } from "lucide-react-native";
 import Animated, {
-  Easing,
+  FadeIn,
   FadeInDown,
-  FadeInUp,
   SlideInLeft,
   SlideInRight,
   SlideOutLeft,
   SlideOutRight,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
 } from "react-native-reanimated";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
-import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { triggerFeedback } from "@/lib/feedback";
 import { getThemePalette } from "@/lib/theme";
 import { KEYS, storage } from "@/lib/storage";
+import {
+  onboardingJourney,
+  onboardingPrinciples,
+  type OnboardingIconName,
+  type OnboardingJourneyScreen,
+} from "@/lib/onboarding-journey";
 import onboardingHeroImage from "@/assets/images/onboarding-hero.png";
+import routineTrophyImage from "@/assets/images/routine-trophy-soft.png";
+import rewardGiftImage from "@/assets/images/reward-star-gift-soft.png";
+import parentCheckImage from "@/assets/images/parent-check-soft.png";
 
-const previewCards = [
-  {
-    eyebrow: "Familienalltag",
-    title: "Mehr Leichtigkeit im Familienalltag.",
-    description:
-      "Eltern richten einmal ein, Kinder erleben kleine Erfolgsmomente statt täglicher Diskussionen.",
-    Icon: Sparkles,
-    chips: ["Morgen", "Abend", "Hausaufgaben"],
-  },
-  {
-    eyebrow: "Spielerisch",
-    title: "Routinen werden zu kleinen Levels.",
-    description:
-      "Zähneputzen, Aufräumen und Abendrituale werden zu sichtbaren Schritten mit Sternen und Belohnungen.",
-    Icon: Star,
-    chips: ["Sterne", "Belohnungen", "Fortschritt"],
-  },
-  {
-    eyebrow: "Elternkontrolle",
-    title: "Eltern behalten die Kontrolle.",
-    description:
-      "PIN-Schutz, lokale Daten und kein eigenes Kinderkonto halten die App klar und sicher.",
-    Icon: LockKeyhole,
-    chips: ["PIN", "Lokal", "Privat"],
-  },
-] as const;
+const iconMap: Record<OnboardingIconName, typeof Sparkles> = {
+  sparkles: Sparkles,
+  heart: Heart,
+  star: Star,
+  listChecks: ListChecks,
+  gift: Gift,
+  shield: Shield,
+  arrowRight: ArrowRight,
+};
 
-function FloatingParticle({
-  top,
-  left,
-  delay,
-  size,
-  duration,
-  color,
+const visualImageMap = {
+  family: onboardingHeroImage,
+  calm: parentCheckImage,
+  child: onboardingHeroImage,
+  routine: routineTrophyImage,
+  rewards: rewardGiftImage,
+  safety: parentCheckImage,
+  ready: routineTrophyImage,
+} as const;
+
+function JourneyVisual({
+  screen,
+  compact,
 }: {
-  top: number;
-  left: number;
-  delay: number;
-  size: number;
-  duration: number;
-  color: string;
+  screen: OnboardingJourneyScreen;
+  compact: boolean;
 }) {
-  const reduceMotion = useReducedMotion();
-  const translateY = useSharedValue(0);
-  const opacity = useSharedValue(reduceMotion ? 0.32 : 0.2);
-
-  React.useEffect(() => {
-    if (reduceMotion) {
-      translateY.value = 0;
-      opacity.value = 0.3;
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      translateY.value = withRepeat(
-        withSequence(
-          withTiming(-8, {
-            duration,
-            easing: Easing.inOut(Easing.ease),
-          }),
-          withTiming(8, {
-            duration,
-            easing: Easing.inOut(Easing.ease),
-          })
-        ),
-        -1,
-        true
-      );
-      opacity.value = withRepeat(
-        withSequence(
-          withTiming(0.55, { duration: duration * 0.7 }),
-          withTiming(0.22, { duration: duration * 0.7 })
-        ),
-        -1,
-        true
-      );
-    }, delay);
-
-    return () => clearTimeout(timeout);
-  }, [delay, duration, opacity, reduceMotion, translateY]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: translateY.value }, { rotate: `${translateY.value * 1.8}deg` }],
-  }));
+  const palette = getThemePalette("sterne");
+  const imageSource = visualImageMap[screen.visual];
+  const imageAspectRatio = compact ? 1.16 : 1.34;
 
   return (
-    <Animated.View
-      className="absolute"
-      pointerEvents="none"
-      style={[
-        animatedStyle,
-        {
-          top,
-          left,
-        },
-      ]}
+    <View
+      className="overflow-hidden rounded-[28px] border"
+      style={{ backgroundColor: palette.heroSurface, borderColor: palette.accentBorder }}
     >
-      <Star size={size} color={color} fill={color} />
-    </Animated.View>
+      <Image
+        source={imageSource}
+        style={{ width: "100%", aspectRatio: imageAspectRatio }}
+        contentFit="cover"
+        transition={180}
+        accessibilityLabel={screen.title}
+      />
+
+      <View className="px-4 pb-4 pt-3">
+        <View className="flex-row items-center justify-between gap-3">
+          <View className="min-w-0 flex-1">
+            <Text className="text-xs font-body-semibold uppercase text-muted-foreground">
+              Sternenmoment
+            </Text>
+            <Text
+              className="mt-1 text-sm font-body-semibold leading-5 text-foreground"
+              numberOfLines={2}
+            >
+              {screen.childLine}
+            </Text>
+          </View>
+          <View
+            className="h-12 w-12 items-center justify-center rounded-full"
+            style={{ backgroundColor: "#FFFFFF" }}
+          >
+            <Star size={22} color={palette.chartPrimary} fill={palette.chartPrimary} />
+          </View>
+        </View>
+
+        <View className="mt-4 flex-row items-center gap-2">
+          {[0, 1, 2].map((item) => (
+            <View
+              key={item}
+              className="h-2 flex-1 rounded-full"
+              style={{
+                backgroundColor:
+                  item <= onboardingJourney.findIndex((entry) => entry.id === screen.id)
+                    ? palette.progress
+                    : palette.accentBorder,
+              }}
+            />
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function HighlightRow({
+  highlight,
+}: {
+  highlight: OnboardingJourneyScreen["highlights"][number];
+}) {
+  const palette = getThemePalette("sterne");
+  const Icon = iconMap[highlight.iconName];
+
+  return (
+    <View
+      className="flex-row items-start rounded-[20px] border px-3.5 py-3.5"
+      style={{ backgroundColor: "#FFFFFF", borderColor: palette.accentBorder }}
+    >
+      <View
+        className="h-10 w-10 items-center justify-center rounded-full"
+        style={{ backgroundColor: palette.tabActiveBg }}
+      >
+        <Icon size={18} color={palette.accentStrong} />
+      </View>
+      <View className="ml-3 min-w-0 flex-1">
+        <Text className="text-sm font-body-semibold leading-5 text-foreground">
+          {highlight.title}
+        </Text>
+        <Text className="mt-1 text-xs font-body leading-5 text-muted-foreground">
+          {highlight.description}
+        </Text>
+      </View>
+    </View>
   );
 }
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const palette = getThemePalette("sterne");
-  const reduceMotion = useReducedMotion();
   const scrollViewRef = useRef<ScrollView>(null);
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [previewIndex, setPreviewIndex] = useState(0);
+  const { width } = useWindowDimensions();
+  const [screenIndex, setScreenIndex] = useState(0);
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
 
-  const particles = useMemo(
-    () => [
-      { top: 58, left: 24, delay: 0, size: 12, duration: 4400, color: palette.chartPrimary },
-      { top: 92, left: 298, delay: 120, size: 10, duration: 5200, color: palette.chartSecondary },
-      { top: 192, left: 42, delay: 220, size: 11, duration: 5000, color: palette.chartPrimary },
-      { top: 248, left: 310, delay: 340, size: 9, duration: 5600, color: palette.chartSecondary },
-      { top: 356, left: 30, delay: 440, size: 8, duration: 6000, color: palette.chartPrimary },
-      { top: 418, left: 282, delay: 510, size: 12, duration: 5300, color: palette.chartSecondary },
-      { top: 530, left: 64, delay: 650, size: 10, duration: 5800, color: palette.chartPrimary },
-      { top: 602, left: 292, delay: 780, size: 8, duration: 6200, color: palette.chartSecondary },
-    ],
-    [palette.chartPrimary, palette.chartSecondary]
-  );
+  const screen = onboardingJourney[screenIndex];
+  const isFirstScreen = screenIndex === 0;
+  const isLastScreen = screenIndex === onboardingJourney.length - 1;
+  const progressValue = ((screenIndex + 1) / onboardingJourney.length) * 100;
+  const isCompact = width < 370;
 
-  const previewCard = previewCards[previewIndex];
+  const enteringAnimation = direction === "forward" ? SlideInRight.duration(250) : SlideInLeft.duration(250);
+  const exitingAnimation = direction === "forward" ? SlideOutLeft.duration(210) : SlideOutRight.duration(210);
+
+  const topPrinciples = useMemo(
+    () => onboardingPrinciples.slice(0, isCompact ? 3 : 5),
+    [isCompact]
+  );
 
   const scrollToTop = () => {
     requestAnimationFrame(() => {
@@ -172,399 +186,241 @@ export default function WelcomeScreen() {
     await storage.setItem(KEYS.HAS_SEEN_WELCOME, true);
   };
 
-  const handleStart = async () => {
+  const startSetup = async () => {
     await markWelcomeSeen();
     void triggerFeedback("stars_added");
     router.replace("/(auth)/login");
   };
 
-  const handlePreviewStart = async () => {
-    await markWelcomeSeen();
-    setDirection("forward");
-    setPreviewIndex(0);
-    setIsPreviewMode(true);
-    scrollToTop();
-    void triggerFeedback("theme_preview");
-  };
-
-  const handleNextPreview = async () => {
-    if (previewIndex === previewCards.length - 1) {
-      await handleStart();
+  const goNext = () => {
+    if (isLastScreen) {
+      void startSetup();
       return;
     }
+
     setDirection("forward");
-    setPreviewIndex((prev) => prev + 1);
+    setScreenIndex((current) => current + 1);
     scrollToTop();
     void triggerFeedback("tab_focus");
   };
 
-  const handlePreviousPreview = () => {
-    if (previewIndex === 0) {
-      setIsPreviewMode(false);
+  const goBack = () => {
+    if (isFirstScreen) {
+      return;
+    }
+
+    setDirection("backward");
+    setScreenIndex((current) => current - 1);
+    scrollToTop();
+    void triggerFeedback("tab_focus");
+  };
+
+  const handleSecondary = () => {
+    if (isLastScreen) {
+      setDirection("backward");
+      setScreenIndex(0);
       scrollToTop();
       return;
     }
-    setDirection("backward");
-    setPreviewIndex((prev) => prev - 1);
-    scrollToTop();
-    void triggerFeedback("tab_focus");
-  };
 
-  const handleSkip = async () => {
-    await markWelcomeSeen();
-    router.replace("/(auth)/login");
+    void startSetup();
   };
-
-  const enteringAnimation = direction === "forward" ? SlideInRight.duration(260) : SlideInLeft.duration(260);
-  const exitingAnimation = direction === "forward" ? SlideOutLeft.duration(220) : SlideOutRight.duration(220);
 
   return (
     <SafeAreaView className="flex-1">
       <ThemedScreenBackground theme="sterne">
-        {!reduceMotion &&
-          particles.map((particle, index) => (
-            <FloatingParticle key={index} {...particle} />
-          ))}
-
         <ScrollView
           ref={scrollViewRef}
           className="flex-1"
-          contentContainerClassName="px-4 pb-12 pt-4"
+          contentContainerClassName="px-4 pb-10 pt-4"
           showsVerticalScrollIndicator={false}
         >
-          <View className="flex-row items-center justify-between px-1">
-            <View className="flex-row items-center gap-2">
-              {isPreviewMode ? (
-                <Pressable
-                  onPress={handlePreviousPreview}
-                  className="flex-row items-center rounded-full px-2 py-1.5"
-                  style={{ backgroundColor: palette.headerGlass }}
-                >
-                  <ChevronLeft size={16} color={palette.accentStrong} />
-                  <Text className="ml-1 text-xs font-body-semibold" style={{ color: palette.accentText }}>
-                    Zurück
-                  </Text>
-                </Pressable>
-              ) : (
-                <View
-                  className="rounded-full px-3 py-1.5"
-                  style={{ backgroundColor: palette.headerGlass }}
-                >
-                  <Text className="text-xs font-body-semibold uppercase tracking-[0.7px]" style={{ color: palette.accentText }}>
-                    First Start
-                  </Text>
-                </View>
-              )}
+          <View className="flex-row items-center justify-between gap-3 px-1">
+            <Pressable
+              onPress={goBack}
+              disabled={isFirstScreen}
+              className="h-11 min-w-[92px] flex-row items-center rounded-full px-3"
+              style={{
+                backgroundColor: isFirstScreen ? "transparent" : palette.headerGlass,
+                opacity: isFirstScreen ? 0 : 1,
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Zurück"
+            >
+              <ChevronLeft size={17} color={palette.accentStrong} />
+              <Text className="ml-1 text-sm font-body-semibold" style={{ color: palette.accentStrong }}>
+                Zurück
+              </Text>
+            </Pressable>
+
+            <View
+              className="rounded-full px-3 py-1.5"
+              style={{ backgroundColor: palette.headerGlass }}
+            >
+              <Text className="text-xs font-body-semibold uppercase" style={{ color: palette.accentText }}>
+                {screen.stepLabel}
+              </Text>
             </View>
 
-            {isPreviewMode ? (
-              <Pressable onPress={handleSkip}>
-                <Text className="text-sm font-body-semibold" style={{ color: palette.accentStrong }}>
-                  Überspringen
-                </Text>
-              </Pressable>
-            ) : (
-              <View
-                className="rounded-full px-3 py-1.5"
-                style={{ backgroundColor: palette.headerGlass }}
-              >
-                <Text className="text-xs font-body-semibold uppercase tracking-[0.7px]" style={{ color: palette.accentText }}>
-                  Storyworld
-                </Text>
-              </View>
-            )}
+            <Pressable
+              onPress={() => {
+                void startSetup();
+              }}
+              className="h-11 min-w-[92px] items-end justify-center rounded-full px-3"
+              accessibilityRole="button"
+              accessibilityLabel="Intro überspringen und Setup starten"
+            >
+              <Text className="text-sm font-body-semibold" style={{ color: palette.accentStrong }}>
+                Setup
+              </Text>
+            </Pressable>
           </View>
 
-          {!isPreviewMode ? (
-            <Animated.View entering={FadeInDown.duration(320)} className="mt-4">
-              <View
-                className="rounded-[34px] border px-5 pb-5 pt-5"
-                style={{
-                  backgroundColor: palette.cardTint,
-                  borderColor: palette.accentBorder,
-                }}
-              >
-                <View className="flex-row items-center justify-between gap-3">
-                  <View className="flex-row items-center gap-2">
-                    <View
-                      className="rounded-2xl p-2.5"
-                      style={{ backgroundColor: palette.tabActiveBg }}
-                    >
-                      <Check size={18} color={palette.accentText} strokeWidth={3} />
-                    </View>
-                    <Text className="text-xl font-headline text-foreground">Routine Stars</Text>
-                  </View>
-                  <View
-                    className="rounded-full px-3 py-1.5"
-                    style={{ backgroundColor: palette.heroSurface }}
-                  >
-                    <Text className="text-xs font-body-semibold uppercase tracking-[0.8px]" style={{ color: palette.accentText }}>
-                      Willkommen
-                    </Text>
-                  </View>
-                </View>
-
-                <Text className="mt-4 text-[28px] font-headline leading-[33px] text-foreground">
-                  Starke Routinen. Kleine Stars.
-                </Text>
-                <Text className="mt-3 text-[15px] font-body leading-6 text-muted-foreground">
-                  Spielerisch motiviert, liebevoll begleitet und jeden Tag ein
-                  bisschen selbstständiger.
-                </Text>
-
+          <Animated.View entering={FadeInDown.duration(280)} className="mt-4">
+            <View
+              className="rounded-[24px] border px-4 py-4"
+              style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+            >
+              <View className="flex-row items-center gap-3">
                 <View
-                  className="mt-4 overflow-hidden rounded-[22px] border"
-                  style={{ borderColor: palette.accentBorder, backgroundColor: palette.heroSurface }}
+                  className="h-12 w-12 items-center justify-center rounded-full"
+                  style={{ backgroundColor: palette.tabActiveBg }}
                 >
-                  <Image
-                    source={onboardingHeroImage}
-                    style={{ width: "100%", aspectRatio: 1.28 }}
-                    contentFit="cover"
-                    transition={180}
-                    accessibilityLabel="Kind und Elternteil planen gemeinsam eine Routine"
-                  />
+                  <Check size={20} color={palette.accentStrong} strokeWidth={3} />
                 </View>
-
-                <View className="mt-4 flex-row flex-wrap gap-2">
-                  {[
-                    { icon: Sparkles, label: "Sterne statt Stress" },
-                    { icon: Star, label: "Jeden Tag ein Level weiter" },
-                    { icon: Shield, label: "Eltern bleiben in Kontrolle" },
-                  ].map((item) => (
-                    <View
-                      key={item.label}
-                      className="flex-row items-center gap-2 rounded-full border px-3 py-2"
-                      style={{
-                        backgroundColor: "#FFFFFF",
-                        borderColor: palette.accentBorder,
-                      }}
-                    >
-                      <item.icon size={14} color={palette.accentStrong} />
-                      <Text className="text-xs font-body-semibold text-foreground">
-                        {item.label}
-                      </Text>
-                    </View>
-                  ))}
+                <View className="min-w-0 flex-1">
+                  <Text className="text-xs font-body-semibold uppercase text-muted-foreground">
+                    Neue Familienreise
+                  </Text>
+                  <Text className="text-lg font-headline leading-6 text-foreground">
+                    Routine Stars
+                  </Text>
                 </View>
-
-                <View className="mt-5 gap-3">
-                  <Button
-                    onPress={() => {
-                      void handleStart();
-                    }}
-                    size="lg"
-                    className="h-14 w-full rounded-[22px]"
-                    style={{ backgroundColor: palette.button }}
-                  >
-                    <View className="flex-row items-center gap-2">
-                      <Star size={18} color="#FFFFFF" fill="#FFFFFF" />
-                      <Text className="text-base font-body-semibold leading-5 text-white">Loslegen</Text>
-                    </View>
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    onPress={() => {
-                      void handlePreviewStart();
-                    }}
-                    size="lg"
-                    className="w-full rounded-[22px]"
-                    style={{
-                      backgroundColor: "#FFFFFF",
-                      borderColor: palette.accentBorder,
-                    }}
-                  >
-                    <View className="flex-row items-center gap-2">
-                      <Sparkles size={18} color={palette.accentStrong} />
-                      <Text className="text-base font-body-semibold leading-5" style={{ color: palette.accentStrong }}>
-                        Erst anschauen
-                      </Text>
-                    </View>
-                  </Button>
-                </View>
-              </View>
-            </Animated.View>
-          ) : (
-            <Animated.View entering={FadeInUp.duration(220)} className="mt-4">
-              <View
-                className="rounded-[34px] border px-5 pb-5 pt-5"
-                style={{
-                  backgroundColor: palette.cardTint,
-                  borderColor: palette.accentBorder,
-                }}
-              >
-                <View className="flex-row items-start justify-between gap-3">
-                  <View className="flex-1">
-                    <Text className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground">
-                      {previewCard.eyebrow}
-                    </Text>
-                    <Text className="mt-2 text-[25px] font-headline leading-[31px] text-foreground">
-                      {previewCard.title}
-                    </Text>
-                  </View>
-                  <View
-                    className="h-14 w-14 items-center justify-center rounded-full"
-                    style={{ backgroundColor: palette.tabActiveBg }}
-                  >
-                    <previewCard.Icon size={24} color={palette.accentStrong} />
-                  </View>
-                </View>
-
-                <Text className="mt-4 text-[15px] font-body leading-6 text-muted-foreground">
-                  {previewCard.description}
+                <Text className="text-sm font-body-semibold" style={{ color: palette.accentStrong }}>
+                  {screenIndex + 1}/{onboardingJourney.length}
                 </Text>
-
-                <View className="mt-5">
-                  <Animated.View
-                    key={previewIndex}
-                    entering={enteringAnimation}
-                    exiting={exitingAnimation}
-                  >
-                    <View
-                      className="overflow-hidden rounded-[30px] border px-4 py-4"
-                      style={{
-                        backgroundColor: palette.heroSurface,
-                        borderColor: palette.accentBorder,
-                      }}
-                    >
-                      {previewIndex === 0 ? (
-                        <>
-                          <View className="overflow-hidden rounded-[22px]">
-                            <Image
-                              source={onboardingHeroImage}
-                              style={{ width: "100%", aspectRatio: 1.08 }}
-                              contentFit="cover"
-                              transition={180}
-                              accessibilityLabel="Kind und Elternteil planen gemeinsam eine Routine"
-                            />
-                          </View>
-                          <View className="mt-4 flex-row flex-wrap gap-2">
-                            {previewCard.chips.map((chip) => (
-                              <View
-                                key={chip}
-                                className="rounded-full bg-white px-3 py-1.5"
-                              >
-                                <Text className="text-xs font-body-semibold text-foreground">
-                                  {chip}
-                                </Text>
-                              </View>
-                            ))}
-                          </View>
-                        </>
-                      ) : (
-                        <>
-                          <View className="gap-3">
-                            {previewCard.chips.map((chip, index) => (
-                              <View
-                                key={chip}
-                                className="flex-row items-start rounded-[20px] border px-3.5 py-3.5"
-                                style={{
-                                  backgroundColor: index === 1 ? "#FFFFFF" : palette.cardTint,
-                                  borderColor: palette.accentBorder,
-                                }}
-                              >
-                                <View
-                                  className="h-10 w-10 items-center justify-center rounded-full"
-                                  style={{ backgroundColor: palette.tabActiveBg }}
-                                >
-                                  {index === 0 ? (
-                                    <Star size={16} color={palette.chartPrimary} fill={palette.chartPrimary} />
-                                  ) : index === 1 ? (
-                                    <Sparkles size={16} color={palette.accentStrong} />
-                                  ) : (
-                                    <Shield size={16} color={palette.accentStrong} />
-                                  )}
-                                </View>
-                                <View className="ml-3 flex-1">
-                                  <Text className="text-base font-body-semibold leading-5 text-foreground">
-                                    {chip}
-                                  </Text>
-                                  <Text className="mt-1 text-sm font-body leading-5 text-muted-foreground">
-                                    {previewIndex === 1
-                                      ? index === 0
-                                        ? "Aufgaben zeigen sofort, was geschafft ist."
-                                        : index === 1
-                                          ? "Belohnungen machen Routine zu kleinen Zielen."
-                                          : "Eltern sehen klar, was gut läuft."
-                                      : index === 0
-                                        ? "Nur Eltern kommen in die Verwaltung."
-                                        : index === 1
-                                          ? "Familiendaten bleiben lokal auf dem Gerät."
-                                          : "Kinder brauchen kein eigenes Konto."}
-                                  </Text>
-                                </View>
-                              </View>
-                            ))}
-                          </View>
-                          <View
-                            className="mt-4 rounded-[22px] border px-4 py-4"
-                            style={{
-                              backgroundColor: "#FFFFFF",
-                              borderColor: palette.accentBorder,
-                            }}
-                          >
-                            <Text className="text-sm font-body leading-6 text-muted-foreground">
-                              {previewIndex === 1
-                                ? "So fühlt sich die App später für Kinder an: freundlich, motivierend und mit klaren kleinen Schritten."
-                                : "Der Elternbereich bleibt bewusst getrennt, damit Kinder nur ihre Welt sehen und Eltern trotzdem alles steuern können."}
-                            </Text>
-                          </View>
-                        </>
-                      )}
-                    </View>
-                  </Animated.View>
-                </View>
-
-                <View className="mt-5 flex-row items-center justify-center gap-2">
-                  {previewCards.map((_, index) => (
-                    <View
-                      key={index}
-                      className="rounded-full"
-                      style={{
-                        width: index === previewIndex ? 24 : 8,
-                        height: 8,
-                        backgroundColor:
-                          index === previewIndex ? palette.accentStrong : palette.accentBorder,
-                      }}
-                    />
-                  ))}
-                </View>
-
-                <View className="mt-6 gap-3">
-                  <Button
-                    onPress={() => {
-                      void handleNextPreview();
-                    }}
-                    size="lg"
-                    className="h-14 w-full rounded-[22px]"
-                    style={{ backgroundColor: palette.button }}
-                  >
-                    <View className="flex-row items-center gap-2">
-                      <Text className="text-base font-body-semibold leading-5 text-white">
-                        {previewIndex === previewCards.length - 1 ? "Jetzt starten" : "Weiter"}
-                      </Text>
-                      <ArrowRight size={18} color="#FFFFFF" />
-                    </View>
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    onPress={handlePreviousPreview}
-                    size="lg"
-                    className="w-full rounded-[22px]"
-                    style={{
-                      backgroundColor: "#FFFFFF",
-                      borderColor: palette.accentBorder,
-                    }}
-                  >
-                    <Text className="text-base font-body-semibold leading-5" style={{ color: palette.accentStrong }}>
-                      {previewIndex === 0 ? "Zurück zum Welcome" : "Zurück"}
-                    </Text>
-                  </Button>
-                </View>
               </View>
-            </Animated.View>
-          )}
+
+              <Progress
+                value={progressValue}
+                className="mt-4 h-3 w-full"
+                indicatorClassName="bg-[#FFD700]"
+                indicatorColor={palette.progress}
+              />
+
+              <View className="mt-4 flex-row flex-wrap gap-2">
+                {topPrinciples.map((principle) => (
+                  <View
+                    key={principle}
+                    className="rounded-full border px-3 py-1.5"
+                    style={{ backgroundColor: palette.heroSurface, borderColor: palette.accentBorder }}
+                  >
+                    <Text
+                      className="text-[11px] font-body-semibold leading-4"
+                      style={{ color: palette.accentText }}
+                      numberOfLines={1}
+                    >
+                      {principle}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </Animated.View>
+
+          <Animated.View
+            key={screen.id}
+            entering={enteringAnimation}
+            exiting={exitingAnimation}
+            className="mt-3"
+          >
+            <View
+              className="rounded-[34px] border px-5 pb-5 pt-5"
+              style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+            >
+              <Text className="text-xs font-body-semibold uppercase text-muted-foreground">
+                {screen.eyebrow}
+              </Text>
+              <Text
+                className="mt-2 text-[28px] font-headline leading-[34px] text-foreground"
+                maxFontSizeMultiplier={1.12}
+              >
+                {screen.title}
+              </Text>
+              <Text className="mt-3 text-[15px] font-body leading-6 text-muted-foreground">
+                {screen.description}
+              </Text>
+
+              <View className="mt-5">
+                <JourneyVisual screen={screen} compact={isCompact} />
+              </View>
+
+              <View className="mt-5 gap-3">
+                {screen.highlights.map((highlight) => (
+                  <HighlightRow key={highlight.title} highlight={highlight} />
+                ))}
+              </View>
+
+              <View className="mt-6 flex-row items-center justify-center gap-2">
+                {onboardingJourney.map((item, index) => (
+                  <View
+                    key={item.id}
+                    className="rounded-full"
+                    style={{
+                      width: index === screenIndex ? 24 : 8,
+                      height: 8,
+                      backgroundColor:
+                        index === screenIndex ? palette.accentStrong : palette.accentBorder,
+                    }}
+                  />
+                ))}
+              </View>
+
+              <View className="mt-6 gap-3">
+                <Button
+                  onPress={goNext}
+                  size="lg"
+                  className="h-14 w-full rounded-[22px]"
+                  style={{ backgroundColor: palette.button }}
+                >
+                  <View className="flex-row items-center gap-2">
+                    {isLastScreen ? (
+                      <Star size={18} color="#FFFFFF" fill="#FFFFFF" />
+                    ) : null}
+                    <Text className="text-base font-body-semibold leading-5 text-white">
+                      {screen.primaryCta}
+                    </Text>
+                    {!isLastScreen ? <ArrowRight size={18} color="#FFFFFF" /> : null}
+                  </View>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onPress={handleSecondary}
+                  size="lg"
+                  className="h-14 w-full rounded-[22px]"
+                  style={{ backgroundColor: "#FFFFFF", borderColor: palette.accentBorder }}
+                >
+                  <View className="flex-row items-center gap-2">
+                    {isLastScreen ? (
+                      <ChevronLeft size={18} color={palette.accentStrong} />
+                    ) : (
+                      <ArrowRight size={18} color={palette.accentStrong} />
+                    )}
+                    <Text className="text-base font-body-semibold leading-5" style={{ color: palette.accentStrong }}>
+                      {screen.secondaryCta}
+                    </Text>
+                  </View>
+                </Button>
+              </View>
+            </View>
+          </Animated.View>
+
+          <Animated.View entering={FadeIn.duration(360)} className="mt-4 px-4">
+            <Text className="text-center text-xs font-body leading-5 text-muted-foreground">
+              Der erste Start ist lokal. Du kannst Profile, Routinen und Belohnungen später im Elternbereich anpassen.
+            </Text>
+          </Animated.View>
         </ScrollView>
       </ThemedScreenBackground>
     </SafeAreaView>

@@ -115,3 +115,107 @@
 | `components/onboarding/routine-setup.tsx` | Agent-4 | template selector |
 | `components/onboarding/reward-setup.tsx` | Agent-4 | reward browser |
 | `app/(auth)/onboarding.tsx` | Agent-4 | array data shape |
+
+---
+
+## Sticker Reward System — V1 Integration
+
+**Date**: 2026-06-04
+**Status**: Implemented and verified locally
+
+### Agent Split
+
+- **Produkt und UX Agent**: confirmed the existing gap that stickers were unlocked after whole-day completion instead of completed routines, and recommended a child gallery plus parent-controlled reward mode.
+- **Asset und Creative Agent**: verified the existing animal sticker PNGs as V1-ready assets with transparent background and consistent style.
+- **App Integration Agent**: implemented storage, pure unlock logic, dashboard trigger, gallery UI, parent settings, docs, and smoke checks.
+
+### Decisions
+
+- Existing animal PNG stickers remain the V1 asset pack.
+- Newly generated `Weltraum` and `Gute Nacht` PNG stickers are added as V2 theme worlds.
+- Canonical sticker metadata lives in `lib/animal-stickers.ts` via `STICKER_CATALOG`.
+- `ANIMAL_STICKERS` remains as a compatibility alias for earlier code.
+- New collection state is stored in `STICKER_COLLECTION`; legacy `STICKER_WALL` data is read for migration.
+- Default unlock mode is `routine_complete`: one sticker offer when a task completion finishes its routine.
+- Parent settings can switch to `daily_complete`: one sticker offer after all routines are finished for the day.
+
+### New Files
+
+| File | Purpose |
+|------|---------|
+| `lib/sticker-reward-logic.ts` | Pure unlock event and idempotency logic |
+| `app/settings/stickers.tsx` | Parent overview and reward-mode control |
+| `scripts/check-sticker-reward-logic.mjs` | Sticker unlock and asset smoke test |
+| `docs/sticker-reward-system.md` | Decisions, user journey, storage, and asset docs |
+| `docs/superpowers/plans/2026-06-04-sticker-reward-system.md` | Implementation plan |
+
+### Modified Files
+
+| File | Change |
+|------|--------|
+| `lib/types.ts` | Added sticker catalog, collection, rarity, and settings contracts |
+| `lib/storage.ts` | Added `STICKER_COLLECTION` and `STICKER_REWARD_SETTINGS` keys |
+| `lib/animal-stickers.ts` | Added theme, rarity, dimensions, source path, transparency, and order metadata |
+| `hooks/use-sticker-wall.ts` | Migrated wall hook into collection hook with legacy compatibility aliases |
+| `app/(tabs)/index.tsx` | Added routine-completion sticker reward trigger |
+| `app/(tabs)/star-account.tsx` | Uses the new collection entries for compact gallery preview |
+| `app/sticker-album.tsx` | Renamed visible screen to Sticker-Galerie |
+| `components/stickers/sticker-wall.tsx` | Renders catalog-based gallery with locked and collected states |
+| `components/stickers/sticker-reward-sheet.tsx` | Uses routine-aware reward copy |
+| `components/routine-stars/daily-mission-card.tsx` | Avoids competing Sticker-Album copy for milestones |
+| `app/settings/index.tsx` | Adds Sticker-System entry |
+| `app/settings/_layout.tsx` | Adds Sticker-System settings route |
+| `package.json` | Adds `test:stickers` |
+
+### Asset Manifest
+
+| Asset | Size | Alpha |
+|-------|------|-------|
+| `assets/routinestars_tier_sticker_einzeln/routinestars_01_loewe.png` | 325x359 | yes |
+| `assets/routinestars_tier_sticker_einzeln/routinestars_03_giraffe.png` | 297x362 | yes |
+| `assets/routinestars_tier_sticker_einzeln/routinestars_04_panda.png` | 301x329 | yes |
+| `assets/routinestars_tier_sticker_einzeln/routinestars_05_hase.png` | 288x362 | yes |
+| `assets/routinestars_tier_sticker_einzeln/routinestars_06_fuchs.png` | 294x362 | yes |
+| `assets/routinestars_tier_sticker_einzeln/routinestars_07_baer.png` | 336x362 | yes |
+| `assets/routinestars_tier_sticker_einzeln/routinestars_09_katze.png` | 294x346 | yes |
+| `assets/routinestars_tier_sticker_einzeln/routinestars_10_hund.png` | 307x347 | yes |
+| `assets/routinestars_tier_sticker_einzeln/routinestars_11_eule.png` | 288x336 | yes |
+| `assets/routinestars_tier_sticker_einzeln/routinestars_12_schildkroete.png` | 325x326 | yes |
+| `assets/routinestars_weltraum_sticker_einzeln/routinestars_weltraum_01_rakete.png` | 360x360 | yes |
+| `assets/routinestars_weltraum_sticker_einzeln/routinestars_weltraum_02_planet.png` | 360x360 | yes |
+| `assets/routinestars_weltraum_sticker_einzeln/routinestars_weltraum_03_astronautenhelm.png` | 360x360 | yes |
+| `assets/routinestars_weltraum_sticker_einzeln/routinestars_weltraum_04_mondrover.png` | 360x360 | yes |
+| `assets/routinestars_gute_nacht_sticker_einzeln/routinestars_gute_nacht_01_schlafmond.png` | 360x360 | yes |
+| `assets/routinestars_gute_nacht_sticker_einzeln/routinestars_gute_nacht_02_traumwolke.png` | 360x360 | yes |
+| `assets/routinestars_gute_nacht_sticker_einzeln/routinestars_gute_nacht_03_sternenbuch.png` | 360x360 | yes |
+| `assets/routinestars_gute_nacht_sticker_einzeln/routinestars_gute_nacht_04_pyjama_baer.png` | 360x360 | yes |
+
+### Generated Master Assets
+
+| Asset | Size | Alpha |
+|-------|------|-------|
+| `assets/sticker-masters/weltraum/routinestars_weltraum_01_rakete_master.png` | 1024x1024 | yes |
+| `assets/sticker-masters/weltraum/routinestars_weltraum_02_planet_master.png` | 1024x1024 | yes |
+| `assets/sticker-masters/weltraum/routinestars_weltraum_03_astronautenhelm_master.png` | 1024x1024 | yes |
+| `assets/sticker-masters/weltraum/routinestars_weltraum_04_mondrover_master.png` | 1024x1024 | yes |
+| `assets/sticker-masters/gute-nacht/routinestars_gute_nacht_01_schlafmond_master.png` | 1024x1024 | yes |
+| `assets/sticker-masters/gute-nacht/routinestars_gute_nacht_02_traumwolke_master.png` | 1024x1024 | yes |
+| `assets/sticker-masters/gute-nacht/routinestars_gute_nacht_03_sternenbuch_master.png` | 1024x1024 | yes |
+| `assets/sticker-masters/gute-nacht/routinestars_gute_nacht_04_pyjama_baer_master.png` | 1024x1024 | yes |
+
+### Review Assets
+
+| Asset | Purpose |
+|-------|---------|
+| `assets/review/stickers-v2/source/routinestars_sticker_v2_weltraum_gute_nacht_sheet_chromakey.png` | Generated source sheet |
+| `assets/review/stickers-v2/contact-sheets/routinestars_stickers_v2_contact_sheet.png` | Visual QA contact sheet |
+
+### Verification Checklist
+
+- [x] `npm run test:stickers`
+- [x] `npm run test:smoke`
+- [x] `npm run test:progress-smoke`
+- [x] `npm run test:contrast-smoke`
+- [x] `npm run typecheck`
+- [x] `npm run lint` — 0 errors, 2 pre-existing warnings in `lib/routine-visuals.ts`
+- [x] `npx expo export --platform ios --output-dir /tmp/routine-stars-mobile-export`

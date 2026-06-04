@@ -25,7 +25,7 @@ export default function ProfileScreen() {
   const { children, selectedChild, selectChild, selectedChildId, isLoading } = useChildren();
   const { rewards } = useRewards();
   const { getLogsForChild } = useActivityLogs();
-  const { placedStickers } = useStickerWall(selectedChildId);
+  const { collectedEntries } = useStickerWall(selectedChildId);
   const palette = getThemePalette(selectedChild?.theme);
   const previousStarsRef = useRef(0);
   const previousStreakRef = useRef(0);
@@ -143,7 +143,7 @@ export default function ProfileScreen() {
           </Animated.View>
 
           <StickerWall
-            entries={placedStickers}
+            entries={collectedEntries}
             palette={palette}
             compact
             onOpenWall={() => router.push("/sticker-album")}

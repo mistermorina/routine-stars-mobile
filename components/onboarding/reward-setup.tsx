@@ -29,9 +29,10 @@ interface RewardSetupProps {
     rewards?: RewardItem[];
     children?: ChildProfile[];
   };
+  isSaving?: boolean;
 }
 
-export function RewardSetup({ onNext, onBack, formData }: RewardSetupProps) {
+export function RewardSetup({ onNext, onBack, formData, isSaving = false }: RewardSetupProps) {
   const starterRewards = getStarterRewardSuggestions().map((reward) => ({
     id: reward.id,
     title: reward.title,
@@ -81,8 +82,8 @@ export function RewardSetup({ onNext, onBack, formData }: RewardSetupProps) {
         <CardHeader>
           <CardTitle>Belohnungen festlegen</CardTitle>
           <CardDescription>
-            Du kannst direkt mit einem sinnvollen Starterpaket loslegen oder
-            Belohnungen selbst auswählen.
+            Belohnungen sollen Mut machen, nicht Druck erzeugen. Starte klein und
+            passe alles später im Elternbereich an.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -103,10 +104,10 @@ export function RewardSetup({ onNext, onBack, formData }: RewardSetupProps) {
                 </View>
                 <View className="ml-3 flex-1">
                   <Text className="text-base font-body-semibold text-foreground">
-                    Starterpaket
+                    Warmes Starterpaket
                   </Text>
                   <Text className="mt-0.5 text-xs font-body" style={{ color: palette.accentText }}>
-                    Vier direkte Belohnungen für den schnellen Start
+                    Vier kleine Ziele für schnelle Erfolgserlebnisse
                   </Text>
                 </View>
               </View>
@@ -152,13 +153,15 @@ export function RewardSetup({ onNext, onBack, formData }: RewardSetupProps) {
                   <Button
                     onPress={handleStarterPack}
                     style={{ backgroundColor: palette.button }}
+                    disabled={isSaving}
                   >
-                    Mit Starterpaket fortfahren
+                    Starterpaket wählen
                   </Button>
                   <Button
                     variant="outline"
                     onPress={() => setIsManualMode(true)}
                     style={{ borderColor: palette.accent }}
+                    disabled={isSaving}
                   >
                     <Text className="text-sm font-body-semibold" style={{ color: palette.accent }}>
                       Belohnungen selbst auswählen
@@ -222,6 +225,17 @@ export function RewardSetup({ onNext, onBack, formData }: RewardSetupProps) {
                   </View>
                 )}
 
+                {selectedRewards.length === 0 ? (
+                  <View
+                    className="rounded-[18px] px-4 py-3"
+                    style={{ backgroundColor: palette.heroSurface }}
+                  >
+                    <Text className="text-sm font-body leading-5" style={{ color: palette.accentText }}>
+                      Noch keine Belohnung gewählt. Tippe unten auf eine Idee oder nutze das Starterpaket.
+                    </Text>
+                  </View>
+                ) : null}
+
                 {/* Reward browser */}
                 <RewardBrowser
                   onAddReward={handleAddReward}
@@ -233,6 +247,7 @@ export function RewardSetup({ onNext, onBack, formData }: RewardSetupProps) {
                   variant="outline"
                   onPress={handleStarterPack}
                   style={{ borderColor: palette.accent }}
+                  disabled={isSaving}
                 >
                   <Text className="text-sm font-body-semibold" style={{ color: palette.accent }}>
                     Stattdessen Starterpaket verwenden
@@ -247,17 +262,18 @@ export function RewardSetup({ onNext, onBack, formData }: RewardSetupProps) {
                 variant="outline"
                 onPress={onBack}
                 className="min-w-[100px]"
+                disabled={isSaving}
               >
                 Zurück
               </Button>
               <Button
                 onPress={isManualMode ? handleSubmit : handleStarterPack}
-                disabled={isManualMode && selectedRewards.length === 0}
+                disabled={isSaving || (isManualMode && selectedRewards.length === 0)}
                 className="min-w-[100px]"
                 style={{ backgroundColor: palette.button }}
               >
                 <Text className="text-base font-body-semibold text-primary-foreground">
-                  Fertig
+                  {isSaving ? "Wird gespeichert..." : "In die App"}
                 </Text>
               </Button>
             </View>

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Animated, {
@@ -33,11 +33,34 @@ interface OnboardingFormData {
 
 const TOTAL_STEPS = 3;
 
+const setupSteps = [
+  {
+    eyebrow: "Profil",
+    title: "Wer sammelt die ersten Sterne?",
+    description:
+      "Name, Alter und Look helfen uns, passende Routinen vorzuschlagen.",
+  },
+  {
+    eyebrow: "Routinen",
+    title: "Welche Alltagsschritte sollen leichter werden?",
+    description:
+      "Wähle eine Vorlage oder passe die erste Routine direkt an eure Familie an.",
+  },
+  {
+    eyebrow: "Belohnungen",
+    title: "Was macht Fortschritt spürbar?",
+    description:
+      "Starte mit warmen, altersgerechten Belohnungen und ändere sie später jederzeit.",
+  },
+] as const;
+
 export default function OnboardingScreen() {
   const router = useRouter();
   const { toasts, toast, dismiss } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [formData, setFormData] = useState<OnboardingFormData>({
     children: [],
     savedRoutines: [],
@@ -46,76 +69,96 @@ export default function OnboardingScreen() {
 
   const progressValue = ((currentStep + 1) / TOTAL_STEPS) * 100;
   const onboardingTheme = getThemePalette(formData.children[0]?.theme);
+  const activeStep = setupSteps[currentStep];
 
   const handleNext = useCallback(
     async (data: Partial<OnboardingFormData>) => {
+      if (isSaving) return;
+
       const newFormData = { ...formData, ...data };
       setFormData(newFormData);
+      setSaveError(null);
 
       if (currentStep < TOTAL_STEPS - 1) {
         setDirection("forward");
         setCurrentStep((prev) => prev + 1);
       } else {
-        // Onboarding complete - create children from profiles
-        const newChildren: Child[] = newFormData.children.map((profile, i) => ({
-          id: `child-${Date.now()}-${i}`,
-          name: profile.name,
-          avatar: profile.avatar,
-          stars: 0,
-          theme: profile.theme,
-          ageGroup: profile.ageGroup,
-        }));
+        setIsSaving(true);
 
-        // Create routines from savedRoutines array
-        const newRoutines: Routine[] = (newFormData.savedRoutines || []).map((sr) => ({
-          id: sr.id,
-          name: sr.name,
-          color: sr.color,
-          tasks: sr.tasks.map((t) => ({
-            ...t,
-            completed: false,
-          })),
-        }));
+        try {
+          const newChildren: Child[] = newFormData.children.map((profile, i) => ({
+            id: `child-${Date.now()}-${i}`,
+            name: profile.name,
+            avatar: profile.avatar,
+            stars: 0,
+            theme: profile.theme,
+            ageGroup: profile.ageGroup,
+          }));
 
-        // Create rewards from the rewards array
-        const newRewards: Reward[] = (newFormData.rewards || []).map((r) => ({
-          id: r.id || `reward-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-          title: r.title,
-          cost: r.cost,
-          iconName: r.iconName,
-        }));
+          if (newChildren.length === 0) {
+            throw new Error("Mindestens ein Kinderprofil ist erforderlich.");
+          }
 
-        // Save everything to AsyncStorage
-        await storage.setItem(KEYS.CHILDREN, newChildren);
-        await storage.setItem(KEYS.LAST_SELECTED_CHILD_ID, newChildren[0].id);
-        await storage.setItem(KEYS.CUSTOM_ROUTINES, newRoutines);
-        await storage.setItem(KEYS.CUSTOM_REWARDS, newRewards);
-        await storage.setItem(KEYS.HAS_ONBOARDED, true);
+          const newRoutines: Routine[] = (newFormData.savedRoutines || []).map((sr) => ({
+            id: sr.id,
+            name: sr.name,
+            color: sr.color,
+            tasks: sr.tasks.map((t) => ({
+              ...t,
+              completed: false,
+            })),
+          }));
 
-        const names = newChildren.map((c) => c.name).join(" & ");
-        const verb = newChildren.length === 1 ? "kann" : "können";
-        toast({
-          title: "Alles eingerichtet!",
-          description: `${names} ${verb} jetzt loslegen.`,
-        });
+          const newRewards: Reward[] = (newFormData.rewards || []).map((r) => ({
+            id: r.id || `reward-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            title: r.title,
+            cost: r.cost,
+            iconName: r.iconName,
+          }));
 
-        // Navigate to the main app
-        setTimeout(() => {
-          router.replace("/(tabs)");
-        }, 600);
+          await storage.setItem(KEYS.CHILDREN, newChildren);
+          await storage.setItem(KEYS.LAST_SELECTED_CHILD_ID, newChildren[0].id);
+          await storage.setItem(KEYS.CUSTOM_ROUTINES, newRoutines);
+          await storage.setItem(KEYS.CUSTOM_REWARDS, newRewards);
+          await storage.setItem(KEYS.HAS_ONBOARDED, true);
+
+          const names = newChildren.map((c) => c.name).join(" & ");
+          const verb = newChildren.length === 1 ? "kann" : "können";
+          toast({
+            title: "Alles eingerichtet!",
+            description: `${names} ${verb} jetzt Sterne sammeln.`,
+          });
+
+          setTimeout(() => {
+            router.replace("/(tabs)");
+          }, 600);
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Die Einrichtung konnte nicht gespeichert werden.";
+          setSaveError(message);
+          setIsSaving(false);
+          toast({
+            title: "Speichern nicht möglich",
+            description: "Bitte versuche es noch einmal.",
+          });
+        }
       }
     },
-    [currentStep, formData, router, toast]
+    [currentStep, formData, isSaving, router, toast]
   );
 
   const handleBack = useCallback(() => {
+    if (isSaving) return;
+
     if (currentStep > 0) {
       setDirection("backward");
       setCurrentStep((prev) => prev - 1);
     } else {
       router.back();
     }
-  }, [currentStep, router]);
+  }, [currentStep, isSaving, router]);
 
   const enteringAnimation =
     direction === "forward"
@@ -132,22 +175,31 @@ export default function OnboardingScreen() {
       <ThemedScreenBackground theme={formData.children[0]?.theme}>
         <View className="flex-1 min-h-0 px-4 pt-4">
           <View
-            className="mb-6 rounded-[26px] border px-4 py-4"
+            className="mb-5 rounded-[26px] border px-4 py-4"
             style={{
               backgroundColor: onboardingTheme.cardTint,
               borderColor: onboardingTheme.accentBorder,
             }}
           >
-            <View className="flex-row items-center justify-between">
-              <View>
+            <View className="flex-row items-start justify-between gap-3">
+              <View className="min-w-0 flex-1">
+                <Text className="text-xs font-body-semibold uppercase text-muted-foreground">
+                  {activeStep.eyebrow}
+                </Text>
+                <Text className="mt-1 text-lg font-headline leading-6 text-foreground">
+                  {activeStep.title}
+                </Text>
+                <Text className="mt-1 text-xs font-body leading-5 text-muted-foreground">
+                  {activeStep.description}
+                </Text>
                 <Progress
                   value={progressValue}
-                  className="h-3 w-48"
+                  className="mt-4 h-3 w-full"
                   indicatorClassName="bg-[#FFD700]"
                   indicatorColor={onboardingTheme.progress}
                 />
                 <View className="mt-3">
-                  <Animated.Text className="text-sm font-body text-muted-foreground">
+                  <Animated.Text className="text-xs font-body text-muted-foreground">
                     Schritt {currentStep + 1} von {TOTAL_STEPS}
                   </Animated.Text>
                 </View>
@@ -160,11 +212,28 @@ export default function OnboardingScreen() {
                   className="text-xs font-body-semibold"
                   style={{ color: onboardingTheme.accentText }}
                 >
-                  Storyworld
+                  Einrichtung
                 </Animated.Text>
               </View>
             </View>
           </View>
+
+          {saveError ? (
+            <View
+              className="mb-4 rounded-[18px] border px-4 py-3"
+              style={{
+                backgroundColor: "#FFF4F4",
+                borderColor: "#F5B7B7",
+              }}
+            >
+              <Text className="text-sm font-body-semibold text-[#8A1F1F]">
+                {saveError}
+              </Text>
+              <Text className="mt-1 text-xs font-body leading-5 text-[#8A1F1F]">
+                Deine Eingaben bleiben auf diesem Screen erhalten.
+              </Text>
+            </View>
+          ) : null}
 
           <View className="flex-1 min-h-0">
             {currentStep === 0 && (
@@ -208,6 +277,7 @@ export default function OnboardingScreen() {
                   onNext={(data) => handleNext(data)}
                   onBack={handleBack}
                   formData={formData}
+                  isSaving={isSaving}
                 />
               </Animated.View>
             )}

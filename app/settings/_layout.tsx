@@ -75,6 +75,10 @@ export default function SettingsLayout() {
         options={{ title: "Fortschritt" }}
       />
       <Stack.Screen
+        name="stickers"
+        options={{ title: "Sticker-System" }}
+      />
+      <Stack.Screen
         name="stats"
         options={{ title: "Statistiken" }}
       />
