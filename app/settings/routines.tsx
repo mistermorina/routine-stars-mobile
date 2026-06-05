@@ -227,7 +227,7 @@ export default function RoutinesSettingsScreen() {
       <ScaleDecorator>
         <View
           className={cn(
-            "mb-3 rounded-[24px] border px-4 py-4",
+            "mb-3 rounded-[20px] border px-3.5 py-3.5",
             isActive && "opacity-80"
           )}
           style={{
@@ -236,35 +236,41 @@ export default function RoutinesSettingsScreen() {
           }}
         >
           <View className="flex-row items-start gap-3">
-            <Pressable onLongPress={drag} hitSlop={8} className="pt-3">
+            <Pressable onLongPress={drag} hitSlop={8} className="pt-2.5">
               <GripVertical size={18} color="#737373" />
             </Pressable>
 
-            <View className="flex-1 gap-3">
+            <View className="flex-1 gap-2.5">
               <View className="gap-1.5">
                 <Label>Aufgabe</Label>
                 <Input
                   value={item.title}
                   onChangeText={(value) => updateDraftTask(item.id, { title: value })}
-                  placeholder="Zum Beispiel Zähne putzen"
+                  placeholder="Zähne putzen"
+                  className="h-11 px-3"
+                  style={{ fontSize: 14, lineHeight: 18 }}
                 />
               </View>
 
-              <View className="flex-row gap-3">
+              <View className="flex-row gap-2.5">
                 <View className="flex-1 gap-1.5">
                   <Label>Icon</Label>
                   <Pressable
                     onPress={() => setShowIconPickerForTaskId(item.id)}
-                    className="h-12 flex-row items-center rounded-lg border border-input bg-card px-4"
+                    accessibilityRole="button"
+                    accessibilityLabel="Icon ändern"
+                    className="h-11 flex-row items-center justify-between rounded-lg border border-input bg-card px-3"
                   >
                     <Icon size={18} color={palette.accentStrong} />
-                    <Text className="ml-2 text-sm font-body text-foreground">Icon wählen</Text>
+                    <Text className="text-xs font-body-semibold uppercase tracking-[0.4px] text-muted-foreground">
+                      Ändern
+                    </Text>
                   </Pressable>
                 </View>
 
                 <View className="w-[120px] gap-1.5">
                   <Label>Sterne</Label>
-                  <View className="h-12 flex-row items-center justify-between rounded-lg border border-input bg-card px-3">
+                  <View className="h-11 flex-row items-center justify-between rounded-lg border border-input bg-card px-3">
                     <Pressable
                       onPress={() => updateDraftTask(item.id, { stars: Math.max(1, item.stars - 1) })}
                       hitSlop={8}
@@ -282,10 +288,10 @@ export default function RoutinesSettingsScreen() {
                 </View>
               </View>
 
-              <View className="flex-row gap-3">
+              <View className="flex-row gap-2.5">
                 <View className="flex-1 gap-1.5">
                   <Label>Timer (Min.)</Label>
-                  <View className="h-12 flex-row items-center justify-between rounded-lg border border-input bg-card px-3">
+                  <View className="h-11 flex-row items-center justify-between rounded-lg border border-input bg-card px-3">
                     <Pressable
                       onPress={() =>
                         updateDraftTask(item.id, {
@@ -319,7 +325,7 @@ export default function RoutinesSettingsScreen() {
 
                 <View className="flex-1 gap-1.5">
                   <Label>Bonus</Label>
-                  <View className="h-12 flex-row items-center justify-between rounded-lg border border-input bg-card px-3">
+                  <View className="h-11 flex-row items-center justify-between rounded-lg border border-input bg-card px-3">
                     <Pressable
                       onPress={() =>
                         updateDraftTask(item.id, {
@@ -351,7 +357,7 @@ export default function RoutinesSettingsScreen() {
               </View>
             </View>
 
-            <Pressable onPress={() => removeDraftTask(item.id)} hitSlop={8} className="pt-3">
+            <Pressable onPress={() => removeDraftTask(item.id)} hitSlop={8} className="pt-2.5">
               <Trash2 size={18} color="#ef4444" />
             </Pressable>
           </View>
