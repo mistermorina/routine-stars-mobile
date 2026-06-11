@@ -459,7 +459,7 @@ export default function DashboardScreen() {
           {showTimeFilters ? (
             <Animated.View entering={FadeInDown.delay(40).duration(320)} className="mx-4 mt-3">
               <View
-                className="flex-row rounded-full border p-1"
+                className="flex-row gap-1 rounded-full border p-1"
                 style={{
                   backgroundColor: "rgba(255,255,255,0.72)",
                   borderColor: palette.accentBorder,
@@ -479,7 +479,8 @@ export default function DashboardScreen() {
                       accessibilityRole="button"
                       accessibilityLabel={`Routinen filtern: ${filter.label}`}
                       accessibilityState={{ selected: isActive }}
-                      className="flex-1 items-center justify-center rounded-full py-2"
+                      containerClassName="flex-1"
+                      className="items-center justify-center rounded-full py-2.5"
                       style={
                         isActive
                           ? {
@@ -494,8 +495,9 @@ export default function DashboardScreen() {
                       }
                     >
                       <Text
+                        numberOfLines={1}
                         className={
-                          isActive ? "text-sm font-body-semibold" : "text-sm font-body"
+                          isActive ? "text-[13px] font-body-semibold" : "text-[13px] font-body"
                         }
                         style={{
                           color: isActive ? palette.accentText : "#8E99A6",
@@ -542,6 +544,8 @@ export default function DashboardScreen() {
                   <Text
                     className="mt-1 text-[24px] font-headline leading-8 text-foreground"
                     numberOfLines={2}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.72}
                   >
                     {allDone
                       ? "Alles erledigt!"
@@ -560,7 +564,8 @@ export default function DashboardScreen() {
                     onPress={handleHeroPress}
                     accessibilityRole="button"
                     accessibilityLabel={allDone ? "Belohnungen ansehen" : "Routine starten"}
-                    className="mt-4 self-start flex-row items-center gap-2 rounded-full px-5 py-3"
+                    containerClassName="mt-4 self-start"
+                    className="flex-row items-center gap-2 rounded-full px-5 py-3"
                     style={{ backgroundColor: palette.button }}
                   >
                     <Text className="text-base font-body-semibold text-white">
@@ -783,7 +788,8 @@ export default function DashboardScreen() {
                   onPress={() => setTimeFilter("alle")}
                   accessibilityRole="button"
                   accessibilityLabel="Alle Routinen anzeigen"
-                  className="mt-3 rounded-full px-4 py-2"
+                  containerClassName="mt-3 self-center"
+                  className="rounded-full px-4 py-2"
                   style={{ backgroundColor: palette.tabActiveBg }}
                 >
                   <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>

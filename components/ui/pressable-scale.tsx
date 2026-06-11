@@ -19,6 +19,9 @@ interface PressableScaleProps extends Omit<PressableProps, "style"> {
   /** Styling for the animated surface (the visible element). */
   className?: string;
   style?: StyleProp<ViewStyle>;
+  /** Layout styling for the outer Pressable (flex-1, self-start, …). */
+  containerClassName?: string;
+  containerStyle?: StyleProp<ViewStyle>;
   /** How far the surface shrinks while pressed. */
   scaleTo?: number;
 }
@@ -31,6 +34,8 @@ export function PressableScale({
   children,
   className,
   style,
+  containerClassName,
+  containerStyle,
   scaleTo = 0.96,
   onPressIn,
   onPressOut,
@@ -59,6 +64,8 @@ export function PressableScale({
     <Pressable
       {...pressableProps}
       disabled={disabled}
+      className={containerClassName}
+      style={containerStyle}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
     >
