@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { View, Text, ScrollView } from "react-native";
 import { Image } from "expo-image";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { getIcon, Trophy, Star, Sparkles } from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
 import { useToast } from "@/hooks/use-toast";
 import { useRewards } from "@/hooks/use-rewards";
@@ -10,12 +9,21 @@ import { useCollapsibleHeader } from "@/hooks/use-collapsible-header";
 import { Header } from "@/components/routine-stars/header";
 import { RewardsOverview } from "@/components/routine-stars/rewards-overview";
 import { Card } from "@/components/ui/card";
-import { SoftHeroWash } from "@/components/ui/soft-hero-wash";
+import { Progress } from "@/components/ui/progress";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { triggerFeedback } from "@/lib/feedback";
 import { getThemePalette } from "@/lib/theme";
 import type { Reward } from "@/lib/types";
-import rewardStarGiftImage from "@/assets/images/reward-star-gift-soft.png";
+import rewardStarGiftImage from "@/assets/images/reward-star-gift.png";
+
+type RewardFilter = "alle" | "verfuegbar" | "bald";
+
+const REWARD_FILTERS: { key: RewardFilter; label: string }[] = [
+  { key: "alle", label: "Alle" },
+  { key: "verfuegbar", label: "Verfügbar" },
+  { key: "bald", label: "Bald frei" },
+];
 
 export default function RewardsScreen() {
   const {
@@ -29,6 +37,7 @@ export default function RewardsScreen() {
   const { rewards, isLoading: rewardsLoading } = useRewards();
   const palette = getThemePalette(selectedChild?.theme);
   const [recentlyRedeemedRewardId, setRecentlyRedeemedRewardId] = useState<string | null>(null);
+  const [rewardFilter, setRewardFilter] = useState<RewardFilter>("alle");
   const {
     handleHeaderScroll,
     isHeaderCollapsed,
@@ -38,19 +47,25 @@ export default function RewardsScreen() {
     () => [...rewards].sort((left, right) => left.cost - right.cost),
     [rewards]
   );
+  const childStars = selectedChild?.stars ?? 0;
   const nextReward = selectedChild
     ? sortedRewards.find((reward) => reward.cost > selectedChild.stars)
     : undefined;
   const missingStars = nextReward && selectedChild
     ? nextReward.cost - selectedChild.stars
     : 0;
-  const availableRewards = selectedChild
-    ? sortedRewards.filter((reward) => reward.cost <= selectedChild.stars).length
-    : 0;
-  const featuredReward = selectedChild
-    ? sortedRewards.find((reward) => reward.cost <= selectedChild.stars) ?? nextReward ?? sortedRewards[0]
-    : sortedRewards[0];
-  const FeaturedRewardIcon = featuredReward ? getIcon(featuredReward.iconName) : Trophy;
+  const nextRewardProgress = nextReward && nextReward.cost > 0
+    ? Math.min((childStars / nextReward.cost) * 100, 100)
+    : 100;
+  const filteredRewards = useMemo(() => {
+    if (rewardFilter === "verfuegbar") {
+      return sortedRewards.filter((reward) => reward.cost <= childStars);
+    }
+    if (rewardFilter === "bald") {
+      return sortedRewards.filter((reward) => reward.cost > childStars);
+    }
+    return sortedRewards;
+  }, [childStars, rewardFilter, sortedRewards]);
 
   const handleRedeem = useCallback(
     async (reward: Reward) => {
@@ -129,191 +144,198 @@ export default function RewardsScreen() {
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
         >
+          {/* Screen headline */}
           <Animated.View entering={FadeInDown.duration(320)} className="mt-4">
-            <Card
-              className="overflow-hidden rounded-[22px] px-4 pb-4 pt-4"
-              style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
-            >
-              <SoftHeroWash
-                surfaceColor={palette.heroSurface}
-                baseColor={palette.cardTint}
-                holdOffset="48%"
-              />
-              <View
-                className="absolute right-[-16px] top-[-8px] h-24 w-24 rounded-full"
-                style={{ backgroundColor: palette.motifSecondary, opacity: 0.28 }}
-              />
-              <View
-                className="absolute left-[-8px] bottom-10 h-20 w-20 rounded-full"
-                style={{ backgroundColor: palette.motifPrimary, opacity: 0.18 }}
-              />
-              <Image
-                source={rewardStarGiftImage}
-                style={{
-                  position: "absolute",
-                  right: -24,
-                  top: 20,
-                  width: 128,
-                  height: 128,
-                  opacity: 0.34,
-                }}
-                contentFit="contain"
-                transition={180}
-                accessible={false}
-              />
-
-              <View className="relative">
-                <View>
-                  <View>
-                    <View
-                      className="self-start rounded-full px-3 py-1.5"
-                      style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
-                    >
-                      <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
-                        Belohnungen
-                      </Text>
-                    </View>
-                    <Text
-                      className="mt-2 text-[27px] font-headline leading-[32px] text-foreground"
-                      numberOfLines={1}
-                      adjustsFontSizeToFit
-                      minimumFontScale={0.82}
-                    >
-                      Wunschliste
-                    </Text>
-                    <Text className="mt-2 max-w-[240px] text-sm font-body leading-5" style={{ color: palette.accentText }}>
-                      Sterne werden zu Wunschmomenten. Erreichbare Belohnungen
-                      kannst du direkt einlösen.
-                    </Text>
-                  </View>
-                  <View
-                    className="mt-3 flex-row items-center justify-between rounded-[16px] px-3.5 py-3"
-                    style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
-                  >
-                    <View>
-                      <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
-                        Bereit
-                      </Text>
-                      <Text className="text-xs font-body text-muted-foreground">
-                        Belohnungen frei
-                      </Text>
-                    </View>
-                    <Text className="text-2xl font-headline leading-7" style={{ color: palette.accentText }}>
-                      {availableRewards}
-                    </Text>
-                  </View>
-                </View>
-
-                <View
-                  className="mt-4 rounded-[18px] border px-4 py-3.5"
-                  style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.74)" }}
-                >
-                  <View className="flex-row items-center">
-                    <View
-                      className="h-14 w-14 items-center justify-center rounded-[20px]"
-                      style={{ backgroundColor: palette.tabActiveBg }}
-                    >
-                      <FeaturedRewardIcon size={24} color={palette.accentStrong} />
-                    </View>
-                    <View className="ml-3 flex-1">
-                      <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
-                        {featuredReward && selectedChild.stars >= featuredReward.cost ? "Heute erreichbar" : "Nächstes Ziel"}
-                      </Text>
-                      <Text className="mt-1 text-lg font-headline text-foreground">
-                        {featuredReward ? featuredReward.title : "Noch keine Belohnung"}
-                      </Text>
-                      <Text className="mt-1 text-xs font-body" style={{ color: palette.accentText }}>
-                        {featuredReward
-                          ? selectedChild.stars >= featuredReward.cost
-                            ? "Bereit zum Einlösen."
-                            : `Noch ${Math.max(featuredReward.cost - selectedChild.stars, 0)} Sterne bis zum Wunschmoment.`
-                          : "Lege im Onboarding oder in den Einstellungen Belohnungen an."}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-
-                <View className="mt-4 flex-row gap-3">
-                  <View
-                    className="flex-1 rounded-[18px] px-4 py-3.5"
-                    style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
-                  >
-                    <Text className="text-sm font-body text-muted-foreground">
-                      {selectedChild?.name ?? "Kind"}s Sterne
-                    </Text>
-                    <View className="mt-3 flex-row items-center gap-2">
-                      <Star size={22} color="#FFD700" fill="#FFD700" />
-                      <Text className="text-3xl font-headline text-foreground">
-                        {selectedChild?.stars ?? 0}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View
-                    className="flex-1 rounded-[18px] px-4 py-3.5"
-                    style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
-                  >
-                    <Text className="text-sm font-body text-muted-foreground">Wunschstatus</Text>
-                    <Text className="mt-3 text-base font-headline text-foreground">
-                      {nextReward ? "Fast da" : "Alles erreichbar"}
-                    </Text>
-                    <Text className="mt-1 text-xs font-body" style={{ color: palette.accentText }}>
-                      {nextReward
-                        ? `Noch ${missingStars} Sterne bis zur nächsten Belohnung`
-                        : "Alle Belohnungen sind aktuell freigeschaltet"}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </Card>
+            <Text className="text-[32px] font-headline leading-10 text-foreground">
+              Belohnungen
+            </Text>
+            <Text className="mt-0.5 text-sm font-body text-muted-foreground">
+              Sammle Sterne und schalte Überraschungen frei ✨
+            </Text>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(70).duration(320)} className="mt-4">
+          {/* Filter chips */}
+          {sortedRewards.length > 1 ? (
+            <Animated.View entering={FadeInDown.delay(40).duration(320)} className="mt-3">
+              <View
+                className="flex-row gap-1 rounded-full border p-1"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.72)",
+                  borderColor: palette.accentBorder,
+                }}
+              >
+                {REWARD_FILTERS.map((filter) => {
+                  const isActive = filter.key === rewardFilter;
+                  return (
+                    <PressableScale
+                      key={filter.key}
+                      onPress={() => {
+                        if (!isActive) {
+                          void triggerFeedback("tab_focus");
+                          setRewardFilter(filter.key);
+                        }
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Belohnungen filtern: ${filter.label}`}
+                      accessibilityState={{ selected: isActive }}
+                      containerClassName="flex-1"
+                      className="items-center justify-center rounded-full py-2.5"
+                      style={
+                        isActive
+                          ? {
+                              backgroundColor: "#FFFFFF",
+                              shadowColor: "#9DB8D8",
+                              shadowOpacity: 0.18,
+                              shadowRadius: 8,
+                              shadowOffset: { width: 0, height: 3 },
+                              elevation: 2,
+                            }
+                          : undefined
+                      }
+                    >
+                      <Text
+                        numberOfLines={1}
+                        className={
+                          isActive ? "text-[13px] font-body-semibold" : "text-[13px] font-body"
+                        }
+                        style={{ color: isActive ? palette.accentText : "#8E99A6" }}
+                      >
+                        {filter.label}
+                      </Text>
+                    </PressableScale>
+                  );
+                })}
+              </View>
+            </Animated.View>
+          ) : null}
+
+          {/* Hero: next reward */}
+          <Animated.View entering={FadeInDown.delay(55).duration(320)} className="mt-3">
             <Card
-              className="rounded-[22px] px-4 py-4"
-              style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+              className="overflow-hidden rounded-card px-5 py-5"
+              style={{
+                backgroundColor: palette.heroSurface,
+                borderColor: palette.accentBorder,
+                shadowColor: "#9DB8D8",
+                shadowOpacity: 0.16,
+                shadowRadius: 18,
+                shadowOffset: { width: 0, height: 10 },
+              }}
             >
-              <View className="flex-row items-center justify-between gap-3">
-                <View className="min-w-0 flex-1 flex-row items-center gap-3">
-                  <View
-                    className="h-11 w-11 shrink-0 items-center justify-center rounded-[18px]"
-                    style={{ backgroundColor: palette.heroSurface }}
-                  >
-                    <Sparkles size={20} color={palette.accentStrong} />
-                  </View>
-                  <View className="min-w-0 flex-1">
-                    <Text className="text-lg font-headline text-foreground">Belohnungen zum Freispielen</Text>
-                    <Text className="text-sm font-body text-muted-foreground">
-                      Einlösen, wenn genug Sterne gesammelt wurden.
-                    </Text>
-                  </View>
-                </View>
-                <View
-                  className="max-w-[96px] shrink-0 rounded-full px-3 py-1.5"
-                  style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
-                >
+              <View
+                className="absolute right-[-30px] top-[-30px] h-40 w-40 rounded-full"
+                style={{ backgroundColor: palette.motifPrimary, opacity: 0.35 }}
+              />
+              <View
+                className="absolute bottom-[-44px] left-[-30px] h-36 w-36 rounded-full"
+                style={{ backgroundColor: palette.motifSecondary, opacity: 0.3 }}
+              />
+              <View className="flex-row items-center gap-3">
+                <View className="min-w-0 flex-1">
                   <Text
-                    className="text-xs font-body-semibold"
+                    className="text-xs font-body-semibold uppercase tracking-[0.7px]"
                     style={{ color: palette.accentText }}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.78}
                   >
-                    {sortedRewards.length} Wünsche
+                    Nächste Belohnung
+                  </Text>
+                  <Text
+                    className="mt-1 text-[24px] font-headline leading-8 text-foreground"
+                    numberOfLines={2}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.72}
+                  >
+                    {nextReward ? nextReward.title : "Alles erreichbar!"}
+                  </Text>
+                  <Text className="mt-1 text-sm font-body text-muted-foreground">
+                    {nextReward
+                      ? `Noch ${missingStars} ${missingStars === 1 ? "Stern" : "Sterne"} bis zur Überraschung`
+                      : "Du kannst dir gerade jede Belohnung aussuchen."}
                   </Text>
                 </View>
+                <Image
+                  source={rewardStarGiftImage}
+                  style={{ width: 112, height: 112 }}
+                  contentFit="contain"
+                  transition={180}
+                  accessibilityLabel="Geschenk mit Sternen"
+                />
               </View>
+              {nextReward ? (
+                <View className="mt-4 flex-row items-center gap-3">
+                  <View className="flex-1">
+                    <Progress
+                      value={nextRewardProgress}
+                      className="h-2.5"
+                      indicatorColor={palette.chartPrimary}
+                      trackStyle={{ backgroundColor: "rgba(255,255,255,0.85)" }}
+                    />
+                  </View>
+                  <Text className="shrink-0 text-xs font-body-semibold text-muted-foreground">
+                    {childStars} / {nextReward.cost}
+                  </Text>
+                </View>
+              ) : null}
             </Card>
           </Animated.View>
 
-          <View className="mt-4">
-            <RewardsOverview
-              rewards={sortedRewards}
-              childStars={selectedChild.stars}
-              childTheme={selectedChild.theme}
-              onRedeem={handleRedeem}
-              recentlyRedeemedRewardId={recentlyRedeemedRewardId}
-            />
+          {/* Rewards grid */}
+          <Animated.View
+            entering={FadeInDown.delay(90).duration(320)}
+            className="mt-5 flex-row items-center justify-between gap-3"
+          >
+            <Text className="text-lg font-headline text-foreground">Belohnungen für dich</Text>
+            <View
+              className="rounded-full px-3 py-1.5"
+              style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
+            >
+              <Text
+                className="text-xs font-body-semibold"
+                style={{ color: palette.accentText }}
+                numberOfLines={1}
+              >
+                {filteredRewards.length} {filteredRewards.length === 1 ? "Wunsch" : "Wünsche"}
+              </Text>
+            </View>
+          </Animated.View>
+
+          <View className="mt-3">
+            {sortedRewards.length > 0 && filteredRewards.length === 0 ? (
+              <Card
+                className="items-center rounded-card px-5 py-6"
+                style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+              >
+                <Text className="text-center text-base font-headline text-foreground">
+                  {rewardFilter === "verfuegbar"
+                    ? "Noch nichts freigeschaltet"
+                    : "Alles ist schon erreichbar"}
+                </Text>
+                <Text className="mt-1 text-center text-sm font-body text-muted-foreground">
+                  {rewardFilter === "verfuegbar"
+                    ? "Sammle weiter Sterne, dann öffnet sich hier deine erste Belohnung."
+                    : "Schau unter „Alle“ – du kannst dir alles aussuchen."}
+                </Text>
+                <PressableScale
+                  onPress={() => setRewardFilter("alle")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Alle Belohnungen anzeigen"
+                  containerClassName="mt-3 self-center"
+                  className="rounded-full px-4 py-2"
+                  style={{ backgroundColor: palette.tabActiveBg }}
+                >
+                  <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>
+                    Alle anzeigen
+                  </Text>
+                </PressableScale>
+              </Card>
+            ) : (
+              <RewardsOverview
+                rewards={filteredRewards}
+                childStars={childStars}
+                childTheme={selectedChild.theme}
+                onRedeem={handleRedeem}
+                recentlyRedeemedRewardId={recentlyRedeemedRewardId}
+              />
+            )}
           </View>
         </ScrollView>
       </View>

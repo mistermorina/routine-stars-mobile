@@ -1,19 +1,12 @@
 import React, { useCallback } from "react";
 import { View, Text, FlatList, type ListRenderItemInfo } from "react-native";
 import { Image } from "expo-image";
-import Animated, {
-  FadeInRight,
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withSpring,
-} from "react-native-reanimated";
-import { Lock } from "lucide-react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import { Check, Lock } from "lucide-react-native";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { getIcon } from "@/lib/icons";
-import { cn } from "@/lib/utils";
 import { getThemePalette } from "@/lib/theme";
 import type { ChildTheme, Reward } from "@/lib/types";
 import emptyRewardsImage from "@/assets/images/empty-rewards.png";
@@ -43,170 +36,108 @@ function RewardItem({
 }) {
   const canAfford = childStars >= reward.cost;
   const missingStars = Math.max(reward.cost - childStars, 0);
+  const progressPct = reward.cost > 0 ? Math.min((childStars / reward.cost) * 100, 100) : 0;
+  // "Close" rewards show a progress bar, distant ones a calm "Bald frei" badge.
+  const isClose = !canAfford && progressPct >= 50;
   const isRecentlyRedeemed = recentlyRedeemedRewardId === reward.id;
   const IconComponent = getIcon(reward.iconName);
   const palette = getThemePalette(childTheme);
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const handleRedeem = () => {
-    scale.value = withSequence(
-      withSpring(0.98, { damping: 14, stiffness: 220 }),
-      withSpring(1.02, { damping: 10, stiffness: 240 }),
-      withSpring(1, { damping: 12, stiffness: 200 })
-    );
-    onRedeem(reward);
-  };
-
-  const statusLabel = isRecentlyRedeemed
-    ? "Eingelöst"
-    : canAfford
-      ? "Bereit"
-      : `${missingStars} fehlen`;
 
   return (
     <Animated.View
-      entering={FadeInRight.delay(index * 100).duration(400).springify()}
+      entering={FadeInDown.delay(Math.min(index, 6) * 60).duration(320)}
+      className="flex-1"
+      style={{ maxWidth: "48.8%" }}
     >
-      <Animated.View style={animatedStyle}>
-        <Card
-          className={cn(
-            "mb-3 overflow-hidden rounded-[22px] px-4 py-4",
-            !canAfford && "opacity-90"
-          )}
-          style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+      <Card
+        className="overflow-hidden rounded-card px-3.5 py-4"
+        style={{
+          backgroundColor: isRecentlyRedeemed ? "#EAF8EF" : palette.cardTint,
+          borderColor: isRecentlyRedeemed ? "#BFE8CD" : palette.accentBorder,
+          minHeight: 172,
+        }}
+      >
+        <View
+          className="absolute right-[-16px] top-[-14px] h-20 w-20 rounded-full"
+          style={{ backgroundColor: palette.motifSecondary, opacity: canAfford ? 0.22 : 0.1 }}
+        />
+
+        <View
+          className="h-14 w-14 items-center justify-center rounded-tile"
+          style={{
+            backgroundColor: canAfford || isRecentlyRedeemed ? palette.surface : "rgba(255,255,255,0.78)",
+            borderColor: palette.accentBorder,
+            borderWidth: 1,
+          }}
         >
-          <View
-            className="absolute right-[-18px] top-[-12px] h-24 w-24 rounded-full"
-            style={{ backgroundColor: palette.motifSecondary, opacity: canAfford ? 0.24 : 0.12 }}
+          <IconComponent
+            size={26}
+            color={canAfford || isRecentlyRedeemed ? palette.accentStrong : "#9AA5B1"}
           />
-          <View
-            className="absolute left-[-8px] bottom-6 h-16 w-16 rounded-full"
-            style={{ backgroundColor: palette.motifPrimary, opacity: canAfford ? 0.18 : 0.1 }}
-          />
+        </View>
 
-          <View className="flex-row items-start">
-            <View
-              className="mr-3 h-12 w-12 items-center justify-center rounded-[16px]"
-              style={{
-                backgroundColor: canAfford ? palette.surface : "rgba(255,255,255,0.72)",
-                borderColor: palette.accentBorder,
-                borderWidth: 1,
-              }}
-            >
-              <IconComponent
-                size={22}
-                color={canAfford ? palette.accentStrong : "#737373"}
-              />
-            </View>
+        <Text
+          className="mt-2.5 text-[15px] font-headline leading-5 text-foreground"
+          numberOfLines={2}
+        >
+          {reward.title}
+        </Text>
 
-            <View className="flex-1 mr-3">
-              <View className="flex-row items-start justify-between gap-2">
-                <View className="min-w-0 flex-1">
-                  <Text
-                    className="text-lg font-headline text-foreground"
-                    numberOfLines={2}
-                  >
-                    {reward.title}
-                  </Text>
-                  <View className="mt-2 flex-row items-center gap-2">
-                    <View
-                      className="rounded-full px-2.5 py-1"
-                      style={{
-                        backgroundColor: canAfford ? palette.tabActiveBg : "rgba(255,255,255,0.74)",
-                      }}
-                    >
-                      <Text
-                        className="text-[11px] font-body-semibold"
-                        style={{ color: canAfford ? palette.accentText : "#6b7280" }}
-                      >
-                        {statusLabel}
-                      </Text>
-                    </View>
-                    {!canAfford ? (
-                      <View className="flex-row items-center gap-1">
-                        <Lock size={12} color="#737373" />
-                        <Text className="text-[11px] font-body-semibold text-muted-foreground">
-                          Noch nicht genug
-                        </Text>
-                      </View>
-                    ) : null}
-                  </View>
-                </View>
-                <Badge
-                  variant="secondary"
-                  className="self-start rounded-[16px] px-3 py-2"
-                  style={{
-                    backgroundColor: isRecentlyRedeemed
-                      ? palette.heroSurface
-                      : canAfford
-                        ? palette.tabActiveBg
-                        : "rgba(255,255,255,0.74)",
-                  }}
-                >
-                  <View className="flex-row items-center gap-1.5">
-                    <Text
-                      className="text-lg font-headline"
-                      style={{ color: canAfford ? palette.accentText : "#6b7280" }}
-                    >
-                      {reward.cost}
-                    </Text>
-                    <Text
-                      className="text-base font-body-bold"
-                      style={{ color: canAfford ? "#9A6A00" : "#737373" }}
-                    >
-                      ★
-                    </Text>
-                  </View>
-                </Badge>
-              </View>
-            </View>
-
-          </View>
-
-          {canAfford ? (
-            <View className="mt-3 flex-row justify-end">
-              <Button
-                variant="default"
-                size="sm"
-                disabled={isRecentlyRedeemed}
-                onPress={handleRedeem}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  isRecentlyRedeemed
-                    ? `${reward.title} wurde eingelöst`
-                    : `${reward.title} für ${reward.cost} Sterne einlösen`
-                }
-                accessibilityHint={
-                  isRecentlyRedeemed
-                    ? undefined
-                    : "Löst die Belohnung ein und zieht die Sterne vom Konto ab."
-                }
-                accessibilityState={{ disabled: isRecentlyRedeemed }}
-                className="h-11 rounded-[14px] px-4"
-                style={
-                  isRecentlyRedeemed
-                    ? { backgroundColor: palette.heroSurface }
-                    : { backgroundColor: palette.button }
-                }
+        <View className="mt-auto pt-3">
+          {isRecentlyRedeemed ? (
+            <View className="flex-row items-center gap-1.5">
+              <View
+                className="h-6 w-6 items-center justify-center rounded-full"
+                style={{ backgroundColor: "#4FD17A" }}
               >
-                <Text
-                  className={cn(
-                    "text-sm font-body-semibold",
-                    isRecentlyRedeemed ? "text-muted-foreground" : "text-white"
-                  )}
-                  style={isRecentlyRedeemed ? { color: palette.accentStrong } : undefined}
-                >
-                  {isRecentlyRedeemed ? "Eingelöst" : "Einlösen"}
-                </Text>
-              </Button>
+                <Check size={14} color="#FFFFFF" strokeWidth={3} />
+              </View>
+              <Text className="text-xs font-body-semibold" style={{ color: "#1F8A4C" }}>
+                Freigeschaltet
+              </Text>
             </View>
-          ) : null}
-        </Card>
-      </Animated.View>
+          ) : canAfford ? (
+            <PressableScale
+              onPress={() => onRedeem(reward)}
+              accessibilityRole="button"
+              accessibilityLabel={`${reward.title} für ${reward.cost} Sterne einlösen`}
+              accessibilityHint="Löst die Belohnung ein und zieht die Sterne vom Konto ab."
+              containerClassName="self-start"
+              className="flex-row items-center gap-1.5 rounded-full px-4 py-2"
+              style={{ backgroundColor: palette.button }}
+            >
+              <Text className="text-sm font-body-semibold text-white">Einlösen</Text>
+            </PressableScale>
+          ) : isClose ? (
+            <View>
+              <Progress
+                value={progressPct}
+                className="h-2"
+                indicatorColor={palette.chartPrimary}
+                trackStyle={{ backgroundColor: "#EAF1F7" }}
+              />
+              <Text className="mt-1.5 text-xs font-body-semibold" style={{ color: palette.accentText }}>
+                Nur {missingStars} {missingStars === 1 ? "Stern" : "Sterne"} entfernt
+              </Text>
+            </View>
+          ) : (
+            <View className="flex-row items-center justify-between">
+              <View
+                className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
+                style={{ backgroundColor: "rgba(255,255,255,0.85)" }}
+              >
+                <Lock size={11} color="#9AA5B1" />
+                <Text className="text-[11px] font-body-semibold text-muted-foreground">
+                  Bald frei
+                </Text>
+              </View>
+              <Text className="text-xs font-body-semibold" style={{ color: "#9A6A00" }}>
+                {reward.cost} ★
+              </Text>
+            </View>
+          )}
+        </View>
+      </Card>
     </Animated.View>
   );
 }
@@ -239,11 +170,11 @@ export function RewardsOverview({
 
     return (
       <Card
-        className="items-center overflow-hidden rounded-[22px] px-5 py-8"
+        className="items-center overflow-hidden rounded-card px-5 py-8"
         style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
       >
         <View
-          className="w-full max-w-[220px] overflow-hidden rounded-[22px]"
+          className="w-full max-w-[220px] overflow-hidden rounded-card"
           style={{ backgroundColor: palette.heroSurface }}
         >
           <Image
@@ -269,8 +200,10 @@ export function RewardsOverview({
       data={rewards}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
+      numColumns={2}
       scrollEnabled={false}
-      contentContainerStyle={{ paddingBottom: 16 }}
+      columnWrapperStyle={{ gap: 12 }}
+      contentContainerStyle={{ gap: 12, paddingBottom: 16 }}
     />
   );
 }

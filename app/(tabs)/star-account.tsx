@@ -8,10 +8,13 @@ import { useChildren } from "@/hooks/use-children";
 import { useRewards } from "@/hooks/use-rewards";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
 import { useStickerWall } from "@/hooks/use-sticker-wall";
+import { useChildProgression } from "@/hooks/use-child-progression";
 import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { StickerWall } from "@/components/stickers/sticker-wall";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { InsightCard } from "@/components/profile/insight-card";
+import { MilestoneBadges } from "@/components/profile/milestone-badges";
 import { MonthlyCompletionCalendar } from "@/components/profile/monthly-completion-calendar";
 import { ProfileHeroCard } from "@/components/profile/profile-hero-card";
 import { getActivityInsights, formatFriendlyDate } from "@/lib/activity-insights";
@@ -26,6 +29,7 @@ export default function ProfileScreen() {
   const { rewards } = useRewards();
   const { getLogsForChild } = useActivityLogs();
   const { collectedEntries } = useStickerWall(selectedChildId);
+  const { nextSticker } = useChildProgression(selectedChildId);
   const palette = getThemePalette(selectedChild?.theme);
   const previousStarsRef = useRef(0);
   const previousStreakRef = useRef(0);
@@ -117,7 +121,17 @@ export default function ProfileScreen() {
           contentContainerClassName="px-4 pb-8 pt-2"
           showsVerticalScrollIndicator={false}
         >
-          <View className="mt-2">
+          {/* Screen headline */}
+          <Animated.View entering={FadeInDown.duration(320)} className="mt-2">
+            <Text className="text-[32px] font-headline leading-10 text-foreground">
+              Profil
+            </Text>
+            <Text className="mt-0.5 text-sm font-body text-muted-foreground">
+              Deine Sterne, Erfolge und Sticker ✨
+            </Text>
+          </Animated.View>
+
+          <View className="mt-3">
             <ProfileHeroCard
               child={selectedChild}
               allChildren={children}
@@ -136,6 +150,56 @@ export default function ProfileScreen() {
               onSettingsPress={() => router.push("/parent-login")}
             />
           </View>
+
+          {/* Next sticker goal — the honest "XP bar" */}
+          {nextSticker ? (
+            <Animated.View entering={FadeInDown.delay(60).duration(320)} className="mt-4">
+              <Card
+                className="overflow-hidden rounded-card px-4 py-4"
+                style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+              >
+                <View
+                  className="absolute right-[-14px] top-[-12px] h-20 w-20 rounded-full"
+                  style={{ backgroundColor: palette.motifPrimary, opacity: 0.18 }}
+                />
+                <Text
+                  className="text-xs font-body-semibold uppercase tracking-[0.7px]"
+                  style={{ color: palette.accentText }}
+                >
+                  Nächstes Sticker-Ziel
+                </Text>
+                <Text className="mt-1 text-lg font-headline text-foreground" numberOfLines={1}>
+                  {nextSticker.sticker.title}
+                </Text>
+                <Text className="mt-0.5 text-xs font-body text-muted-foreground" numberOfLines={2}>
+                  {nextSticker.hint}
+                </Text>
+                <View className="mt-3 flex-row items-center gap-3">
+                  <View className="flex-1">
+                    <Progress
+                      value={nextSticker.progressPercent}
+                      className="h-2.5"
+                      indicatorColor={palette.chartPrimary}
+                      trackStyle={{ backgroundColor: "#EAF1F7" }}
+                    />
+                  </View>
+                  <Text className="shrink-0 text-xs font-body-semibold text-muted-foreground">
+                    {nextSticker.current} / {nextSticker.target}
+                  </Text>
+                </View>
+              </Card>
+            </Animated.View>
+          ) : null}
+
+          {/* Milestone badges */}
+          <Animated.View entering={FadeInDown.delay(80).duration(320)} className="mt-4">
+            <MilestoneBadges
+              totalStars={insights.totalStars}
+              streak={insights.currentStreak}
+              stickerCount={collectedEntries.length}
+              palette={palette}
+            />
+          </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(90).duration(320)} className="mt-4">
             <MonthlyCompletionCalendar
