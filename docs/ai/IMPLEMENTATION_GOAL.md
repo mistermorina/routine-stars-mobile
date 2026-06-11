@@ -1,5 +1,13 @@
 # Implementation Goal — Design & Feel Upgrade v2 (Basis: main @ 38697c8)
 
+> STATUS 2026-06-11: Alle 4 Wellen umgesetzt und einzeln committet (A: Routinen+TabBar,
+> B: Rewards+Profil, C: Sound/Skeletons/ReducedMotion, D: Eltern-Statistiken editorial).
+> Wichtige Vor-Ort-Korrektur zu Welle C: Timer-Modal/Complete-Dialog behalten ihre eigene
+> Farbwelt (MODAL_NAVY etc.) — sie matcht die fest eingebackenen Bitmap-Hintergründe
+> (timer-challenge-bg.png u. a.). Der Audit-Punkt "Theme-Bypass" war dort ein Fehlschluss.
+> Bekannte Mikro-Grenze: "Heute"-Markierung im Stats-Wochenchart aktualisiert sich erst
+> beim nächsten Screen-Besuch nach Mitternacht (kein Live-Ticker, bewusst).
+
 Designsprache: siehe `docs/ai/DESIGN_DIRECTION.md` (verbindlich).
 Arbeitsmodus: 4 Wellen. Nach JEDER Welle: Commit + typecheck/lint + User testet auf Gerät.
 Nächste Welle erst nach User-Freigabe. Kleine, reversible Änderungen; keine Feature-Umbauten.

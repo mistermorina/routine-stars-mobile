@@ -322,16 +322,16 @@ export default function SettingsIndex() {
             await storage.setItem(storage.KEYS.HAS_ONBOARDED, false);
             router.replace("/(auth)/onboarding");
           }}
-          className="mt-4 flex-row items-center rounded-[24px] border border-blue-200 bg-card px-4 py-4 active:bg-blue-50"
+          className="mt-4 flex-row items-center rounded-[24px] border border-border bg-card px-4 py-4 active:bg-secondary"
         >
-          <View className="h-12 w-12 items-center justify-center rounded-[18px] bg-blue-50">
-            <Rocket size={22} color="#3b82f6" />
+          <View className="h-12 w-12 items-center justify-center rounded-[18px] bg-secondary/80">
+            <Rocket size={22} color="#1a1a2e" />
           </View>
           <View className="ml-3 flex-1">
-            <Text className="text-base font-body-semibold text-blue-500">
+            <Text className="text-base font-body-semibold text-foreground">
               Onboarding erneut starten
             </Text>
-            <Text className="mt-1 text-xs font-body text-blue-400">
+            <Text className="mt-1 text-xs font-body text-muted-foreground">
               Startet den ersten Einrichtungsflow mit aktuellen lokalen Daten neu.
             </Text>
           </View>

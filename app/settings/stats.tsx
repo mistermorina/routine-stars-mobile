@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import Svg, { Circle } from "react-native-svg";
 import { BarChart3, Sparkles, Star } from "lucide-react-native";
 import { useChildren } from "@/hooks/use-children";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
@@ -13,6 +14,19 @@ import { formatFriendlyDate, getActivityInsights } from "@/lib/activity-insights
 import { getThemePalette } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
+const WEEKDAY_SHORT = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"] as const;
+
+function localIsoDaysAgo(daysAgo: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+const RING_RADIUS = 56;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
 export default function StatsSettings() {
   const { children, selectedChild, selectedChildId, selectChild } = useChildren();
   const { getLogsForChild } = useActivityLogs();
@@ -23,7 +37,23 @@ export default function StatsSettings() {
   );
   const insights = useMemo(() => getActivityInsights(childLogs), [childLogs]);
   const recentSummaries = insights.summaries.slice(-7);
-  const maxRecentStars = Math.max(...recentSummaries.map((item) => item.totalStars), 1);
+  // Calendar-true last 7 days (today rightmost), zero-filled for quiet days.
+  const weekDays = useMemo(() => {
+    const summariesByDate = new Map(insights.summaries.map((entry) => [entry.date, entry]));
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = localIsoDaysAgo(6 - index);
+      const summary = summariesByDate.get(date);
+      return {
+        date,
+        weekday: WEEKDAY_SHORT[new Date(`${date}T12:00:00`).getDay()],
+        totalStars: summary?.totalStars ?? 0,
+        isToday: index === 6,
+      };
+    });
+  }, [insights.summaries]);
+  const maxWeekStars = Math.max(...weekDays.map((day) => day.totalStars), 1);
+  const activeDaysThisWeek = weekDays.filter((day) => day.totalStars > 0).length;
+  const weekPercent = Math.round((activeDaysThisWeek / 7) * 100);
   const groupedLogs = useMemo(
     () =>
       [...insights.summaries]
@@ -95,6 +125,61 @@ export default function StatsSettings() {
             badges={[{ label: `${recentSummaries.length} Tage` }]}
             palette={palette}
           />
+        </Animated.View>
+
+        {/* Weekly ring — calm editorial summary of the last 7 days */}
+        <Animated.View entering={FadeInDown.delay(40).duration(300)} className="mt-4">
+          <Card
+            className="overflow-hidden rounded-[28px] px-5 py-5"
+            style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+          >
+            <View className="flex-row items-center gap-4">
+              <View className="min-w-0 flex-1">
+                <Text className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground">
+                  Diese Woche
+                </Text>
+                <Text className="mt-1 text-[40px] font-headline leading-[46px] text-foreground">
+                  {weekPercent} %
+                </Text>
+                <Text className="mt-1 text-sm font-body text-muted-foreground">
+                  An {activeDaysThisWeek} von 7 Tagen wurden Aufgaben erledigt.
+                </Text>
+              </View>
+              <View className="h-[128px] w-[128px] items-center justify-center">
+                <Svg width={128} height={128} viewBox="0 0 128 128">
+                  <Circle
+                    cx={64}
+                    cy={64}
+                    r={RING_RADIUS}
+                    fill="none"
+                    stroke={palette.accentBorder}
+                    strokeWidth={9}
+                    opacity={0.55}
+                  />
+                  <Circle
+                    cx={64}
+                    cy={64}
+                    r={RING_RADIUS}
+                    fill="none"
+                    stroke={palette.chartPrimary}
+                    strokeWidth={9}
+                    strokeLinecap="round"
+                    strokeDasharray={RING_CIRCUMFERENCE}
+                    strokeDashoffset={RING_CIRCUMFERENCE * (1 - weekPercent / 100)}
+                    transform="rotate(-90 64 64)"
+                  />
+                </Svg>
+                <View className="absolute items-center">
+                  <Text className="text-lg font-headline" style={{ color: palette.accentText }}>
+                    {activeDaysThisWeek}/7
+                  </Text>
+                  <Text className="text-[10px] font-body-semibold text-muted-foreground">
+                    Tagen
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </Card>
         </Animated.View>
 
         {groupedLogs.length === 0 ? (
@@ -185,24 +270,35 @@ export default function StatsSettings() {
               </View>
             </View>
 
-            {recentSummaries.length > 0 ? (
+            {insights.summaries.length > 0 ? (
               <View className="mt-6 flex-row items-end gap-3">
-                {recentSummaries.map((summary) => {
-                  const height = Math.max(36, (summary.totalStars / maxRecentStars) * 120);
-                  const date = new Date(`${summary.date}T12:00:00`);
+                {weekDays.map((day) => {
+                  const height =
+                    day.totalStars > 0
+                      ? Math.max(28, (day.totalStars / maxWeekStars) * 120)
+                      : 6;
 
                   return (
-                    <View key={summary.date} className="flex-1 items-center">
+                    <View key={day.date} className="flex-1 items-center">
                       <View
                         className="w-full rounded-full"
                         style={{
                           height,
-                          backgroundColor: palette.chartPrimary,
-                          opacity: 0.85,
+                          backgroundColor:
+                            day.totalStars > 0 ? palette.chartPrimary : palette.accentBorder,
+                          opacity: day.isToday ? 1 : day.totalStars > 0 ? 0.62 : 0.5,
                         }}
                       />
-                      <Text className="mt-2 text-xs font-body-semibold text-muted-foreground">
-                        {date.getDate()}
+                      <Text
+                        className={cn(
+                          "mt-2 text-xs",
+                          day.isToday ? "font-body-bold" : "font-body-semibold"
+                        )}
+                        style={{
+                          color: day.isToday ? palette.accentText : "#8E99A6",
+                        }}
+                      >
+                        {day.weekday}
                       </Text>
                     </View>
                   );
