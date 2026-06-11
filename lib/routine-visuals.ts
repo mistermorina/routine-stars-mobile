@@ -12,7 +12,7 @@ import routineWeekendImage from "@/assets/images/routine-weekend-soft.png";
 import routineMealsImage from "@/assets/images/routine-meals-soft.png";
 import routineSpecialImage from "@/assets/images/routine-special-soft.png";
 
-type RoutineVisualKey =
+export type RoutineVisualKey =
   | "morning"
   | "evening"
   | "school"
@@ -116,10 +116,10 @@ const ROUTINE_VISUALS: Record<RoutineVisualKey, RoutineVisual> = {
   },
 };
 
-const ROUTINE_KEYWORDS: Array<{
+const ROUTINE_KEYWORDS: {
   key: RoutineVisualKey;
   words: string[];
-}> = [
+}[] = [
   {
     key: "evening",
     words: ["abend", "nacht", "schlaf", "bett", "licht aus", "schlafanzug", "kuscheln"],
@@ -190,7 +190,7 @@ const ROUTINE_NAME_KEYWORDS = [
   { key: "weekend", words: ["wochenend", "weekend"] },
   { key: "cleanup", words: ["haushalt", "household", "aufräumen", "aufraeumen"] },
   { key: "hygiene", words: ["hygiene", "zähne", "zaehne", "waschen"] },
-] satisfies Array<{ key: RoutineVisualKey; words: string[] }>;
+] satisfies { key: RoutineVisualKey; words: string[] }[];
 
 function routineSearchText(routine: Routine): string {
   return [
@@ -219,6 +219,11 @@ function classifyRoutine(routine: Routine): RoutineVisualKey {
   );
 
   return match?.key ?? "generic";
+}
+
+/** Category of a routine (name/task keyword heuristic) — used for filtering. */
+export function getRoutineCategory(routine: Routine): RoutineVisualKey {
+  return classifyRoutine(routine);
 }
 
 export function getRoutineVisual(routine: Routine, fallbackAccent: string): RoutineVisual {

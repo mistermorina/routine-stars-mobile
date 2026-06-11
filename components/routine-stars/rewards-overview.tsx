@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 import { View, Text, FlatList, type ListRenderItemInfo } from "react-native";
 import { Image } from "expo-image";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { Check, Lock } from "lucide-react-native";
+import { Check, Lock, Star } from "lucide-react-native";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { PressableScale } from "@/components/ui/pressable-scale";
@@ -62,18 +62,36 @@ function RewardItem({
           style={{ backgroundColor: palette.motifSecondary, opacity: canAfford ? 0.22 : 0.1 }}
         />
 
-        <View
-          className="h-14 w-14 items-center justify-center rounded-tile"
-          style={{
-            backgroundColor: canAfford || isRecentlyRedeemed ? palette.surface : "rgba(255,255,255,0.78)",
-            borderColor: palette.accentBorder,
-            borderWidth: 1,
-          }}
-        >
-          <IconComponent
-            size={26}
-            color={canAfford || isRecentlyRedeemed ? palette.accentStrong : "#9AA5B1"}
-          />
+        <View className="flex-row items-start justify-between">
+          <View
+            className="h-14 w-14 items-center justify-center rounded-tile"
+            style={{
+              backgroundColor: canAfford || isRecentlyRedeemed ? palette.surface : "rgba(255,255,255,0.78)",
+              borderColor: palette.accentBorder,
+              borderWidth: 1,
+            }}
+          >
+            <IconComponent
+              size={26}
+              color={canAfford || isRecentlyRedeemed ? palette.accentStrong : "#9AA5B1"}
+            />
+          </View>
+          {/* Cost is always visible — kids need the target number */}
+          <View
+            className="flex-row items-center gap-1 rounded-full border px-2.5 py-1"
+            style={{
+              backgroundColor: "rgba(255,255,255,0.9)",
+              borderColor: palette.accentBorder,
+            }}
+          >
+            <Text
+              className="text-xs font-body-bold leading-4"
+              style={{ color: canAfford ? "#B97E0B" : "#71808E" }}
+            >
+              {reward.cost}
+            </Text>
+            <Star size={12} color="#F7C948" fill={canAfford ? "#F7C948" : "transparent"} />
+          </View>
         </View>
 
         <Text
@@ -121,18 +139,13 @@ function RewardItem({
               </Text>
             </View>
           ) : (
-            <View className="flex-row items-center justify-between">
-              <View
-                className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
-                style={{ backgroundColor: "rgba(255,255,255,0.85)" }}
-              >
-                <Lock size={11} color="#9AA5B1" />
-                <Text className="text-[11px] font-body-semibold text-muted-foreground">
-                  Bald frei
-                </Text>
-              </View>
-              <Text className="text-xs font-body-semibold" style={{ color: "#9A6A00" }}>
-                {reward.cost} ★
+            <View
+              className="self-start flex-row items-center gap-1 rounded-full px-2.5 py-1"
+              style={{ backgroundColor: "rgba(255,255,255,0.85)" }}
+            >
+              <Lock size={11} color="#9AA5B1" />
+              <Text className="text-[11px] font-body-semibold leading-4 text-muted-foreground">
+                Bald frei
               </Text>
             </View>
           )}

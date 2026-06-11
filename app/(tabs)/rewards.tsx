@@ -16,7 +16,7 @@ import { ThemedScreenBackground } from "@/components/ui/themed-screen-background
 import { triggerFeedback } from "@/lib/feedback";
 import { getThemePalette } from "@/lib/theme";
 import type { Reward } from "@/lib/types";
-import rewardStarGiftImage from "@/assets/images/reward-star-gift.png";
+import rewardStarGiftImage from "@/assets/images/reward-star-gift-soft.png";
 
 type RewardFilter = "alle" | "verfuegbar" | "bald";
 
@@ -238,31 +238,27 @@ export default function RewardsScreen() {
                 className="absolute bottom-[-44px] left-[-30px] h-36 w-36 rounded-full"
                 style={{ backgroundColor: palette.motifSecondary, opacity: 0.3 }}
               />
-              <View className="flex-row items-center gap-3">
-                <View className="min-w-0 flex-1">
-                  <Text
-                    className="text-xs font-body-semibold uppercase tracking-[0.7px]"
-                    style={{ color: palette.accentText }}
-                  >
-                    Nächste Belohnung
-                  </Text>
-                  <Text
-                    className="mt-1 text-[24px] font-headline leading-8 text-foreground"
-                    numberOfLines={2}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.72}
-                  >
-                    {nextReward ? nextReward.title : "Alles erreichbar!"}
-                  </Text>
-                  <Text className="mt-1 text-sm font-body text-muted-foreground">
-                    {nextReward
-                      ? `Noch ${missingStars} ${missingStars === 1 ? "Stern" : "Sterne"} bis zur Überraschung`
-                      : "Du kannst dir gerade jede Belohnung aussuchen."}
-                  </Text>
-                </View>
+              <Text
+                className="text-xs font-body-semibold uppercase tracking-[0.7px]"
+                style={{ color: palette.accentText }}
+              >
+                Nächste Belohnung
+              </Text>
+              <Text
+                className="mt-1 text-[24px] font-headline leading-8 text-foreground"
+                numberOfLines={2}
+              >
+                {nextReward ? nextReward.title : "Alles erreichbar!"}
+              </Text>
+              <View className="mt-1 flex-row items-end gap-3">
+                <Text className="min-w-0 flex-1 text-sm font-body text-muted-foreground">
+                  {nextReward
+                    ? `Noch ${missingStars} ${missingStars === 1 ? "Stern" : "Sterne"} bis zur Überraschung`
+                    : "Du kannst dir gerade jede Belohnung aussuchen."}
+                </Text>
                 <Image
                   source={rewardStarGiftImage}
-                  style={{ width: 112, height: 112 }}
+                  style={{ width: 96, height: 96 }}
                   contentFit="contain"
                   transition={180}
                   accessibilityLabel="Geschenk mit Sternen"

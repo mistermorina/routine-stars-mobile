@@ -113,7 +113,12 @@ export default function LegalSettings() {
                   Transparenz
                 </Text>
               </View>
-              <Text className="mt-3 text-[30px] font-headline text-foreground">
+              <Text
+                className="mt-3 text-[26px] font-headline leading-[32px] text-foreground"
+                numberOfLines={2}
+                adjustsFontSizeToFit
+                minimumFontScale={0.7}
+              >
                 Rechtliches & Einwilligungen
               </Text>
               <Text className="mt-2 text-sm font-body leading-6" style={{ color: palette.accentText }}>

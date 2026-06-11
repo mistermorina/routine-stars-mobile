@@ -27,11 +27,13 @@ const textVariants = {
   link: "text-primary font-body-semibold text-base underline",
 } as const;
 
+// Roomier line height centers Poppins glyphs inside the fixed-height button
+// (tight line boxes make the ascender-heavy font sit visibly high).
 const textSizes = {
-  default: "text-base leading-5",
-  sm: "text-sm leading-4",
-  lg: "text-base leading-5",
-  icon: "text-base leading-5",
+  default: "text-base leading-[22px]",
+  sm: "text-sm leading-[19px]",
+  lg: "text-base leading-[22px]",
+  icon: "text-base leading-[22px]",
 } as const;
 
 export interface ButtonProps extends PressableProps {
@@ -69,6 +71,7 @@ export function Button({
             textSizes[size],
             textClassName
           )}
+          style={{ includeFontPadding: false }}
         >
           {children}
         </Text>

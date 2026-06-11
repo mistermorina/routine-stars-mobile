@@ -83,10 +83,10 @@ export function SettingsHeroCard({
       </View>
 
       <Text
-        className="mt-5 text-[38px] font-headline leading-[42px] text-foreground"
-        numberOfLines={1}
+        className="mt-5 text-[30px] font-headline leading-[36px] text-foreground"
+        numberOfLines={2}
         adjustsFontSizeToFit
-        minimumFontScale={0.66}
+        minimumFontScale={0.7}
       >
         {title}
       </Text>

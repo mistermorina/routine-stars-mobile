@@ -39,46 +39,30 @@ import type { Routine, Task } from "@/lib/types";
 import emptyRoutinesImage from "@/assets/images/empty-routines.png";
 import rewardStarGiftImage from "@/assets/images/reward-star-gift-soft.png";
 import routineTrophyImage from "@/assets/images/routine-trophy-soft.png";
-import themeStarsImage from "@/assets/images/theme-stars.png";
-import themeAnimalsImage from "@/assets/images/theme-animals.png";
-import themeGalaxyImage from "@/assets/images/theme-galaxy.png";
+import { getRoutineCategory, getRoutineVisual, type RoutineVisualKey } from "@/lib/routine-visuals";
 
-const heroImages = {
-  sterne: themeStarsImage,
-  tiere: themeAnimalsImage,
-  galaxy: themeGalaxyImage,
-} as const;
+type RoutineFilter = "heute" | "alle" | RoutineVisualKey;
 
-type TimeFilter = "heute" | "morgens" | "abends" | "alle";
-
-const TIME_FILTERS: { key: TimeFilter; label: string }[] = [
-  { key: "heute", label: "Heute" },
-  { key: "morgens", label: "Morgens" },
-  { key: "abends", label: "Abends" },
-  { key: "alle", label: "Alle" },
+// Category chips appear only when at least one routine matches.
+const CATEGORY_FILTERS: { key: RoutineVisualKey; label: string }[] = [
+  { key: "morning", label: "Morgens" },
+  { key: "evening", label: "Abends" },
+  { key: "school", label: "Schule" },
+  { key: "hygiene", label: "Hygiene" },
+  { key: "meals", label: "Essen" },
+  { key: "cleanup", label: "Haushalt" },
+  { key: "sport", label: "Sport" },
+  { key: "weekend", label: "Wochenende" },
+  { key: "special", label: "Extra" },
+  { key: "generic", label: "Weitere" },
 ];
 
 const WEEKDAY_BY_INDEX = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"] as const;
-
-function getRoutineHour(routine: Routine): number | null {
-  const time = routine.schedule?.time;
-  if (!time) return null;
-  const hour = Number(time.split(":")[0]);
-  return Number.isFinite(hour) ? hour : null;
-}
 
 function isRoutineDueToday(routine: Routine): boolean {
   const days = routine.schedule?.days;
   if (!days || days.length === 0) return true;
   return days.includes(WEEKDAY_BY_INDEX[new Date().getDay()]);
-}
-
-function matchesTimeFilter(routine: Routine, filter: TimeFilter): boolean {
-  if (filter === "alle") return true;
-  if (filter === "heute") return isRoutineDueToday(routine);
-  const hour = getRoutineHour(routine);
-  if (hour === null) return false;
-  return filter === "morgens" ? hour < 12 : hour >= 17;
 }
 
 export default function DashboardScreen() {
@@ -119,21 +103,34 @@ export default function DashboardScreen() {
     isHeaderCollapsed,
     toggleHeaderCollapsed,
   } = useCollapsibleHeader();
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>("heute");
+  const [routineFilter, setRoutineFilter] = useState<RoutineFilter>("heute");
   const [pendingScrollRoutineId, setPendingScrollRoutineId] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   const routineListY = useRef(0);
   const routinePositions = useRef<Record<string, number>>({});
 
   const palette = getThemePalette(selectedChild?.theme);
+  const routineCategories = useMemo(() => {
+    const map = new Map<string, RoutineVisualKey>();
+    for (const routine of routines) {
+      map.set(routine.id, getRoutineCategory(routine));
+    }
+    return map;
+  }, [routines]);
+  const availableFilters = useMemo<{ key: RoutineFilter; label: string }[]>(() => {
+    const present = new Set(routineCategories.values());
+    return [
+      { key: "heute" as const, label: "Heute" },
+      ...CATEGORY_FILTERS.filter((entry) => present.has(entry.key)),
+      { key: "alle" as const, label: "Alle" },
+    ];
+  }, [routineCategories]);
   const showTimeFilters = routines.length > 1;
-  const displayRoutines = useMemo(
-    () =>
-      showTimeFilters
-        ? routines.filter((routine) => matchesTimeFilter(routine, timeFilter))
-        : routines,
-    [routines, showTimeFilters, timeFilter]
-  );
+  const displayRoutines = useMemo(() => {
+    if (!showTimeFilters || routineFilter === "alle") return routines;
+    if (routineFilter === "heute") return routines.filter(isRoutineDueToday);
+    return routines.filter((routine) => routineCategories.get(routine.id) === routineFilter);
+  }, [routineCategories, routineFilter, routines, showTimeFilters]);
 
   const totalTasks = routines.reduce((count, routine) => count + routine.tasks.length, 0);
   const completedTasks = routines.reduce(
@@ -156,6 +153,11 @@ export default function DashboardScreen() {
     ? heroRoutine.tasks.filter((task) => !task.completed).length
     : 0;
   const allDone = totalTasks > 0 && remainingTasks === 0;
+  // Cut-out art (transparent PNG) matching the hero routine's category.
+  const heroArt =
+    allDone || !heroRoutine
+      ? routineTrophyImage
+      : getRoutineVisual(heroRoutine, palette.chartPrimary).art;
   const completedRoutines = routines.filter(
     (routine) => routine.tasks.length > 0 && routine.tasks.every((task) => task.completed)
   ).length;
@@ -196,7 +198,7 @@ export default function DashboardScreen() {
     if (!isVisible) {
       // Hero routine is hidden by the current filter: reveal it first,
       // then scroll once the list has re-laid out.
-      setTimeFilter("alle");
+      setRoutineFilter("alle");
       setPendingScrollRoutineId(heroRoutine.id);
       return;
     }
@@ -461,43 +463,44 @@ export default function DashboardScreen() {
             </Text>
           </Animated.View>
 
-          {/* Time-of-day filter chips */}
+          {/* Category filter chips (horizontal scroll) */}
           {showTimeFilters ? (
-            <Animated.View entering={FadeInDown.delay(40).duration(320)} className="mx-4 mt-3">
-              <View
-                className="flex-row gap-1 rounded-full border p-1"
-                style={{
-                  backgroundColor: "rgba(255,255,255,0.72)",
-                  borderColor: palette.accentBorder,
-                }}
+            <Animated.View entering={FadeInDown.delay(40).duration(320)} className="mt-3">
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
               >
-                {TIME_FILTERS.map((filter) => {
-                  const isActive = filter.key === timeFilter;
+                {availableFilters.map((filter) => {
+                  const isActive = filter.key === routineFilter;
                   return (
                     <PressableScale
                       key={filter.key}
                       onPress={() => {
                         if (!isActive) {
                           void triggerFeedback("tab_focus");
-                          setTimeFilter(filter.key);
+                          setRoutineFilter(filter.key);
                         }
                       }}
                       accessibilityRole="button"
                       accessibilityLabel={`Routinen filtern: ${filter.label}`}
                       accessibilityState={{ selected: isActive }}
-                      containerClassName="flex-1"
-                      className="items-center justify-center rounded-full py-2.5"
+                      className="items-center justify-center rounded-full border px-4 py-2.5"
                       style={
                         isActive
                           ? {
-                              backgroundColor: "#FFFFFF",
+                              backgroundColor: palette.button,
+                              borderColor: palette.button,
                               shadowColor: "#9DB8D8",
-                              shadowOpacity: 0.18,
+                              shadowOpacity: 0.2,
                               shadowRadius: 8,
                               shadowOffset: { width: 0, height: 3 },
                               elevation: 2,
                             }
-                          : undefined
+                          : {
+                              backgroundColor: "rgba(255,255,255,0.8)",
+                              borderColor: palette.accentBorder,
+                            }
                       }
                     >
                       <Text
@@ -506,7 +509,7 @@ export default function DashboardScreen() {
                           isActive ? "text-[13px] font-body-semibold" : "text-[13px] font-body"
                         }
                         style={{
-                          color: isActive ? palette.accentText : "#8E99A6",
+                          color: isActive ? "#FFFFFF" : "#71808E",
                         }}
                       >
                         {filter.label}
@@ -514,7 +517,7 @@ export default function DashboardScreen() {
                     </PressableScale>
                   );
                 })}
-              </View>
+              </ScrollView>
             </Animated.View>
           ) : null}
 
@@ -539,27 +542,25 @@ export default function DashboardScreen() {
                 className="absolute bottom-[-44px] left-[-30px] h-36 w-36 rounded-full"
                 style={{ backgroundColor: palette.motifSecondary, opacity: 0.3 }}
               />
-              <View className="flex-row items-center gap-3">
+              <Text
+                className="text-xs font-body-semibold uppercase tracking-[0.7px]"
+                style={{ color: palette.accentText }}
+              >
+                {allDone ? "Heute geschafft" : "Nächste Routine"}
+              </Text>
+              <Text
+                className="mt-1 text-[24px] font-headline leading-8 text-foreground"
+                numberOfLines={2}
+              >
+                {allDone
+                  ? "Alles erledigt!"
+                  : heroRoutine
+                    ? heroRoutine.name
+                    : "Bereit für den Start"}
+              </Text>
+              <View className="mt-1 flex-row items-end gap-3">
                 <View className="min-w-0 flex-1">
-                  <Text
-                    className="text-xs font-body-semibold uppercase tracking-[0.7px]"
-                    style={{ color: palette.accentText }}
-                  >
-                    {allDone ? "Heute geschafft" : "Nächste Routine"}
-                  </Text>
-                  <Text
-                    className="mt-1 text-[24px] font-headline leading-8 text-foreground"
-                    numberOfLines={2}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.72}
-                  >
-                    {allDone
-                      ? "Alles erledigt!"
-                      : heroRoutine
-                        ? heroRoutine.name
-                        : "Bereit für den Start"}
-                  </Text>
-                  <Text className="mt-1 text-sm font-body text-muted-foreground">
+                  <Text className="text-sm font-body text-muted-foreground">
                     {allDone
                       ? "Du hast dir deine Sterne verdient."
                       : heroRoutine
@@ -574,18 +575,20 @@ export default function DashboardScreen() {
                     className="flex-row items-center gap-2 rounded-full px-5 py-3"
                     style={{ backgroundColor: palette.button }}
                   >
-                    <Text className="text-base font-body-semibold text-white">
+                    <Text className="text-base font-body-semibold leading-[22px] text-white">
                       {allDone ? "Belohnungen" : "Starten"}
                     </Text>
                     <ArrowRight size={18} color="#FFFFFF" />
                   </PressableScale>
                 </View>
                 <Image
-                  source={heroImages[selectedChild.theme] ?? themeStarsImage}
-                  style={{ width: 116, height: 116 }}
+                  source={heroArt}
+                  style={{ width: 104, height: 104 }}
                   contentFit="contain"
                   transition={180}
-                  accessibilityLabel="Maskottchen deiner Sternenwelt"
+                  accessibilityLabel={
+                    allDone ? "Pokal für den geschafften Tag" : "Symbolbild der nächsten Routine"
+                  }
                 />
               </View>
               <View className="mt-4 flex-row items-center gap-3">
@@ -791,7 +794,7 @@ export default function DashboardScreen() {
                   Schau unter „Alle“ nach deinen Routinen.
                 </Text>
                 <PressableScale
-                  onPress={() => setTimeFilter("alle")}
+                  onPress={() => setRoutineFilter("alle")}
                   accessibilityRole="button"
                   accessibilityLabel="Alle Routinen anzeigen"
                   containerClassName="mt-3 self-center"
