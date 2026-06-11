@@ -8,6 +8,7 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { Star } from "lucide-react-native";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 const NUM_STARS = 40;
 const COLORS = ["#F3E5AB", "#87CEEB", "#F8E9D7", "#FFD700"];
@@ -93,6 +94,7 @@ function ConfettiStar({ particle }: { particle: StarParticle }) {
 }
 
 export function Confetti({ colors = COLORS }: { colors?: string[] }) {
+  const reduceMotion = useReducedMotion();
   const particles = useMemo<StarParticle[]>(() => {
     return Array.from({ length: NUM_STARS }, (_, i) => ({
       id: i,
@@ -104,6 +106,11 @@ export function Confetti({ colors = COLORS }: { colors?: string[] }) {
       color: colors[Math.floor(Math.random() * colors.length)],
     }));
   }, [colors]);
+
+  // Decorative only — skip entirely when the OS asks for reduced motion.
+  if (reduceMotion) {
+    return null;
+  }
 
   return (
     <View

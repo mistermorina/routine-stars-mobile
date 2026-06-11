@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { View, ActivityIndicator } from "react-native";
 import { useFonts } from "expo-font";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AuthProvider } from "@/contexts/auth-context";
+import { initFeedback } from "@/lib/sound-adapter";
 import "../global.css";
 
 export default function RootLayout() {
@@ -13,6 +14,10 @@ export default function RootLayout() {
     Poppins_600SemiBold: require("../assets/fonts/Poppins-SemiBold.ttf"),
     Poppins_700Bold: require("../assets/fonts/Poppins-Bold.ttf"),
   });
+
+  useEffect(() => {
+    void initFeedback();
+  }, []);
 
   if (!fontsLoaded) {
     return (

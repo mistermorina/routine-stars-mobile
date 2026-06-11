@@ -39,9 +39,19 @@ const FEEDBACK_THROTTLE_MS: Record<FeedbackEvent, number> = {
 const lastTriggered = new Map<FeedbackEvent, number>();
 
 let soundAdapter: FeedbackSoundAdapter | null = null;
+let hapticsGloballyEnabled = true;
 
 export function setFeedbackSoundAdapter(adapter: FeedbackSoundAdapter | null) {
   soundAdapter = adapter;
+}
+
+/** Global haptics switch (settings toggle); per-call options still apply. */
+export function setHapticsGloballyEnabled(enabled: boolean) {
+  hapticsGloballyEnabled = enabled;
+}
+
+export function isHapticsGloballyEnabled(): boolean {
+  return hapticsGloballyEnabled;
 }
 
 async function runHaptic(event: FeedbackEvent) {
@@ -80,7 +90,7 @@ export async function triggerFeedback(
 
   lastTriggered.set(event, now);
 
-  if (!options.disableHaptics && Platform.OS !== "web") {
+  if (!options.disableHaptics && hapticsGloballyEnabled && Platform.OS !== "web") {
     try {
       await runHaptic(event);
     } catch {

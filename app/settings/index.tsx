@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, Pressable, ScrollView, Alert } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, Pressable, ScrollView, Alert, Switch } from "react-native";
 import { useRouter } from "expo-router";
 import {
   Users,
@@ -14,9 +14,20 @@ import {
   RefreshCcw,
   Rocket,
   Sparkles,
+  Vibrate,
+  Volume2,
 } from "lucide-react-native";
 import { storage } from "@/lib/storage";
+import { isHapticsGloballyEnabled } from "@/lib/feedback";
+import {
+  initFeedback,
+  isSoundEnabled,
+  setHapticsEnabled,
+  setSoundEnabled,
+} from "@/lib/sound-adapter";
 import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
+
+const SWITCH_TRACK_COLOR = { false: "#E5E5E5", true: "#87CEEB" };
 
 const settingsItems = [
   {
@@ -94,6 +105,31 @@ const featuredRoutes = new Set([
 
 export default function SettingsIndex() {
   const router = useRouter();
+  const [soundOn, setSoundOn] = useState(true);
+  const [hapticsOn, setHapticsOn] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    // Idempotent: resolves instantly if the root layout already initialized.
+    void initFeedback().then(() => {
+      if (!mounted) return;
+      setSoundOn(isSoundEnabled());
+      setHapticsOn(isHapticsGloballyEnabled());
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleToggleSound = (value: boolean) => {
+    setSoundOn(value);
+    void setSoundEnabled(value);
+  };
+
+  const handleToggleHaptics = (value: boolean) => {
+    setHapticsOn(value);
+    void setHapticsEnabled(value);
+  };
 
   const handleResetApp = () => {
     Alert.alert(
@@ -236,6 +272,49 @@ export default function SettingsIndex() {
             </Pressable>
           );
         })}
+
+        <View className="mt-2">
+          <Text className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground">
+            Ton & Vibration
+          </Text>
+        </View>
+
+        <View className="rounded-[24px] bg-card px-4">
+          <View className="flex-row items-center border-b border-border/60 py-4">
+            <View className="h-11 w-11 items-center justify-center rounded-[16px] bg-secondary/80">
+              <Volume2 size={20} color="#1a1a2e" />
+            </View>
+            <View className="ml-3 min-w-0 flex-1 pr-3">
+              <Text className="text-base font-body-semibold text-foreground">Soundeffekte</Text>
+              <Text className="mt-1 text-xs font-body leading-5 text-muted-foreground">
+                Kurze Klänge bei Aufgaben, Belohnungen und Stickern.
+              </Text>
+            </View>
+            <Switch
+              value={soundOn}
+              onValueChange={handleToggleSound}
+              trackColor={SWITCH_TRACK_COLOR}
+              accessibilityLabel="Soundeffekte ein- oder ausschalten"
+            />
+          </View>
+          <View className="flex-row items-center py-4">
+            <View className="h-11 w-11 items-center justify-center rounded-[16px] bg-secondary/80">
+              <Vibrate size={20} color="#1a1a2e" />
+            </View>
+            <View className="ml-3 min-w-0 flex-1 pr-3">
+              <Text className="text-base font-body-semibold text-foreground">Vibration</Text>
+              <Text className="mt-1 text-xs font-body leading-5 text-muted-foreground">
+                Sanftes haptisches Feedback bei wichtigen Momenten.
+              </Text>
+            </View>
+            <Switch
+              value={hapticsOn}
+              onValueChange={handleToggleHaptics}
+              trackColor={SWITCH_TRACK_COLOR}
+              accessibilityLabel="Vibration ein- oder ausschalten"
+            />
+          </View>
+        </View>
 
         {/* Onboarding erneut starten */}
         <Pressable

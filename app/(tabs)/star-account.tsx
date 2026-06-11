@@ -11,6 +11,7 @@ import { useStickerWall } from "@/hooks/use-sticker-wall";
 import { useChildProgression } from "@/hooks/use-child-progression";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StickerWall } from "@/components/stickers/sticker-wall";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { InsightCard } from "@/components/profile/insight-card";
@@ -88,8 +89,16 @@ export default function ProfileScreen() {
         theme={selectedChild?.theme}
         backgroundSkin={selectedChild?.backgroundSkin}
       >
-        <View className="flex-1 items-center justify-center">
-          <Text className="font-body text-muted-foreground">Laden...</Text>
+        <View className="flex-1 px-4 pt-6 gap-3">
+          <Skeleton className="h-9 w-36" />
+          <Skeleton className="h-4 w-56 rounded-chip" />
+          <Skeleton className="mt-2 h-44 w-full rounded-card" />
+          <Skeleton className="h-24 w-full rounded-card" />
+          <View className="flex-row gap-3">
+            <Skeleton className="h-28 flex-1 rounded-tile" />
+            <Skeleton className="h-28 flex-1 rounded-tile" />
+            <Skeleton className="h-28 flex-1 rounded-tile" />
+          </View>
         </View>
       </ThemedScreenBackground>
     );

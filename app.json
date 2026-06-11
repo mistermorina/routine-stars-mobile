@@ -33,7 +33,8 @@
         {
           "photosPermission": "Routine Stars benötigt Zugriff auf deine Fotomediathek, damit du ein eigenes Profilbild auswählen kannst."
         }
-      ]
+      ],
+      "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true

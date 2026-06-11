@@ -16,6 +16,8 @@ const KEYS = {
   PARENT_PIN_HASH: "parentPinHash",
   NOTIFICATION_SETTINGS: "notificationSettings",
   LEGAL_PREFERENCES: "legalPreferences",
+  SOUND_ENABLED: "soundEnabled",
+  HAPTICS_ENABLED: "hapticsEnabled",
 } as const;
 
 export { KEYS };

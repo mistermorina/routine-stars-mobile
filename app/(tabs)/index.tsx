@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { View, Text, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
@@ -23,6 +23,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { PressableScale } from "@/components/ui/pressable-scale";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { triggerFeedback } from "@/lib/feedback";
 import { getActivityInsights } from "@/lib/activity-insights";
@@ -398,8 +399,13 @@ export default function DashboardScreen() {
           theme={selectedChild?.theme}
           backgroundSkin={selectedChild?.backgroundSkin}
         >
-          <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color={palette.chartPrimary} />
+          <View className="flex-1 px-4 pt-6 gap-3">
+            <Skeleton className="h-9 w-44" />
+            <Skeleton className="h-4 w-60 rounded-chip" />
+            <Skeleton className="mt-2 h-11 w-full rounded-full" />
+            <Skeleton className="mt-1 h-48 w-full rounded-card" />
+            <Skeleton className="h-36 w-full rounded-card" />
+            <Skeleton className="h-36 w-full rounded-card" />
           </View>
         </ThemedScreenBackground>
       </SafeAreaView>

@@ -11,6 +11,7 @@ import { RewardsOverview } from "@/components/routine-stars/rewards-overview";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { PressableScale } from "@/components/ui/pressable-scale";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { triggerFeedback } from "@/lib/feedback";
 import { getThemePalette } from "@/lib/theme";
@@ -99,8 +100,15 @@ export default function RewardsScreen() {
         theme={selectedChild?.theme}
         backgroundSkin={selectedChild?.backgroundSkin}
       >
-        <View className="flex-1 items-center justify-center">
-          <Text className="font-body text-muted-foreground">Laden...</Text>
+        <View className="flex-1 px-4 pt-6 gap-3">
+          <Skeleton className="h-9 w-52" />
+          <Skeleton className="h-4 w-64 rounded-chip" />
+          <Skeleton className="mt-2 h-11 w-full rounded-full" />
+          <Skeleton className="mt-1 h-44 w-full rounded-card" />
+          <View className="flex-row gap-3">
+            <Skeleton className="h-44 flex-1 rounded-card" />
+            <Skeleton className="h-44 flex-1 rounded-card" />
+          </View>
         </View>
       </ThemedScreenBackground>
     );

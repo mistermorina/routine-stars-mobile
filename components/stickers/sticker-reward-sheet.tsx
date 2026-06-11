@@ -3,6 +3,7 @@ import { Modal, Pressable, ScrollView, Text, useWindowDimensions, View } from "r
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { X } from "lucide-react-native";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import {
   getStickerRarityLabel,
   getStickerThemeWorldLabel,
@@ -110,10 +111,14 @@ export function StickerRewardSheet({
 
               <View className="mt-5 flex-row flex-wrap justify-between gap-y-3">
                 {stickers.map((sticker) => (
-                  <Pressable
+                  <PressableScale
                     key={sticker.id}
                     onPress={() => onSelectSticker(sticker)}
-                    className="w-[48%] overflow-hidden rounded-[22px] border px-3 py-3 active:opacity-90"
+                    accessibilityRole="button"
+                    accessibilityLabel={`Sticker ${sticker.title} auswählen`}
+                    containerClassName="w-[48%]"
+                    scaleTo={0.95}
+                    className="overflow-hidden rounded-card border px-3 py-3"
                     style={{
                       backgroundColor: "rgba(255,255,255,0.8)",
                       borderColor: palette.accentBorder,
@@ -158,7 +163,7 @@ export function StickerRewardSheet({
                         </Text>
                       </View>
                     </View>
-                  </Pressable>
+                  </PressableScale>
                 ))}
               </View>
             </ScrollView>
