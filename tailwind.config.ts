@@ -58,6 +58,10 @@ export default {
         lg: "12px",
         md: "10px",
         sm: "8px",
+        // Design-system radii (docs/ai/DESIGN_DIRECTION.md): cards 22, tiles 18, chips 14
+        card: "22px",
+        tile: "18px",
+        chip: "14px",
       },
     },
   },

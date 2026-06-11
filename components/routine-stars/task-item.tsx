@@ -11,7 +11,7 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { Star, Check, Clock } from "lucide-react-native";
+import { Star, Check, Play } from "lucide-react-native";
 import { getIcon } from "@/lib/icons";
 import { getThemePalette } from "@/lib/theme";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
@@ -274,31 +274,20 @@ export function TaskItem({
                   },
                 ]}
               >
+                {/* Icon squircle */}
                 <View
-                  className="mr-3 h-7 w-7 items-center justify-center rounded-full"
-                  style={{
-                    backgroundColor: isCompleted ? starColor : "#FFFFFF",
-                    borderColor: starColor,
-                    borderWidth: 2,
-                  }}
-                >
-                  {isCompleted ? <Check size={16} color="#FFFFFF" strokeWidth={3} /> : null}
-                </View>
-
-                {/* Icon */}
-                <View
-                  className="mr-3 h-11 w-11 items-center justify-center rounded-[14px]"
+                  className="mr-3 h-[52px] w-[52px] items-center justify-center rounded-tile"
                   style={{
                     backgroundColor: isCompleted || isSuggested ? palette.tabActiveBg : palette.surface,
                   }}
                 >
                   <Icon
-                    size={22}
+                    size={26}
                     color={isCompleted ? starColor : routineColor || "#737373"}
                   />
                 </View>
 
-                {/* Title */}
+                {/* Title + reward chip */}
                 <View className="flex-1 min-w-0 pr-3">
                   <Text
                     className="text-[15px] font-body-semibold leading-5 text-foreground"
@@ -306,47 +295,52 @@ export function TaskItem({
                   >
                     {task.title}
                   </Text>
+                  <View className="mt-1 flex-row items-center gap-1.5">
+                    <View className="flex-row items-center gap-1">
+                      <Star size={12} color="#F7A313" fill="#F7A313" />
+                      <Text className="text-xs font-body-semibold" style={{ color: "#B97E0B" }}>
+                        +{task.stars}
+                      </Text>
+                    </View>
+                    {hasTimer && !isCompleted ? (
+                      <Text className="text-xs font-body text-muted-foreground" numberOfLines={1}>
+                        · {task.timerInMinutes} Min.{hasBonus ? ` · +${task.bonusStars} Bonus` : ""}
+                      </Text>
+                    ) : null}
+                  </View>
                 </View>
 
-                {/* Timer button or star count */}
-                {hasTimer && !isCompleted ? (
-                  <View className="min-w-[92px] items-end gap-1">
-                    <Pressable
-                      onPress={(e) => {
-                        e.stopPropagation?.();
-                        onStartTimer(task);
-                      }}
-                      className="h-10 flex-row items-center gap-1.5 rounded-full px-3"
-                      style={{ backgroundColor: palette.button }}
-                      hitSlop={6}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Timer für ${task.title} starten`}
-                    >
-                      <Clock size={14} color="#FFFFFF" />
-                      <Text className="text-sm font-body-semibold text-white">
-                        Timer
-                      </Text>
-                    </Pressable>
-                    <Text className="text-xs font-body text-muted-foreground">
-                      {hasBonus ? `+${task.bonusStars} Bonus` : `${task.timerInMinutes} Min.`}
-                    </Text>
+                {/* Status affordance: check / play / open ring */}
+                {isCompleted ? (
+                  <View
+                    className="h-11 w-11 shrink-0 items-center justify-center rounded-full"
+                    style={{ backgroundColor: "#4FD17A" }}
+                  >
+                    <Check size={22} color="#FFFFFF" strokeWidth={3} />
                   </View>
+                ) : hasTimer ? (
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation?.();
+                      onStartTimer(task);
+                    }}
+                    className="h-11 w-11 shrink-0 items-center justify-center rounded-full"
+                    style={{ backgroundColor: palette.button }}
+                    hitSlop={6}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Timer für ${task.title} starten`}
+                  >
+                    <Play size={18} color="#FFFFFF" fill="#FFFFFF" />
+                  </Pressable>
                 ) : (
                   <View
-                    className="shrink-0 flex-row items-center gap-1 px-1 py-1"
-                  >
-                    <Text
-                      className="text-sm font-body-bold"
-                      style={{ color: starColor }}
-                    >
-                      {task.stars}
-                    </Text>
-                    <Star
-                      size={17}
-                      color={starColor}
-                      fill={starColor}
-                    />
-                  </View>
+                    className="h-11 w-11 shrink-0 items-center justify-center rounded-full"
+                    style={{
+                      backgroundColor: "#FFFFFF",
+                      borderWidth: 2,
+                      borderColor: routineColor || palette.accentBorder,
+                    }}
+                  />
                 )}
               </Animated.View>
             </Pressable>

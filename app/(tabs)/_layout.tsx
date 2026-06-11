@@ -1,25 +1,14 @@
 import React from "react";
 import { Tabs } from "expo-router";
 import { Home, Trophy, Star } from "lucide-react-native";
+import { AppTabBar } from "@/components/routine-stars/tab-bar";
 
 export default function TabsLayout() {
   return (
     <Tabs
+      tabBar={(props) => <AppTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#245A74",
-        tabBarInactiveTintColor: "#737373",
-        tabBarStyle: {
-          backgroundColor: "#FFFFFF",
-          borderTopColor: "#E5E5E5",
-          height: 88,
-          paddingBottom: 28,
-          paddingTop: 8,
-        },
-        tabBarLabelStyle: {
-          fontFamily: "Poppins_600SemiBold",
-          fontSize: 11,
-        },
       }}
     >
       <Tabs.Screen
@@ -40,7 +29,9 @@ export default function TabsLayout() {
         name="star-account"
         options={{
           title: "Profil",
-          tabBarIcon: ({ color, size }) => <Star size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Star size={size} color={color} fill={focused ? "#FFD700" : "transparent"} />
+          ),
         }}
       />
     </Tabs>

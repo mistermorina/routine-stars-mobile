@@ -1,10 +1,10 @@
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { Flame, Plus, Sparkles, Trophy } from "lucide-react-native";
+import { ArrowRight, Flame, Plus, Sparkles, Star, Trophy } from "lucide-react-native";
 import { useChildren } from "@/hooks/use-children";
 import { useChildProgression } from "@/hooks/use-child-progression";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
@@ -22,6 +22,7 @@ import { StickerRewardSheet } from "@/components/stickers/sticker-reward-sheet";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { triggerFeedback } from "@/lib/feedback";
 import { getActivityInsights } from "@/lib/activity-insights";
@@ -37,12 +38,46 @@ import type { Routine, Task } from "@/lib/types";
 import emptyRoutinesImage from "@/assets/images/empty-routines.png";
 import rewardStarGiftImage from "@/assets/images/reward-star-gift-soft.png";
 import routineTrophyImage from "@/assets/images/routine-trophy-soft.png";
+import themeStarsImage from "@/assets/images/theme-stars.png";
+import themeAnimalsImage from "@/assets/images/theme-animals.png";
+import themeGalaxyImage from "@/assets/images/theme-galaxy.png";
 
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Guten Morgen";
-  if (hour < 18) return "Schön, dass du da bist";
-  return "Zeit für einen ruhigen Abend";
+const heroImages = {
+  sterne: themeStarsImage,
+  tiere: themeAnimalsImage,
+  galaxy: themeGalaxyImage,
+} as const;
+
+type TimeFilter = "heute" | "morgens" | "abends" | "alle";
+
+const TIME_FILTERS: { key: TimeFilter; label: string }[] = [
+  { key: "heute", label: "Heute" },
+  { key: "morgens", label: "Morgens" },
+  { key: "abends", label: "Abends" },
+  { key: "alle", label: "Alle" },
+];
+
+const WEEKDAY_BY_INDEX = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"] as const;
+
+function getRoutineHour(routine: Routine): number | null {
+  const time = routine.schedule?.time;
+  if (!time) return null;
+  const hour = Number(time.split(":")[0]);
+  return Number.isFinite(hour) ? hour : null;
+}
+
+function isRoutineDueToday(routine: Routine): boolean {
+  const days = routine.schedule?.days;
+  if (!days || days.length === 0) return true;
+  return days.includes(WEEKDAY_BY_INDEX[new Date().getDay()]);
+}
+
+function matchesTimeFilter(routine: Routine, filter: TimeFilter): boolean {
+  if (filter === "alle") return true;
+  if (filter === "heute") return isRoutineDueToday(routine);
+  const hour = getRoutineHour(routine);
+  if (hour === null) return false;
+  return filter === "morgens" ? hour < 12 : hour >= 17;
 }
 
 export default function DashboardScreen() {
@@ -83,12 +118,24 @@ export default function DashboardScreen() {
     isHeaderCollapsed,
     toggleHeaderCollapsed,
   } = useCollapsibleHeader();
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("heute");
+  const [pendingScrollRoutineId, setPendingScrollRoutineId] = useState<string | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  const routineListY = useRef(0);
+  const routinePositions = useRef<Record<string, number>>({});
 
   const palette = getThemePalette(selectedChild?.theme);
-  const displayRoutines = routines;
+  const showTimeFilters = routines.length > 1;
+  const displayRoutines = useMemo(
+    () =>
+      showTimeFilters
+        ? routines.filter((routine) => matchesTimeFilter(routine, timeFilter))
+        : routines,
+    [routines, showTimeFilters, timeFilter]
+  );
 
-  const totalTasks = displayRoutines.reduce((count, routine) => count + routine.tasks.length, 0);
-  const completedTasks = displayRoutines.reduce(
+  const totalTasks = routines.reduce((count, routine) => count + routine.tasks.length, 0);
+  const completedTasks = routines.reduce(
     (count, routine) => count + routine.tasks.filter((task) => task.completed).length,
     0
   );
@@ -101,6 +148,17 @@ export default function DashboardScreen() {
         .map((task) => ({ task, routineName: routine.name }))
     )
     .at(0);
+  const heroRoutine =
+    displayRoutines.find((routine) => routine.tasks.some((task) => !task.completed)) ??
+    routines.find((routine) => routine.tasks.some((task) => !task.completed));
+  const heroOpenTasks = heroRoutine
+    ? heroRoutine.tasks.filter((task) => !task.completed).length
+    : 0;
+  const allDone = totalTasks > 0 && remainingTasks === 0;
+  const completedRoutines = routines.filter(
+    (routine) => routine.tasks.length > 0 && routine.tasks.every((task) => task.completed)
+  ).length;
+  const countableRoutines = routines.filter((routine) => routine.tasks.length > 0).length;
 
   const childLogs = useMemo(
     () => (selectedChildId ? getLogsForChild(selectedChildId) : []),
@@ -121,6 +179,47 @@ export default function DashboardScreen() {
       }
     : undefined;
   const hasPendingStickerReward = Boolean(pendingStickerRewardEvent);
+  const starsToday = useMemo(() => {
+    const today = getLocalIsoDate();
+    return childLogs
+      .filter((log) => log.date === today)
+      .reduce((sum, log) => sum + log.stars, 0);
+  }, [childLogs]);
+
+  const handleHeroPress = useCallback(() => {
+    if (allDone || !heroRoutine) {
+      router.push("/(tabs)/rewards");
+      return;
+    }
+    const isVisible = displayRoutines.some((routine) => routine.id === heroRoutine.id);
+    if (!isVisible) {
+      // Hero routine is hidden by the current filter: reveal it first,
+      // then scroll once the list has re-laid out.
+      setTimeFilter("alle");
+      setPendingScrollRoutineId(heroRoutine.id);
+      return;
+    }
+    const itemY = routinePositions.current[heroRoutine.id] ?? 0;
+    scrollRef.current?.scrollTo({
+      y: Math.max(routineListY.current + itemY - 12, 0),
+      animated: true,
+    });
+  }, [allDone, displayRoutines, heroRoutine, router]);
+
+  useEffect(() => {
+    if (!pendingScrollRoutineId) return;
+    const timeout = setTimeout(() => {
+      const itemY = routinePositions.current[pendingScrollRoutineId];
+      if (itemY !== undefined) {
+        scrollRef.current?.scrollTo({
+          y: Math.max(routineListY.current + itemY - 12, 0),
+          animated: true,
+        });
+      }
+      setPendingScrollRoutineId(null);
+    }, 160);
+    return () => clearTimeout(timeout);
+  }, [pendingScrollRoutineId]);
 
   useEffect(() => {
     if (!isLoading && children.length === 0) {
@@ -339,51 +438,158 @@ export default function DashboardScreen() {
         />
 
         <ScrollView
+          ref={scrollRef}
           className="flex-1"
           contentContainerClassName="pb-8"
           onScroll={handleHeaderScroll}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
         >
-          <Animated.View entering={FadeInDown.duration(320)} className="mx-4 mt-3">
+          {/* Screen headline */}
+          <Animated.View entering={FadeInDown.duration(320)} className="mx-4 mt-4">
+            <Text className="text-[32px] font-headline leading-10 text-foreground">
+              Routinen
+            </Text>
+            <Text className="mt-0.5 text-sm font-body text-muted-foreground">
+              Deine täglichen Sterne-Missionen ✨
+            </Text>
+          </Animated.View>
+
+          {/* Time-of-day filter chips */}
+          {showTimeFilters ? (
+            <Animated.View entering={FadeInDown.delay(40).duration(320)} className="mx-4 mt-3">
+              <View
+                className="flex-row rounded-full border p-1"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.72)",
+                  borderColor: palette.accentBorder,
+                }}
+              >
+                {TIME_FILTERS.map((filter) => {
+                  const isActive = filter.key === timeFilter;
+                  return (
+                    <PressableScale
+                      key={filter.key}
+                      onPress={() => {
+                        if (!isActive) {
+                          void triggerFeedback("tab_focus");
+                          setTimeFilter(filter.key);
+                        }
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Routinen filtern: ${filter.label}`}
+                      accessibilityState={{ selected: isActive }}
+                      className="flex-1 items-center justify-center rounded-full py-2"
+                      style={
+                        isActive
+                          ? {
+                              backgroundColor: "#FFFFFF",
+                              shadowColor: "#9DB8D8",
+                              shadowOpacity: 0.18,
+                              shadowRadius: 8,
+                              shadowOffset: { width: 0, height: 3 },
+                              elevation: 2,
+                            }
+                          : undefined
+                      }
+                    >
+                      <Text
+                        className={
+                          isActive ? "text-sm font-body-semibold" : "text-sm font-body"
+                        }
+                        style={{
+                          color: isActive ? palette.accentText : "#8E99A6",
+                        }}
+                      >
+                        {filter.label}
+                      </Text>
+                    </PressableScale>
+                  );
+                })}
+              </View>
+            </Animated.View>
+          ) : null}
+
+          {/* Hero: next routine */}
+          <Animated.View entering={FadeInDown.delay(55).duration(320)} className="mx-4 mt-3">
             <Card
-              className="overflow-hidden rounded-[22px] px-4 py-4"
+              className="overflow-hidden rounded-card px-5 py-5"
               style={{
-                backgroundColor: palette.cardTint,
+                backgroundColor: palette.heroSurface,
                 borderColor: palette.accentBorder,
                 shadowColor: "#9DB8D8",
-                shadowOpacity: 0.14,
+                shadowOpacity: 0.16,
                 shadowRadius: 18,
                 shadowOffset: { width: 0, height: 10 },
               }}
             >
-              <View className="mb-3 flex-row items-center justify-between gap-3">
-                <Text
-                  className="min-w-0 flex-1 text-base font-body-semibold text-muted-foreground"
-                  numberOfLines={1}
-                >
-                  Tagesfortschritt
-                </Text>
-                <Text
-                  className="shrink-0 text-base font-body-semibold text-foreground"
-                  numberOfLines={1}
-                >
+              <View
+                className="absolute right-[-30px] top-[-30px] h-40 w-40 rounded-full"
+                style={{ backgroundColor: palette.motifPrimary, opacity: 0.35 }}
+              />
+              <View
+                className="absolute bottom-[-44px] left-[-30px] h-36 w-36 rounded-full"
+                style={{ backgroundColor: palette.motifSecondary, opacity: 0.3 }}
+              />
+              <View className="flex-row items-center gap-3">
+                <View className="min-w-0 flex-1">
+                  <Text
+                    className="text-xs font-body-semibold uppercase tracking-[0.7px]"
+                    style={{ color: palette.accentText }}
+                  >
+                    {allDone ? "Heute geschafft" : "Nächste Routine"}
+                  </Text>
+                  <Text
+                    className="mt-1 text-[24px] font-headline leading-8 text-foreground"
+                    numberOfLines={2}
+                  >
+                    {allDone
+                      ? "Alles erledigt!"
+                      : heroRoutine
+                        ? heroRoutine.name
+                        : "Bereit für den Start"}
+                  </Text>
+                  <Text className="mt-1 text-sm font-body text-muted-foreground">
+                    {allDone
+                      ? "Du hast dir deine Sterne verdient."
+                      : heroRoutine
+                        ? `${heroOpenTasks} ${heroOpenTasks === 1 ? "Aufgabe" : "Aufgaben"} warten auf dich`
+                        : "Wähle eine Routine aus."}
+                  </Text>
+                  <PressableScale
+                    onPress={handleHeroPress}
+                    accessibilityRole="button"
+                    accessibilityLabel={allDone ? "Belohnungen ansehen" : "Routine starten"}
+                    className="mt-4 self-start flex-row items-center gap-2 rounded-full px-5 py-3"
+                    style={{ backgroundColor: palette.button }}
+                  >
+                    <Text className="text-base font-body-semibold text-white">
+                      {allDone ? "Belohnungen" : "Starten"}
+                    </Text>
+                    <ArrowRight size={18} color="#FFFFFF" />
+                  </PressableScale>
+                </View>
+                <Image
+                  source={heroImages[selectedChild.theme] ?? themeStarsImage}
+                  style={{ width: 116, height: 116 }}
+                  contentFit="contain"
+                  transition={180}
+                  accessibilityLabel="Maskottchen deiner Sternenwelt"
+                />
+              </View>
+              <View className="mt-4 flex-row items-center gap-3">
+                <View className="flex-1">
+                  <Progress
+                    value={progressValue}
+                    className="h-2.5"
+                    indicatorColor={allDone ? "#4FD17A" : palette.chartPrimary}
+                    trackStyle={{ backgroundColor: "rgba(255,255,255,0.85)" }}
+                  />
+                </View>
+                <Text className="shrink-0 text-xs font-body-semibold text-muted-foreground">
                   {completedTasks} / {totalTasks}
                 </Text>
               </View>
-              <Progress
-                value={progressValue}
-                className="h-3"
-                indicatorColor={remainingTasks === 0 ? "#4FD17A" : palette.chartPrimary}
-                trackStyle={{ backgroundColor: "#EAF1F7" }}
-              />
-              <Text className="mt-4 text-center text-sm font-body-semibold text-muted-foreground">
-                {remainingTasks === 0
-                  ? "Super gemacht! Alle Aufgaben erledigt!"
-                  : firstOpenTask
-                    ? `Als Nächstes: ${firstOpenTask.task.title}`
-                    : `${getGreeting()} - kleine Schritte zählen.`}
-              </Text>
             </Card>
           </Animated.View>
 
@@ -519,48 +725,40 @@ export default function DashboardScreen() {
             </Animated.View>
           ) : null}
 
-          <Animated.View entering={FadeInDown.delay(90).duration(320)} className="mx-4 mt-4">
-            <Card
-              className="rounded-[22px]"
-              style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+          <Animated.View
+            entering={FadeInDown.delay(90).duration(320)}
+            className="mx-4 mt-5 flex-row items-center justify-between gap-3"
+          >
+            <Text className="text-lg font-headline text-foreground">Deine Routinen</Text>
+            <View
+              className="rounded-full px-3 py-1.5"
+              style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
             >
-              <View className="flex-row items-center justify-between gap-3">
-                <View className="min-w-0 flex-1 flex-row items-center gap-2">
-                  <View
-                    className="h-11 w-11 shrink-0 items-center justify-center rounded-[18px]"
-                    style={{ backgroundColor: palette.heroSurface }}
-                  >
-                    <Sparkles size={20} color={palette.accentStrong} />
-                  </View>
-                  <View className="min-w-0 flex-1">
-                    <Text className="text-lg font-headline text-foreground" numberOfLines={1}>
-                      Routinen heute
-                    </Text>
-                    <Text className="text-sm font-body text-muted-foreground">
-                      {displayRoutines.length} Routinen • {remainingTasks} offene Aufgaben
-                    </Text>
-                  </View>
-                </View>
-                <View
-                  className="shrink-0 rounded-full px-3 py-1.5"
-                  style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
-                >
-                  <Text
-                    className="text-xs font-body-semibold"
-                    style={{ color: palette.accentText }}
-                    numberOfLines={1}
-                  >
-                    {remainingTasks === 0 ? "Alles erledigt" : `${remainingTasks} bereit`}
-                  </Text>
-                </View>
-              </View>
-            </Card>
+              <Text
+                className="text-xs font-body-semibold"
+                style={{ color: palette.accentText }}
+                numberOfLines={1}
+              >
+                {remainingTasks === 0 ? "Alles erledigt" : `${remainingTasks} offen`}
+              </Text>
+            </View>
           </Animated.View>
 
-          <View className="mt-4 px-4">
+          <View
+            className="mt-3 px-4"
+            onLayout={(event) => {
+              routineListY.current = event.nativeEvent.layout.y;
+            }}
+          >
             {displayRoutines.length > 0 ? (
               displayRoutines.map((routine, index) => (
-                <Animated.View key={routine.id} entering={FadeInDown.delay(140 + index * 40).duration(320)}>
+                <Animated.View
+                  key={routine.id}
+                  entering={FadeInDown.delay(140 + index * 40).duration(320)}
+                  onLayout={(event) => {
+                    routinePositions.current[routine.id] = event.nativeEvent.layout.y;
+                  }}
+                >
                   <RoutineCard
                     routine={routine}
                     childTheme={selectedChild.theme}
@@ -570,6 +768,29 @@ export default function DashboardScreen() {
                   />
                 </Animated.View>
               ))
+            ) : routines.length > 0 ? (
+              <Card
+                className="items-center rounded-card px-5 py-6"
+                style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+              >
+                <Text className="text-center text-base font-headline text-foreground">
+                  Hier ist gerade nichts geplant
+                </Text>
+                <Text className="mt-1 text-center text-sm font-body text-muted-foreground">
+                  Schau unter „Alle“ nach deinen Routinen.
+                </Text>
+                <PressableScale
+                  onPress={() => setTimeFilter("alle")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Alle Routinen anzeigen"
+                  className="mt-3 rounded-full px-4 py-2"
+                  style={{ backgroundColor: palette.tabActiveBg }}
+                >
+                  <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>
+                    Alle anzeigen
+                  </Text>
+                </PressableScale>
+              </Card>
             ) : (
               <Card
                 className="overflow-hidden rounded-[22px] px-5 py-7"
@@ -613,6 +834,60 @@ export default function DashboardScreen() {
               </Card>
             )}
           </View>
+
+          {/* Day summary */}
+          {routines.length > 0 ? (
+            <Animated.View entering={FadeInDown.delay(180).duration(320)} className="mx-4 mt-2">
+              <Card
+                className="rounded-card px-4 py-4"
+                style={{
+                  backgroundColor: palette.cardTint,
+                  borderColor: palette.accentBorder,
+                  shadowColor: "#9DB8D8",
+                  shadowOpacity: 0.12,
+                  shadowRadius: 16,
+                  shadowOffset: { width: 0, height: 8 },
+                }}
+              >
+                <View className="flex-row items-center gap-3">
+                  <View
+                    className="h-12 w-12 shrink-0 items-center justify-center rounded-tile"
+                    style={{ backgroundColor: palette.surface }}
+                  >
+                    <Star size={24} color="#F7A313" fill="#F7A313" />
+                  </View>
+                  <View className="min-w-0 flex-1">
+                    <Text className="text-xs font-body-semibold text-muted-foreground">
+                      Heute geschafft
+                    </Text>
+                    <Text className="text-xl font-headline text-foreground">
+                      {starsToday} {starsToday === 1 ? "Stern" : "Sterne"}
+                    </Text>
+                    <Text className="text-xs font-body text-muted-foreground" numberOfLines={1}>
+                      {allDone ? "Du bist großartig!" : "Weiter so, du schaffst das!"}
+                    </Text>
+                  </View>
+                  <View className="shrink-0 items-end gap-1.5">
+                    <Text className="text-xs font-body-semibold text-muted-foreground">
+                      {completedRoutines} / {countableRoutines} Routinen
+                    </Text>
+                    <View className="w-[96px]">
+                      <Progress
+                        value={
+                          countableRoutines > 0
+                            ? (completedRoutines / countableRoutines) * 100
+                            : 0
+                        }
+                        className="h-2"
+                        indicatorColor={allDone ? "#4FD17A" : palette.chartPrimary}
+                        trackStyle={{ backgroundColor: "#EAF1F7" }}
+                      />
+                    </View>
+                  </View>
+                </View>
+              </Card>
+            </Animated.View>
+          ) : null}
         </ScrollView>
 
         <TaskTimerModal
