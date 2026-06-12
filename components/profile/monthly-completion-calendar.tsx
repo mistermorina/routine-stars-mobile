@@ -114,7 +114,7 @@ export function MonthlyCompletionCalendar({
                 style={{ width: CALENDAR_CELL_WIDTH }}
               >
                 <Text
-                  className="text-[11px] font-body-semibold"
+                  className="text-xs font-body-semibold"
                   style={{ color: item.isToday ? palette.accentText : "#737373" }}
                 >
                   {item.label}
@@ -146,7 +146,7 @@ export function MonthlyCompletionCalendar({
                   )}
                 </View>
                 <Text
-                  className="mt-1 h-4 self-stretch text-center text-[10px] font-body-semibold"
+                  className="mt-1 h-4 self-stretch text-center text-xs font-body-semibold"
                   style={{ color: item.isActive ? palette.accentText : "#A3A3A3" }}
                   numberOfLines={1}
                 >
@@ -225,7 +225,7 @@ export function MonthlyCompletionCalendar({
                   </View>
                   {cell.isActive ? (
                     <Text
-                      className="mt-1 h-4 self-stretch text-center text-[10px] font-body-semibold"
+                      className="mt-1 h-4 self-stretch text-center text-xs font-body-semibold"
                       style={{ color: palette.accentText }}
                       numberOfLines={1}
                     >

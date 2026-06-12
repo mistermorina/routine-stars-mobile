@@ -323,7 +323,7 @@ export interface RewardSuggestion {
 export interface RewardCategoryInfo {
   id: RewardCategory;
   label: string;
-  emoji: string;
+  iconName: string;
 }
 
 // --- Icon Types ---

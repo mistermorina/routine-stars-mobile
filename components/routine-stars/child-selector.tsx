@@ -1,5 +1,5 @@
 import React from "react";
-import { Text, Pressable, ScrollView } from "react-native";
+import { Text, Pressable, View } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -43,7 +43,10 @@ function ChildAvatar({
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      className="items-center mx-3"
+      className="mb-3 min-h-[112px] min-w-[96px] items-center justify-center px-2"
+      accessibilityRole="button"
+      accessibilityLabel={`${child.name} auswählen`}
+      accessibilityState={{ selected: isSelected }}
     >
       <Animated.View
         style={animatedStyle}
@@ -67,6 +70,9 @@ function ChildAvatar({
           "mt-2 text-sm font-body-semibold",
           isSelected ? "text-foreground" : "text-muted-foreground"
         )}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.86}
       >
         {child.name}
       </Text>
@@ -80,11 +86,7 @@ export function ChildSelector({
   onSelectChild,
 }: ChildSelectorProps) {
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerClassName="px-4 py-3 justify-center flex-grow"
-    >
+    <View className="flex-row flex-wrap justify-center px-4 py-3">
       {children.map((child) => (
         <ChildAvatar
           key={child.id}
@@ -93,6 +95,6 @@ export function ChildSelector({
           onPress={() => onSelectChild(child.id)}
         />
       ))}
-    </ScrollView>
+    </View>
   );
 }

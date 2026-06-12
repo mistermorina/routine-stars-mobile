@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable } from "react-native";
+import { Pressable, View } from "react-native";
 import { Check } from "lucide-react-native";
 import { cn } from "@/lib/utils";
 
@@ -20,14 +20,21 @@ export function Checkbox({
     <Pressable
       onPress={() => !disabled && onCheckedChange(!checked)}
       className={cn(
-        "h-6 w-6 items-center justify-center rounded-md border-2",
-        checked ? "border-primary bg-primary" : "border-input bg-card",
+        "h-11 w-11 items-center justify-center rounded-xl",
         disabled && "opacity-50",
         className
       )}
-      hitSlop={8}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked, disabled }}
     >
-      {checked && <Check size={14} color="#1a1a2e" strokeWidth={3} />}
+      <View
+        className={cn(
+          "h-6 w-6 items-center justify-center rounded-md border-2",
+          checked ? "border-primary bg-primary" : "border-input bg-card"
+        )}
+      >
+        {checked && <Check size={14} color="#1a1a2e" strokeWidth={3} />}
+      </View>
     </Pressable>
   );
 }

@@ -90,12 +90,7 @@ export default function StickerSettingsScreen() {
         />
 
         {children.length > 1 ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="mb-4"
-            contentContainerClassName="gap-2"
-          >
+          <View className="mb-4 flex-row flex-wrap gap-2">
             {children.map((child) => {
               const childPalette = getThemePalette(child.theme);
               const isSelected = selectedChildId === child.id;
@@ -104,7 +99,10 @@ export default function StickerSettingsScreen() {
                 <Pressable
                   key={child.id}
                   onPress={() => selectChild(child.id)}
-                  className="flex-row items-center rounded-full border px-4 py-2"
+                  className="min-h-11 flex-row items-center rounded-full border px-4 py-2"
+                  accessibilityRole="button"
+                  accessibilityLabel={`${child.name} auswählen`}
+                  accessibilityState={{ selected: isSelected }}
                   style={{
                     backgroundColor: isSelected ? childPalette.tabActiveBg : "rgba(255,255,255,0.78)",
                     borderColor: isSelected ? childPalette.accent : "rgba(157,184,216,0.32)",
@@ -120,13 +118,14 @@ export default function StickerSettingsScreen() {
                   <Text
                     className="text-sm font-body-semibold"
                     style={{ color: isSelected ? childPalette.accentText : "#1a1a2e" }}
+                    numberOfLines={1}
                   >
                     {child.name}
                   </Text>
                 </Pressable>
               );
             })}
-          </ScrollView>
+          </View>
         ) : null}
 
         <View className="flex-row gap-3">
@@ -214,7 +213,7 @@ export default function StickerSettingsScreen() {
                         style={{ backgroundColor: "#FFFFFF" }}
                       >
                         <Text
-                          className="text-[10px] font-body-semibold uppercase tracking-[0.6px]"
+                          className="text-xs font-body-semibold uppercase tracking-[0.6px]"
                           style={{ color: palette.accentText }}
                         >
                           Aktiv
@@ -305,7 +304,7 @@ export default function StickerSettingsScreen() {
                       style={{ backgroundColor: palette.tabActiveBg }}
                     >
                       <Text
-                        className="text-[10px] font-body-semibold"
+                        className="text-xs font-body-semibold"
                         style={{ color: palette.accentText }}
                       >
                         {getStickerRarityLabel(sticker.rarity)}

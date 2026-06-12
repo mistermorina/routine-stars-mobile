@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
@@ -67,6 +67,8 @@ function isRoutineDueToday(routine: Routine): boolean {
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const isCompactWidth = width < 380;
   const {
     children,
     selectedChild,
@@ -459,18 +461,14 @@ export default function DashboardScreen() {
               Routinen
             </Text>
             <Text className="mt-0.5 text-sm font-body text-muted-foreground">
-              Deine täglichen Sterne-Missionen ✨
+              Deine täglichen Sterne-Missionen
             </Text>
           </Animated.View>
 
-          {/* Category filter chips (horizontal scroll) */}
+          {/* Category filter chips */}
           {showTimeFilters ? (
             <Animated.View entering={FadeInDown.delay(40).duration(320)} className="mt-3">
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
-              >
+              <View className="flex-row flex-wrap gap-2 px-4">
                 {availableFilters.map((filter) => {
                   const isActive = filter.key === routineFilter;
                   return (
@@ -485,7 +483,7 @@ export default function DashboardScreen() {
                       accessibilityRole="button"
                       accessibilityLabel={`Routinen filtern: ${filter.label}`}
                       accessibilityState={{ selected: isActive }}
-                      className="items-center justify-center rounded-full border px-4 py-2.5"
+                      className="min-h-11 items-center justify-center rounded-full border px-4 py-2.5"
                       style={
                         isActive
                           ? {
@@ -506,7 +504,7 @@ export default function DashboardScreen() {
                       <Text
                         numberOfLines={1}
                         className={
-                          isActive ? "text-[13px] font-body-semibold" : "text-[13px] font-body"
+                          isActive ? "text-sm font-body-semibold" : "text-sm font-body"
                         }
                         style={{
                           color: isActive ? "#FFFFFF" : "#71808E",
@@ -517,7 +515,7 @@ export default function DashboardScreen() {
                     </PressableScale>
                   );
                 })}
-              </ScrollView>
+              </View>
             </Animated.View>
           ) : null}
 
@@ -607,9 +605,12 @@ export default function DashboardScreen() {
             </Card>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(55).duration(320)} className="mx-4 mt-3 flex-row gap-3">
+          <Animated.View
+            entering={FadeInDown.delay(55).duration(320)}
+            className={isCompactWidth ? "mx-4 mt-3 gap-3" : "mx-4 mt-3 flex-row gap-3"}
+          >
             <Card
-              className="min-h-[156px] flex-1 overflow-hidden rounded-[20px] px-4 py-4"
+              className={isCompactWidth ? "min-h-[132px] overflow-hidden rounded-[20px] px-4 py-4" : "min-h-[156px] flex-1 overflow-hidden rounded-[20px] px-4 py-4"}
               style={{
                 backgroundColor: palette.cardTint,
                 borderColor: palette.accentBorder,
@@ -631,7 +632,7 @@ export default function DashboardScreen() {
                 </Text>
                 <Text className="mb-1 text-xs font-body text-muted-foreground">Tag</Text>
               </View>
-              <Text className="mt-2 text-xs font-body leading-5 text-muted-foreground">
+              <Text className="mt-2 text-base font-body leading-6 text-muted-foreground">
                 Bleib im Rhythmus und sammle weiter Sterne.
               </Text>
               <Image
@@ -649,7 +650,7 @@ export default function DashboardScreen() {
             </Card>
 
             <Card
-              className="min-h-[156px] flex-1 overflow-hidden rounded-[20px] px-4 py-4"
+              className={isCompactWidth ? "min-h-[132px] overflow-hidden rounded-[20px] px-4 py-4" : "min-h-[156px] flex-1 overflow-hidden rounded-[20px] px-4 py-4"}
               style={{
                 backgroundColor: palette.cardTint,
                 borderColor: palette.accentBorder,
@@ -668,7 +669,7 @@ export default function DashboardScreen() {
               <Text className="mt-3 text-base font-headline leading-5 text-foreground">
                 {nextRewardHint ? nextRewardHint.title : "Alles erreicht"}
               </Text>
-              <Text className="mt-2 text-xs font-body leading-5" style={{ color: palette.accentText }}>
+              <Text className="mt-2 text-base font-body leading-6" style={{ color: palette.accentText }}>
                 {nextRewardHint
                   ? `Noch ${nextRewardHint.missingStars} Sterne`
                   : "Belohnungen sind bereit"}
@@ -708,7 +709,7 @@ export default function DashboardScreen() {
                   className="absolute right-[-18px] top-[-16px] h-24 w-24 rounded-full"
                   style={{ backgroundColor: palette.motifPrimary, opacity: 0.2 }}
                 />
-                <View className="flex-row items-center gap-3">
+                <View className={isCompactWidth ? "gap-3" : "flex-row items-center gap-3"}>
                   <View
                     className="h-12 w-12 items-center justify-center rounded-[18px]"
                     style={{ backgroundColor: palette.heroSurface }}
@@ -719,7 +720,7 @@ export default function DashboardScreen() {
                     <Text className="text-lg font-headline text-foreground">
                       Dein Sticker wartet
                     </Text>
-                    <Text className="mt-1 text-sm font-body text-muted-foreground">
+                    <Text className="mt-1 text-base font-body leading-6 text-muted-foreground">
                       {pendingStickerRewardEvent?.reason === "daily_complete"
                         ? "Such dir ein Tier für deine Sticker-Galerie aus."
                         : `${pendingStickerRewardEvent?.routineName ?? "Die Routine"} ist geschafft.`}
@@ -727,7 +728,7 @@ export default function DashboardScreen() {
                   </View>
                   <Button
                     onPress={handleOpenStickerReward}
-                    className="h-11 rounded-[16px] px-4"
+                    className="h-12 rounded-[16px] px-4"
                     style={{ backgroundColor: palette.button }}
                   >
                     <Text className="text-sm font-body-semibold text-white">
@@ -790,7 +791,7 @@ export default function DashboardScreen() {
                 <Text className="text-center text-base font-headline text-foreground">
                   Hier ist gerade nichts geplant
                 </Text>
-                <Text className="mt-1 text-center text-sm font-body text-muted-foreground">
+                <Text className="mt-1 text-center text-base font-body leading-6 text-muted-foreground">
                   Schau unter „Alle“ nach deinen Routinen.
                 </Text>
                 <PressableScale
@@ -798,7 +799,7 @@ export default function DashboardScreen() {
                   accessibilityRole="button"
                   accessibilityLabel="Alle Routinen anzeigen"
                   containerClassName="mt-3 self-center"
-                  className="rounded-full px-4 py-2"
+                  className="min-h-11 rounded-full px-4 py-2"
                   style={{ backgroundColor: palette.tabActiveBg }}
                 >
                   <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>
@@ -830,7 +831,7 @@ export default function DashboardScreen() {
                 <Text className="text-center text-lg font-headline text-foreground">
                   Noch keine Routinen für heute
                 </Text>
-                <Text className="mx-auto mt-2 max-w-[280px] text-center text-sm font-body leading-6 text-muted-foreground">
+                <Text className="mx-auto mt-2 max-w-[280px] text-center text-base font-body leading-6 text-muted-foreground">
                   Lege im Elternbereich eine Starter-Routine an. Danach erscheint sie hier für das Kind.
                 </Text>
                 <Button
@@ -864,7 +865,7 @@ export default function DashboardScreen() {
                   shadowOffset: { width: 0, height: 8 },
                 }}
               >
-                <View className="flex-row items-center gap-3">
+                <View className={isCompactWidth ? "gap-3" : "flex-row items-center gap-3"}>
                   <View
                     className="h-12 w-12 shrink-0 items-center justify-center rounded-tile"
                     style={{ backgroundColor: palette.surface }}
@@ -878,11 +879,11 @@ export default function DashboardScreen() {
                     <Text className="text-xl font-headline text-foreground">
                       {starsToday} {starsToday === 1 ? "Stern" : "Sterne"}
                     </Text>
-                    <Text className="text-xs font-body text-muted-foreground" numberOfLines={1}>
+                    <Text className="text-sm font-body text-muted-foreground" numberOfLines={1}>
                       {allDone ? "Du bist großartig!" : "Weiter so, du schaffst das!"}
                     </Text>
                   </View>
-                  <View className="shrink-0 items-end gap-1.5">
+                  <View className={isCompactWidth ? "items-start gap-1.5" : "shrink-0 items-end gap-1.5"}>
                     <Text className="text-xs font-body-semibold text-muted-foreground">
                       {completedRoutines} / {countableRoutines} Routinen
                     </Text>

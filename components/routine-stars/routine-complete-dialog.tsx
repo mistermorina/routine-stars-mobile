@@ -229,7 +229,7 @@ export function RoutineCompleteDialog({
               style={{ backgroundColor: "rgba(255,255,255,0.74)" }}
             >
               <Text
-                className="text-[11px] font-body-bold uppercase tracking-[1px]"
+                className="text-xs font-body-bold uppercase tracking-[1px]"
                 style={{ color: palette.accentText }}
               >
                 Routine komplett

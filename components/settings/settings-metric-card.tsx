@@ -32,7 +32,7 @@ export function SettingsMetricCard({
         style={{ backgroundColor: accentColor, opacity: 0.08 }}
       />
       <Text
-        className="text-[11px] font-body-semibold uppercase tracking-[0.7px]"
+        className="text-xs font-body-semibold uppercase tracking-[0.7px]"
         style={{ color: accentColor }}
         numberOfLines={1}
         adjustsFontSizeToFit

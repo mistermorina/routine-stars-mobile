@@ -31,7 +31,7 @@ export function InsightCard({
           className="self-start rounded-full px-2.5 py-1"
           style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
         >
-          <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px]" style={{ color: accentColor }}>
+          <Text className="text-xs font-body-semibold uppercase tracking-[0.6px]" style={{ color: accentColor }} numberOfLines={1}>
             Insight
           </Text>
         </View>
@@ -41,7 +41,7 @@ export function InsightCard({
         <Text className="mt-3 text-3xl font-headline text-foreground">
           {value}
         </Text>
-        <Text className="mt-2 text-sm font-body text-muted-foreground">
+        <Text className="mt-2 text-base font-body leading-6 text-muted-foreground">
           {caption}
         </Text>
       </View>

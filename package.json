@@ -14,7 +14,8 @@
     "test:stickers": "node scripts/check-sticker-reward-logic.mjs",
     "test:smoke": "node scripts/check-task-timer-modal-order.mjs",
     "test:progress-smoke": "node scripts/check-local-day-progress.mjs",
-    "test:contrast-smoke": "node scripts/check-color-contrast.mjs"
+    "test:contrast-smoke": "node scripts/check-color-contrast.mjs",
+    "test:ui-quality": "node scripts/check-ui-quality.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",

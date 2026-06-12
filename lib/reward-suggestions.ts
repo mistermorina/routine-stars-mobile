@@ -1,13 +1,13 @@
 import type { RewardSuggestion, RewardCategory, RewardCategoryInfo } from "@/lib/types";
 
 export const rewardCategories: RewardCategoryInfo[] = [
-  { id: "screen-time", label: "Bildschirmzeit", emoji: "📺" },
-  { id: "activities", label: "Aktivitäten", emoji: "🎨" },
-  { id: "treats", label: "Leckereien", emoji: "🍰" },
-  { id: "privileges", label: "Privilegien", emoji: "⏰" },
-  { id: "social", label: "Soziales", emoji: "👥" },
-  { id: "material", label: "Materielles", emoji: "🎁" },
-  { id: "special", label: "Besonderes", emoji: "🌟" },
+  { id: "screen-time", label: "Bildschirmzeit", iconName: "tv" },
+  { id: "activities", label: "Aktivitäten", iconName: "palette" },
+  { id: "treats", label: "Leckereien", iconName: "cookie" },
+  { id: "privileges", label: "Privilegien", iconName: "clock" },
+  { id: "social", label: "Soziales", iconName: "users" },
+  { id: "material", label: "Materielles", iconName: "gift" },
+  { id: "special", label: "Besonderes", iconName: "sparkles" },
 ];
 
 export const rewardSuggestions: RewardSuggestion[] = [

@@ -65,7 +65,7 @@ export function PressableScale({
       {...pressableProps}
       disabled={disabled}
       className={containerClassName}
-      style={containerStyle}
+      style={[{ minHeight: 44 }, containerStyle]}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
     >

@@ -39,14 +39,17 @@ export function TemplateCard({
       onPressOut={() => {
         scale.value = withSpring(1, { damping: 14, stiffness: 220 });
       }}
+      accessibilityRole="button"
+      accessibilityLabel={`Vorlage ${template.name} auswählen`}
+      accessibilityState={{ selected: isSelected }}
     >
       <Animated.View
         className={cn("overflow-hidden rounded-[20px] border px-4 py-4", isSelected ? "" : "")}
         style={[
           animatedStyle,
           {
-            width: 252,
-            minHeight: 246,
+            width: "100%",
+            minHeight: 224,
             backgroundColor: isSelected ? palette.heroSurface : palette.cardTint,
             borderColor: isSelected ? palette.accent : palette.accentBorder,
             shadowColor: template.color,
@@ -72,7 +75,7 @@ export function TemplateCard({
             className="rounded-full px-2.5 py-1"
             style={{ backgroundColor: "rgba(255,255,255,0.74)" }}
           >
-            <Text className="text-[11px] font-body-semibold uppercase tracking-[0.8px] text-muted-foreground">
+            <Text className="text-xs font-body-semibold uppercase tracking-[0.6px] text-muted-foreground" numberOfLines={1}>
               {template.timeOfDay === "morning"
                 ? "Morgen"
                 : template.timeOfDay === "evening"
@@ -88,7 +91,7 @@ export function TemplateCard({
           <Text className="text-lg font-headline text-foreground" numberOfLines={2}>
             {template.name}
           </Text>
-          <Text className="mt-2 text-sm font-body leading-5 text-muted-foreground" numberOfLines={3}>
+          <Text className="mt-2 text-base font-body leading-6 text-muted-foreground" numberOfLines={3}>
             {template.description}
           </Text>
         </View>
@@ -98,7 +101,7 @@ export function TemplateCard({
             className="rounded-full px-2.5 py-1"
             style={{ backgroundColor: palette.surface }}
           >
-            <Text className="text-xs font-body-semibold" style={{ color: palette.accentText }}>
+            <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }} numberOfLines={1}>
               {template.tasks.length} Aufgaben
             </Text>
           </View>
@@ -107,7 +110,7 @@ export function TemplateCard({
               className="rounded-full px-2.5 py-1"
               style={{ backgroundColor: "rgba(255,255,255,0.74)" }}
             >
-              <Text className="text-xs font-body text-muted-foreground">
+              <Text className="text-sm font-body text-muted-foreground" numberOfLines={1}>
                 {template.suggestedTime}
               </Text>
             </View>
@@ -118,7 +121,7 @@ export function TemplateCard({
               className="rounded-full px-2.5 py-1"
               style={{ backgroundColor: "rgba(255,255,255,0.74)" }}
             >
-              <Text className="text-xs font-body text-foreground">{age}</Text>
+              <Text className="text-sm font-body text-foreground" numberOfLines={1}>{age}</Text>
             </View>
           ))}
         </View>
@@ -129,7 +132,7 @@ export function TemplateCard({
             return (
               <View
                 key={i}
-                className="h-10 w-10 items-center justify-center rounded-[14px]"
+                className="h-11 w-11 items-center justify-center rounded-[14px]"
                 style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
               >
                 <Icon size={18} color={template.color} />
@@ -138,10 +141,10 @@ export function TemplateCard({
           })}
           {template.tasks.length > 3 ? (
             <View
-              className="h-10 min-w-10 items-center justify-center rounded-[14px] px-2"
+              className="h-11 min-w-11 items-center justify-center rounded-[14px] px-2"
               style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
             >
-              <Text className="text-xs font-body-semibold" style={{ color: palette.accentText }}>
+              <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }} numberOfLines={1}>
                 +{template.tasks.length - 3}
               </Text>
             </View>

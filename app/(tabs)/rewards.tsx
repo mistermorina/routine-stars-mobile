@@ -158,7 +158,7 @@ export default function RewardsScreen() {
               Belohnungen
             </Text>
             <Text className="mt-0.5 text-sm font-body text-muted-foreground">
-              Sammle Sterne und schalte Überraschungen frei ✨
+              Sammle Sterne und schalte Überraschungen frei
             </Text>
           </Animated.View>
 
@@ -187,7 +187,7 @@ export default function RewardsScreen() {
                       accessibilityLabel={`Belohnungen filtern: ${filter.label}`}
                       accessibilityState={{ selected: isActive }}
                       containerClassName="flex-1"
-                      className="items-center justify-center rounded-full py-2.5"
+                      className="min-h-11 items-center justify-center rounded-full py-2.5"
                       style={
                         isActive
                           ? {
@@ -204,7 +204,7 @@ export default function RewardsScreen() {
                       <Text
                         numberOfLines={1}
                         className={
-                          isActive ? "text-[13px] font-body-semibold" : "text-[13px] font-body"
+                          isActive ? "text-sm font-body-semibold" : "text-sm font-body"
                         }
                         style={{ color: isActive ? palette.accentText : "#8E99A6" }}
                       >
@@ -251,7 +251,7 @@ export default function RewardsScreen() {
                 {nextReward ? nextReward.title : "Alles erreichbar!"}
               </Text>
               <View className="mt-1 flex-row items-end gap-3">
-                <Text className="min-w-0 flex-1 text-sm font-body text-muted-foreground">
+                <Text className="min-w-0 flex-1 text-base font-body leading-6 text-muted-foreground">
                   {nextReward
                     ? `Noch ${missingStars} ${missingStars === 1 ? "Stern" : "Sterne"} bis zur Überraschung`
                     : "Du kannst dir gerade jede Belohnung aussuchen."}
@@ -313,7 +313,7 @@ export default function RewardsScreen() {
                     ? "Noch nichts freigeschaltet"
                     : "Alles ist schon erreichbar"}
                 </Text>
-                <Text className="mt-1 text-center text-sm font-body text-muted-foreground">
+                <Text className="mt-1 text-center text-base font-body leading-6 text-muted-foreground">
                   {rewardFilter === "verfuegbar"
                     ? "Sammle weiter Sterne, dann öffnet sich hier deine erste Belohnung."
                     : "Schau unter „Alle“ – du kannst dir alles aussuchen."}
@@ -323,7 +323,7 @@ export default function RewardsScreen() {
                   accessibilityRole="button"
                   accessibilityLabel="Alle Belohnungen anzeigen"
                   containerClassName="mt-3 self-center"
-                  className="rounded-full px-4 py-2"
+                  className="min-h-11 rounded-full px-4 py-2"
                   style={{ backgroundColor: palette.tabActiveBg }}
                 >
                   <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>

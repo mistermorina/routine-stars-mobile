@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, Text, Pressable, ScrollView } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Animated, {
@@ -72,7 +72,7 @@ export function Header({
               accessibilityLabel="Header ausklappen"
             >
               <View
-                className="h-10 w-10 items-center justify-center rounded-[14px]"
+                className="h-11 w-11 items-center justify-center rounded-[14px]"
                 style={{ backgroundColor: palette.heroSurface }}
               >
                 <AvatarImage
@@ -130,7 +130,7 @@ export function Header({
 
             <Pressable
               onPress={handleSettingsPress}
-              className="h-10 w-10 items-center justify-center rounded-full"
+              className="h-11 w-11 items-center justify-center rounded-full"
               style={{ backgroundColor: "rgba(255,255,255,0.82)" }}
               hitSlop={8}
               accessibilityRole="button"
@@ -162,12 +162,12 @@ export function Header({
           <View className="flex-row items-center justify-between gap-3">
             <View className="flex-1 flex-row items-center gap-3">
               <View
-                className="h-[50px] w-[50px] items-center justify-center rounded-[18px]"
+                className="h-[54px] w-[54px] items-center justify-center rounded-[18px]"
                 style={{ backgroundColor: palette.heroSurface }}
               >
                 <AvatarImage
                   avatar={child.avatar}
-                  size={50}
+                  size={54}
                   borderRadius={18}
                   backgroundColor="transparent"
                   accessibilityLabel={`${child.name} Avatar`}
@@ -183,7 +183,7 @@ export function Header({
                     style={{ backgroundColor: palette.tabActiveBg }}
                   >
                     <Text
-                      className="text-[10px] font-body-semibold uppercase tracking-[0.7px]"
+                      className="text-xs font-body-semibold uppercase tracking-[0.6px]"
                       style={{ color: palette.accentText }}
                     >
                       Storyworld
@@ -232,7 +232,7 @@ export function Header({
             <View className="gap-2">
               <Pressable
                 onPress={onToggleCollapsed}
-                className="h-10 w-10 items-center justify-center rounded-full"
+                className="h-11 w-11 items-center justify-center rounded-full"
                 style={{ backgroundColor: "rgba(255,255,255,0.82)" }}
                 hitSlop={8}
                 accessibilityRole="button"
@@ -242,7 +242,7 @@ export function Header({
               </Pressable>
               <Pressable
                 onPress={handleSettingsPress}
-                className="h-10 w-10 items-center justify-center rounded-full"
+                className="h-11 w-11 items-center justify-center rounded-full"
                 style={{ backgroundColor: "rgba(255,255,255,0.82)" }}
                 hitSlop={8}
                 accessibilityRole="button"
@@ -254,11 +254,7 @@ export function Header({
           </View>
 
           {allChildren && allChildren.length > 1 && onSelectChild ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerClassName="gap-2 pt-3"
-            >
+            <View className="flex-row flex-wrap gap-2 pt-3">
               {allChildren.map((c) => {
                 const isActive = c.id === child.id;
                 return (
@@ -292,13 +288,14 @@ export function Header({
                         isActive ? "" : "text-muted-foreground"
                       )}
                       style={isActive ? { color: palette.accentText } : undefined}
+                      numberOfLines={1}
                     >
                       {c.name}
                     </Text>
                   </Pressable>
                 );
               })}
-            </ScrollView>
+            </View>
           ) : null}
         </View>
       </View>

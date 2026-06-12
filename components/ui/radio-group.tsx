@@ -46,15 +46,20 @@ export function RadioGroupItem({ value, className }: RadioGroupItemProps) {
     <Pressable
       onPress={() => onValueChange(value)}
       className={cn(
-        "h-5 w-5 items-center justify-center rounded-full border-2",
-        isSelected ? "border-primary" : "border-input",
+        "h-11 w-11 items-center justify-center rounded-full",
         className
       )}
-      hitSlop={8}
+      accessibilityRole="radio"
+      accessibilityState={{ checked: isSelected }}
     >
-      {isSelected && (
-        <View className="h-2.5 w-2.5 rounded-full bg-primary" />
-      )}
+      <View
+        className={cn(
+          "h-5 w-5 items-center justify-center rounded-full border-2",
+          isSelected ? "border-primary" : "border-input"
+        )}
+      >
+        {isSelected && <View className="h-2.5 w-2.5 rounded-full bg-primary" />}
+      </View>
     </Pressable>
   );
 }

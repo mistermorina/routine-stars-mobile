@@ -75,12 +75,7 @@ export default function BackgroundSettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {children.length > 1 ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="mb-4"
-            contentContainerClassName="gap-2"
-          >
+          <View className="mb-4 flex-row flex-wrap gap-2">
             {children.map((child) => {
               const childPalette = getThemePalette(child.theme);
               const isSelected = selectedChildId === child.id;
@@ -89,7 +84,10 @@ export default function BackgroundSettingsScreen() {
                 <Pressable
                   key={child.id}
                   onPress={() => selectChild(child.id)}
-                  className="flex-row items-center rounded-full border px-4 py-2"
+                  className="min-h-11 flex-row items-center rounded-full border px-4 py-2"
+                  accessibilityRole="button"
+                  accessibilityLabel={`${child.name} auswählen`}
+                  accessibilityState={{ selected: isSelected }}
                   style={{
                     backgroundColor: isSelected ? childPalette.tabActiveBg : "rgba(255,255,255,0.78)",
                     borderColor: isSelected ? childPalette.accent : "rgba(157,184,216,0.32)",
@@ -105,13 +103,14 @@ export default function BackgroundSettingsScreen() {
                   <Text
                     className="text-sm font-body-semibold"
                     style={{ color: isSelected ? childPalette.accentText : "#1a1a2e" }}
+                    numberOfLines={1}
                   >
                     {child.name}
                   </Text>
                 </Pressable>
               );
             })}
-          </ScrollView>
+          </View>
         ) : null}
 
         <SettingsHeroCard
@@ -178,7 +177,7 @@ export default function BackgroundSettingsScreen() {
                       >
                         {skin.label}
                       </Text>
-                      <Text className="mt-0.5 text-[11px] font-body text-muted-foreground" numberOfLines={1}>
+                      <Text className="mt-0.5 text-sm font-body text-muted-foreground" numberOfLines={1}>
                         {skin.description}
                       </Text>
                     </View>

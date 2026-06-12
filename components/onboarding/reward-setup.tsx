@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
-import { Gift, X } from "lucide-react-native";
+import { Gift, Star, X } from "lucide-react-native";
 import { getIcon } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -133,16 +133,19 @@ export function RewardSetup({ onNext, onBack, formData, isSaving = false }: Rewa
                       </View>
                       <View className="ml-2 min-w-0 flex-1">
                         <Text
-                          className="text-xs font-body-semibold leading-4 text-foreground"
+                          className="text-sm font-body-semibold leading-5 text-foreground"
                           numberOfLines={2}
                           ellipsizeMode="tail"
                         >
                           {reward.title}
                         </Text>
                       </View>
-                      <Text className="ml-2 shrink-0 text-xs font-body text-muted-foreground">
-                        {reward.cost}⭐
-                      </Text>
+                      <View className="ml-2 shrink-0 flex-row items-center gap-1">
+                        <Star size={13} color="#B97E0B" fill="#B97E0B" />
+                        <Text className="text-sm font-body text-muted-foreground">
+                          {reward.cost}
+                        </Text>
+                      </View>
                     </View>
                   );
                 })}
@@ -199,16 +202,19 @@ export function RewardSetup({ onNext, onBack, formData, isSaving = false }: Rewa
                             </View>
                             <View className="ml-2 min-w-0 flex-1">
                               <Text
-                                className="text-xs font-body-semibold leading-4 text-foreground"
+                                className="text-sm font-body-semibold leading-5 text-foreground"
                                 numberOfLines={2}
                                 ellipsizeMode="tail"
                               >
                                 {reward.title}
                               </Text>
                             </View>
-                            <Text className="ml-2 shrink-0 text-xs font-body text-muted-foreground">
-                              {reward.cost}⭐
-                            </Text>
+                            <View className="ml-2 shrink-0 flex-row items-center gap-1">
+                              <Star size={13} color="#B97E0B" fill="#B97E0B" />
+                              <Text className="text-sm font-body text-muted-foreground">
+                                {reward.cost}
+                              </Text>
+                            </View>
                             <Pressable
                               onPress={() => handleRemoveReward(reward.id)}
                               className="ml-1 h-11 w-11 shrink-0 items-center justify-center rounded-full"

@@ -74,7 +74,7 @@ function ModalBadge({ label }: { label: string }) {
       style={{ backgroundColor: MODAL_LAVENDER_SOFT }}
     >
       <Text
-        className="text-[11px] font-body-bold uppercase tracking-[1px]"
+        className="text-xs font-body-bold uppercase tracking-[1px]"
         style={{ color: "#5364A9" }}
       >
         {label}

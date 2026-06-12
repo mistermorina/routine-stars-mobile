@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
 import {
   Gift,
   Minus,
@@ -35,6 +35,8 @@ function normalizeRewardTitle(value: string) {
 }
 
 export default function RewardsSettingsScreen() {
+  const { width } = useWindowDimensions();
+  const isCompactWidth = width < 380;
   const { rewards, addReward, updateReward, removeReward, isLoading } = useRewards();
   const { toasts, toast, dismiss } = useToast();
   const palette = getThemePalette("sterne");
@@ -173,14 +175,14 @@ export default function RewardsSettingsScreen() {
                 <Text className="mt-2 text-[28px] font-headline text-foreground">
                   Belohnungen wirklich pflegen
                 </Text>
-                <Text className="mt-2 text-sm font-body leading-6 text-muted-foreground">
+                <Text className="mt-2 text-base font-body leading-6 text-muted-foreground">
                   Hier legst du fest, welche Wünsche erreichbar sind und wie viele Sterne
                   ein kleiner oder grosser Moment kosten soll.
                 </Text>
               </View>
               <View className="items-end gap-2">
                 <View className="rounded-full bg-white/85 px-3 py-1.5">
-                  <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-foreground">
+                  <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-foreground">
                     {isLoading ? "..." : `${rewards.length} Belohnungen`}
                   </Text>
                 </View>
@@ -215,7 +217,7 @@ export default function RewardsSettingsScreen() {
               <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>
                 Gute Belohnungen bleiben erreichbar
               </Text>
-              <Text className="mt-1 text-xs font-body leading-5 text-muted-foreground">
+              <Text className="mt-1 text-base font-body leading-6 text-muted-foreground">
                 Kleine Wünsche bei 3 bis 8 Sternen sorgen für schnelle Erfolgsmomente.
                 Grössere Highlights dürfen mehr kosten und seltener bleiben.
               </Text>
@@ -228,7 +230,7 @@ export default function RewardsSettingsScreen() {
             <Text className="text-center text-lg font-headline text-foreground">
               Noch keine Belohnungen vorhanden
             </Text>
-            <Text className="mt-2 text-center text-sm font-body text-muted-foreground">
+            <Text className="mt-2 text-center text-base font-body leading-6 text-muted-foreground">
               Lege eigene Wünsche an oder nutze direkt die Vorschläge weiter unten.
             </Text>
           </Card>
@@ -252,7 +254,7 @@ export default function RewardsSettingsScreen() {
                       <Text className="text-lg font-headline text-foreground">
                         {reward.title || "Neue Belohnung"}
                       </Text>
-                      <Text className="mt-1 text-sm font-body text-muted-foreground">
+                      <Text className="mt-1 text-base font-body leading-6 text-muted-foreground">
                         {reward.cost} Sterne • familienweit einlösbar
                       </Text>
                     </View>
@@ -283,28 +285,32 @@ export default function RewardsSettingsScreen() {
                         />
                       </View>
 
-                      <View className="flex-row gap-3">
-                        <View className="flex-1 gap-1.5">
+                      <View className={isCompactWidth ? "gap-3" : "flex-row gap-3"}>
+                        <View className={isCompactWidth ? "gap-1.5" : "flex-1 gap-1.5"}>
                           <Label>Icon</Label>
                           <Pressable
                             onPress={() => setShowIconPicker(true)}
+                            accessibilityRole="button"
+                            accessibilityLabel="Belohnungsicon wählen"
                             className="h-12 flex-row items-center rounded-lg border border-input bg-card px-4"
                           >
                             <Icon size={18} color={palette.accentStrong} />
-                            <Text className="ml-2 text-sm font-body text-foreground">Icon wählen</Text>
+                            <Text className="ml-2 text-base font-body text-foreground" numberOfLines={1}>Icon wählen</Text>
                           </Pressable>
                         </View>
 
-                        <View className="w-[130px] gap-1.5">
+                        <View className={isCompactWidth ? "gap-1.5" : "w-[130px] gap-1.5"}>
                           <Label>Sterne</Label>
-                          <View className="h-12 flex-row items-center justify-between rounded-lg border border-input bg-card px-3">
+                          <View className="h-12 flex-row items-center justify-between rounded-lg border border-input bg-card px-1">
                             <Pressable
                               onPress={() =>
                                 setDraftReward((prev) =>
                                   prev ? { ...prev, cost: Math.max(1, prev.cost - 1) } : prev
                                 )
                               }
-                              hitSlop={8}
+                              className="h-11 w-11 items-center justify-center rounded-full"
+                              accessibilityRole="button"
+                              accessibilityLabel="Sternkosten verringern"
                             >
                               <Minus size={18} color="#737373" />
                             </Pressable>
@@ -317,7 +323,9 @@ export default function RewardsSettingsScreen() {
                                   prev ? { ...prev, cost: Math.min(99, prev.cost + 1) } : prev
                                 )
                               }
-                              hitSlop={8}
+                              className="h-11 w-11 items-center justify-center rounded-full"
+                              accessibilityRole="button"
+                              accessibilityLabel="Sternkosten erhöhen"
                             >
                               <Plus size={18} color={palette.accentStrong} />
                             </Pressable>
@@ -325,7 +333,7 @@ export default function RewardsSettingsScreen() {
                         </View>
                       </View>
 
-                      <View className="flex-row gap-3">
+                      <View className={isCompactWidth ? "gap-3" : "flex-row gap-3"}>
                         <Button variant="outline" onPress={resetEditor} className="flex-1">
                           Abbrechen
                         </Button>
@@ -370,7 +378,7 @@ export default function RewardsSettingsScreen() {
             </View>
             <View className="ml-3 flex-1">
               <Text className="text-lg font-headline text-foreground">Schnelle Vorschläge</Text>
-              <Text className="mt-1 text-sm font-body text-muted-foreground">
+              <Text className="mt-1 text-base font-body leading-6 text-muted-foreground">
                 Wähle bewährte Belohnungen und passe sie bei Bedarf danach an.
               </Text>
             </View>

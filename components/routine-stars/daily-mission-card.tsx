@@ -68,7 +68,7 @@ export function DailyMissionCard({
                 style={{ backgroundColor: palette.tabActiveBg }}
               >
                 <Text
-                  className="text-[10px] font-body-semibold"
+                  className="text-xs font-body-semibold"
                   style={{ color: palette.accentText }}
                 >
                   Ziel

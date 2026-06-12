@@ -90,8 +90,8 @@ function JourneyVisual({
               Sternenmoment
             </Text>
             <Text
-              className="mt-1 text-sm font-body-semibold leading-5 text-foreground"
-              numberOfLines={2}
+              className="mt-1 text-base font-body-semibold leading-6 text-foreground"
+              numberOfLines={3}
             >
               {screen.childLine}
             </Text>
@@ -316,7 +316,7 @@ export default function WelcomeScreen() {
                     style={{ backgroundColor: palette.heroSurface, borderColor: palette.accentBorder }}
                   >
                     <Text
-                      className="text-[11px] font-body-semibold leading-4"
+                      className="text-xs font-body-semibold leading-4"
                       style={{ color: palette.accentText }}
                       numberOfLines={1}
                     >

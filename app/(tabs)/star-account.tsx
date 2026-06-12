@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef } from "react";
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -26,6 +26,8 @@ const STAR_MILESTONES = [5, 10, 25, 50, 100];
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const isCompactWidth = width < 380;
   const { children, selectedChild, selectChild, selectedChildId, isLoading } = useChildren();
   const { rewards } = useRewards();
   const { getLogsForChild } = useActivityLogs();
@@ -136,7 +138,7 @@ export default function ProfileScreen() {
               Profil
             </Text>
             <Text className="mt-0.5 text-sm font-body text-muted-foreground">
-              Deine Sterne, Erfolge und Sticker ✨
+              Deine Sterne, Erfolge und Sticker
             </Text>
           </Animated.View>
 
@@ -180,7 +182,7 @@ export default function ProfileScreen() {
                 <Text className="mt-1 text-lg font-headline text-foreground" numberOfLines={1}>
                   {nextSticker.sticker.title}
                 </Text>
-                <Text className="mt-0.5 text-xs font-body text-muted-foreground" numberOfLines={2}>
+                <Text className="mt-0.5 text-base font-body leading-6 text-muted-foreground" numberOfLines={2}>
                   {nextSticker.hint}
                 </Text>
                 <View className="mt-3 flex-row items-center gap-3">
@@ -247,7 +249,7 @@ export default function ProfileScreen() {
                   </View>
                   <View className="flex-1">
                     <Text className="text-lg font-headline text-foreground">Hier wächst dein Fortschritt</Text>
-                    <Text className="text-sm font-body text-muted-foreground">
+                    <Text className="text-base font-body leading-6 text-muted-foreground">
                       Sobald erste Routinen erledigt werden, füllen sich Woche, Monat und Insights
                       automatisch.
                     </Text>
@@ -272,7 +274,7 @@ export default function ProfileScreen() {
                       </View>
                       <View className="flex-1">
                         <Text className="text-lg font-headline text-foreground">Schöne Einblicke</Text>
-                        <Text className="text-sm font-body text-muted-foreground">
+                        <Text className="text-base font-body leading-6 text-muted-foreground">
                           Kindnah und hilfreich für den Alltag.
                         </Text>
                       </View>
@@ -289,7 +291,7 @@ export default function ProfileScreen() {
                 </Card>
               </Animated.View>
 
-              <View className="mt-4 flex-row gap-3">
+              <View className={isCompactWidth ? "mt-4 gap-3" : "mt-4 flex-row gap-3"}>
                 <InsightCard
                   label="Aktive Tage"
                   value={`${insights.activeDays}`}
@@ -306,7 +308,7 @@ export default function ProfileScreen() {
                 />
               </View>
 
-              <View className="mt-3 flex-row gap-3">
+              <View className={isCompactWidth ? "mt-3 gap-3" : "mt-3 flex-row gap-3"}>
                 <InsightCard
                   label="Sterne verdient"
                   value={`${insights.totalStars}`}
@@ -353,9 +355,9 @@ export default function ProfileScreen() {
             </Card>
           </Animated.View>
 
-          <View className="mt-4 flex-row gap-3">
+          <View className={isCompactWidth ? "mt-4 gap-3" : "mt-4 flex-row gap-3"}>
             <Card
-              className="min-h-[156px] flex-1 overflow-hidden rounded-[20px] px-4 py-4"
+              className={isCompactWidth ? "min-h-[156px] overflow-hidden rounded-[20px] px-4 py-4" : "min-h-[156px] flex-1 overflow-hidden rounded-[20px] px-4 py-4"}
               style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
             >
               <View
@@ -366,7 +368,7 @@ export default function ProfileScreen() {
               <Text className="mt-2 text-xl font-headline text-foreground">
                 {insights.bestDay ? formatFriendlyDate(insights.bestDay.date) : "Noch offen"}
               </Text>
-              <Text className="mt-2 text-sm font-body" style={{ color: palette.accentText }}>
+              <Text className="mt-2 text-base font-body leading-6" style={{ color: palette.accentText }}>
                 {insights.bestDay
                   ? "Hier war besonders viel geschafft."
                   : "Sobald erste Routinen geschafft werden, erscheint hier der stärkste Tag."}
@@ -392,7 +394,7 @@ export default function ProfileScreen() {
             </Card>
 
             <Card
-              className="min-h-[156px] flex-1 overflow-hidden rounded-[20px] px-4 py-4"
+              className={isCompactWidth ? "min-h-[156px] overflow-hidden rounded-[20px] px-4 py-4" : "min-h-[156px] flex-1 overflow-hidden rounded-[20px] px-4 py-4"}
               style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
             >
               <View
@@ -403,7 +405,7 @@ export default function ProfileScreen() {
               <Text className="mt-2 text-xl font-headline text-foreground">
                 {latestActivity ? formatFriendlyDate(latestActivity.date) : "Noch offen"}
               </Text>
-              <Text className="mt-2 text-sm font-body" style={{ color: palette.accentText }}>
+              <Text className="mt-2 text-base font-body leading-6" style={{ color: palette.accentText }}>
                 {latestActivity
                   ? "Der letzte eingetragene Fortschrittsmoment."
                   : "Sobald etwas erledigt wird, erscheint hier der letzte aktive Tag."}

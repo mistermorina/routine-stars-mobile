@@ -13,9 +13,9 @@ const buttonVariants = {
 
 const buttonSizes = {
   default: "h-12 px-5 py-0",
-  sm: "h-9 px-3 py-0",
+  sm: "h-11 px-4 py-0",
   lg: "h-14 px-6 py-0",
-  icon: "h-10 w-10",
+  icon: "h-11 w-11",
 } as const;
 
 const textVariants = {
@@ -31,7 +31,7 @@ const textVariants = {
 // (tight line boxes make the ascender-heavy font sit visibly high).
 const textSizes = {
   default: "text-base leading-[22px]",
-  sm: "text-sm leading-[19px]",
+  sm: "text-base leading-[22px]",
   lg: "text-base leading-[22px]",
   icon: "text-base leading-[22px]",
 } as const;
@@ -71,6 +71,9 @@ export function Button({
             textSizes[size],
             textClassName
           )}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.88}
           style={{ includeFontPadding: false }}
         >
           {children}

@@ -275,7 +275,7 @@ function StickerCard({
             }}
           >
             <Text
-              className="text-[10px] font-body-semibold"
+              className="text-xs font-body-semibold"
               style={{ color: entry.unlocked ? palette.accentText : "#8791A8" }}
             >
               {entry.unlocked ? "Frei" : `${entry.current}/${entry.target}`}
@@ -296,11 +296,11 @@ function StickerCard({
 
         <View className="mt-auto pt-4">
           <View className="mb-2 flex-row items-center justify-between">
-            <Text className="text-[11px] font-body-semibold text-muted-foreground">
+            <Text className="text-xs font-body-semibold text-muted-foreground">
               {entry.unlocked ? "Freigeschaltet" : "Fortschritt"}
             </Text>
             <Text
-              className="text-[11px] font-body-semibold"
+              className="text-xs font-body-semibold"
               style={{ color: entry.unlocked ? palette.accentText : "#8791A8" }}
             >
               {entry.unlocked ? "100%" : `${entry.progressPercent}%`}
@@ -369,7 +369,7 @@ export function StickerAlbum({
                 className="rounded-[18px] px-3 py-2"
                 style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
               >
-                <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+                <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
                   {THEME_BADGES[childTheme]}
                 </Text>
                 <Text className="mt-1 text-sm font-headline" style={{ color: palette.accentText }}>
@@ -458,7 +458,7 @@ export function StickerAlbum({
                 className="rounded-full px-2.5 py-1"
                 style={{ backgroundColor: palette.tabActiveBg }}
               >
-                <Text className="text-[10px] font-body-semibold" style={{ color: palette.accentText }}>
+                <Text className="text-xs font-body-semibold" style={{ color: palette.accentText }}>
                   {group.entries.filter((entry) => entry.unlocked).length}/{group.entries.length}
                 </Text>
               </View>

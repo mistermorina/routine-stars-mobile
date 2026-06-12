@@ -217,7 +217,7 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
               }}
             >
               <Text
-                className="text-[11px] font-body-semibold uppercase"
+                className="text-xs font-body-semibold uppercase"
                 style={{ color: palette.accentText }}
               >
                 {moment}
@@ -315,7 +315,7 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                       <Text className="text-center text-base font-body-bold text-foreground">
                         {option.id}
                       </Text>
-                      <Text className="mt-1 text-center text-[11px] font-body text-muted-foreground">
+                      <Text className="mt-1 text-center text-xs font-body text-muted-foreground">
                         {option.hint}
                       </Text>
                     </Pressable>
@@ -369,7 +369,7 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                           className="mt-1 rounded-full px-2 py-0.5"
                           style={{ backgroundColor: "rgba(255,255,255,0.74)" }}
                         >
-                          <Text className="text-[10px] font-body-semibold uppercase" style={{ color: themePalette.accentText }}>
+                          <Text className="text-xs font-body-semibold uppercase" style={{ color: themePalette.accentText }} numberOfLines={1}>
                             {theme.badge}
                           </Text>
                         </View>
@@ -384,18 +384,17 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
             {/* Avatar selection */}
             <View className="gap-3">
               <Label>Avatar auswählen</Label>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerClassName="gap-2"
-              >
+              <View className="flex-row flex-wrap gap-2">
                 {avatarCategoryNames.map((category) => {
                   const isSelected = category === selectedAvatarCategory;
                   return (
                     <Pressable
                       key={category}
                       onPress={() => setSelectedAvatarCategory(category)}
-                      className="rounded-full border px-3 py-1.5"
+                      className="min-h-11 rounded-full border px-3 py-2.5"
+                      accessibilityRole="button"
+                      accessibilityLabel={`Avatar-Kategorie ${category}`}
+                      accessibilityState={{ selected: isSelected }}
                       style={
                         isSelected
                           ? {
@@ -417,7 +416,7 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                     </Pressable>
                   );
                 })}
-              </ScrollView>
+              </View>
 
               <View className="flex-row flex-wrap justify-between gap-y-3">
                 {avatarOptions.map((avatar) => (

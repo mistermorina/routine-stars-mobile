@@ -289,21 +289,13 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                   <Text className="text-base font-body-semibold text-foreground">
                     Sanfter Start für {primaryChild?.name || "dein Kind"}
                   </Text>
-                  <Text className="text-xs font-body" style={{ color: palette.accentText }}>
+                  <Text className="text-base font-body leading-6" style={{ color: palette.accentText }}>
                     Alter {primaryChild?.ageGroup ?? "6-8"} • wenige klare Aufgaben
                   </Text>
                 </View>
               </View>
 
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingTop: 16, paddingRight: 4, gap: 12 }}
-                nestedScrollEnabled
-                snapToInterval={264}
-                snapToAlignment="start"
-                decelerationRate="fast"
-              >
+              <View className="gap-3 pt-4">
                 {recommendedTemplates.map((template) => (
                   <TemplateCard
                     key={template.id}
@@ -313,7 +305,7 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                     theme={primaryChild?.theme}
                   />
                 ))}
-              </ScrollView>
+              </View>
             </View>
 
             <Pressable

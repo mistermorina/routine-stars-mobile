@@ -1,5 +1,5 @@
 import React from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Text, useWindowDimensions, View } from "react-native";
 import { Flame, Lock, Sparkles, Star } from "lucide-react-native";
 
 import type { ThemePalette } from "@/lib/theme";
@@ -29,6 +29,8 @@ export function MilestoneBadges({
   stickerCount,
   palette,
 }: MilestoneBadgesProps) {
+  const { width } = useWindowDimensions();
+  const badgeWidth = width < 380 ? "31%" : "23%";
   const milestones: MilestoneDef[] = [
     { id: "streak-3", value: "3", label: "Tage-Serie", icon: Flame, achieved: streak >= 3 },
     { id: "streak-7", value: "7", label: "Tage-Serie", icon: Flame, achieved: streak >= 7 },
@@ -55,18 +57,15 @@ export function MilestoneBadges({
           </Text>
         </View>
       </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 10, paddingHorizontal: 4, paddingVertical: 10 }}
-      >
+      <View className="flex-row flex-wrap gap-2 px-1 py-3">
         {sorted.map((milestone) => {
           const Icon = milestone.icon;
           return (
             <View
               key={milestone.id}
-              className="w-[88px] items-center rounded-tile border px-2 py-3"
+              className="min-h-[132px] items-center rounded-tile border px-2 py-3"
               style={{
+                width: badgeWidth,
                 backgroundColor: milestone.achieved ? palette.cardTint : "rgba(255,255,255,0.6)",
                 borderColor: milestone.achieved ? palette.accentBorder : "#E7EDF3",
               }}
@@ -93,16 +92,18 @@ export function MilestoneBadges({
                 {milestone.value}
               </Text>
               <Text
-                className="text-[11px] font-body-semibold"
+                className="text-xs font-body-semibold"
                 style={{ color: milestone.achieved ? "#6B7785" : "#ADB7C2" }}
                 numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.82}
               >
                 {milestone.label}
               </Text>
             </View>
           );
         })}
-      </ScrollView>
+      </View>
     </View>
   );
 }

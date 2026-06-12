@@ -198,7 +198,7 @@ export default function SettingsIndex() {
                     style={{ backgroundColor: badgeColors.backgroundColor }}
                   >
                     <Text
-                      className="text-[10px] font-body-semibold uppercase tracking-[0.6px]"
+                      className="text-xs font-body-semibold uppercase tracking-[0.6px]"
                       style={{ color: badgeColors.color }}
                       numberOfLines={1}
                     >
@@ -256,7 +256,7 @@ export default function SettingsIndex() {
                     style={{ backgroundColor: badgeColors.backgroundColor }}
                   >
                     <Text
-                      className="text-[10px] font-body-semibold uppercase tracking-[0.6px]"
+                      className="text-xs font-body-semibold uppercase tracking-[0.6px]"
                       style={{ color: badgeColors.color }}
                       numberOfLines={1}
                     >

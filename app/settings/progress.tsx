@@ -56,20 +56,18 @@ export default function ProgressSettings() {
     >
       <ScrollView className="flex-1" contentContainerClassName="p-4 pb-8">
         {children.length > 1 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="mb-4"
-            contentContainerClassName="gap-2"
-          >
+          <View className="mb-4 flex-row flex-wrap gap-2">
             {children.map((child) => (
               <Pressable
                 key={child.id}
                 onPress={() => selectChild(child.id)}
                 className={cn(
-                  "flex-row items-center rounded-full border px-4 py-2",
+                  "min-h-11 flex-row items-center rounded-full border px-4 py-2",
                   selectedChildId === child.id ? "" : "border-border"
                 )}
+                accessibilityRole="button"
+                accessibilityLabel={`${child.name} auswählen`}
+                accessibilityState={{ selected: selectedChildId === child.id }}
                 style={
                   selectedChildId === child.id
                     ? {
@@ -91,12 +89,13 @@ export default function ProgressSettings() {
                   style={{
                     color: selectedChildId === child.id ? palette.accentText : "#1a1a2e",
                   }}
+                  numberOfLines={1}
                 >
                   {child.name}
                 </Text>
               </Pressable>
             ))}
-          </ScrollView>
+          </View>
         )}
 
         <Animated.View entering={FadeInDown.duration(300)}>
@@ -148,7 +147,7 @@ export default function ProgressSettings() {
             <View className="mt-4 flex-row items-center justify-between">
               <Pressable
                 onPress={handlePreviousMonth}
-                className="h-10 w-10 items-center justify-center rounded-full"
+                className="h-11 w-11 items-center justify-center rounded-full"
                 style={{ backgroundColor: palette.heroSurface }}
               >
                 <ChevronLeft size={20} color={palette.accentText} />
@@ -156,7 +155,7 @@ export default function ProgressSettings() {
               <Text className="text-xl font-headline text-foreground">{insights.monthLabel}</Text>
               <Pressable
                 onPress={handleNextMonth}
-                className="h-10 w-10 items-center justify-center rounded-full"
+                className="h-11 w-11 items-center justify-center rounded-full"
                 style={{ backgroundColor: palette.heroSurface }}
               >
                 <ChevronRight size={20} color={palette.accentText} />

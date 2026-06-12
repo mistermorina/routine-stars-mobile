@@ -144,7 +144,7 @@ function RewardItem({
               style={{ backgroundColor: "rgba(255,255,255,0.85)" }}
             >
               <Lock size={11} color="#9AA5B1" />
-              <Text className="text-[11px] font-body-semibold leading-4 text-muted-foreground">
+              <Text className="text-xs font-body-semibold leading-4 text-muted-foreground">
                 Bald frei
               </Text>
             </View>

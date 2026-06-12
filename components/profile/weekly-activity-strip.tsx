@@ -69,7 +69,7 @@ export function WeeklyActivityStrip({
                 {item.isActive ? item.stars : item.dateLabel}
               </Text>
             </View>
-            <Text className="mt-2 text-[11px] font-body text-muted-foreground">
+            <Text className="mt-2 text-xs font-body text-muted-foreground">
               {item.isActive ? `${item.taskCount} Aufg.` : `Tag ${item.dateLabel}`}
             </Text>
           </Animated.View>

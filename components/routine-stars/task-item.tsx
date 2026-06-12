@@ -230,7 +230,7 @@ export function TaskItem({
             }}
           >
             <Check size={24} color="#FFFFFF" />
-            <Text style={{ color: "#FFFFFF", fontSize: 11, marginTop: 2, fontWeight: "600" }}>
+            <Text style={{ color: "#FFFFFF", fontSize: 12, marginTop: 2, fontWeight: "600" }} numberOfLines={1}>
               Erledigt
             </Text>
           </View>
@@ -290,7 +290,7 @@ export function TaskItem({
                 {/* Title + reward chip */}
                 <View className="flex-1 min-w-0 pr-3">
                   <Text
-                    className="text-[15px] font-body-semibold leading-5 text-foreground"
+                    className="text-base font-body-semibold leading-6 text-foreground"
                     numberOfLines={2}
                   >
                     {task.title}
@@ -298,12 +298,12 @@ export function TaskItem({
                   <View className="mt-1 flex-row items-center gap-1.5">
                     <View className="flex-row items-center gap-1">
                       <Star size={12} color="#F7A313" fill="#F7A313" />
-                      <Text className="text-xs font-body-semibold" style={{ color: "#B97E0B" }}>
+                      <Text className="text-sm font-body-semibold" style={{ color: "#B97E0B" }}>
                         +{task.stars}
                       </Text>
                     </View>
                     {hasTimer && !isCompleted ? (
-                      <Text className="text-xs font-body text-muted-foreground" numberOfLines={1}>
+                      <Text className="text-sm font-body text-muted-foreground" numberOfLines={1}>
                         · {task.timerInMinutes} Min.{hasBonus ? ` · +${task.bonusStars} Bonus` : ""}
                       </Text>
                     ) : null}

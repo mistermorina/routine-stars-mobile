@@ -7,7 +7,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { ChevronRight, Plus, Check } from "lucide-react-native";
+import { ChevronRight, Plus, Check, Star } from "lucide-react-native";
 import { getIcon } from "@/lib/icons";
 import { getThemePalette } from "@/lib/theme";
 import type { ChildTheme, RewardSuggestion, RewardCategoryInfo } from "@/lib/types";
@@ -33,6 +33,7 @@ export function RewardCategorySection({
   const palette = getThemePalette(theme);
 
   const addedCount = rewards.filter((r) => addedIds.has(r.id)).length;
+  const CategoryIcon = getIcon(category.iconName);
   const chevronStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${chevronRotation.value}deg` }],
   }));
@@ -47,11 +48,16 @@ export function RewardCategorySection({
     <View className="mb-3">
       <Pressable
         onPress={handleToggle}
-        className="flex-row items-center justify-between rounded-[24px] border p-4"
+        className="min-h-14 flex-row items-center justify-between rounded-[24px] border p-4"
         style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
       >
-        <View className="flex-row items-center gap-2">
-          <Text className="text-lg">{category.emoji}</Text>
+        <View className="min-w-0 flex-1 flex-row items-center gap-3">
+          <View
+            className="h-11 w-11 items-center justify-center rounded-[16px]"
+            style={{ backgroundColor: palette.heroSurface }}
+          >
+            <CategoryIcon size={20} color={palette.accentStrong} />
+          </View>
           <Text className="text-base font-headline text-foreground">{category.label}</Text>
           {addedCount > 0 && (
             <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: palette.button }}>
@@ -94,14 +100,17 @@ export function RewardCategorySection({
                   <Icon size={18} color={isAdded ? palette.accentStrong : "#737373"} />
                 </View>
                 <Text
-                  className={cn("ml-2.5 flex-1 text-sm font-body", isAdded ? "" : "text-foreground")}
+                  className={cn("ml-2.5 flex-1 text-base font-body leading-6", isAdded ? "" : "text-foreground")}
                   style={isAdded ? { color: palette.accentText } : undefined}
                 >
                   {reward.title}
                 </Text>
-                <Text className="text-xs font-body text-muted-foreground mr-2">
-                  {reward.cost} ⭐
-                </Text>
+                <View className="mr-2 flex-row items-center gap-1">
+                  <Star size={13} color="#B97E0B" fill="#B97E0B" />
+                  <Text className="text-sm font-body-semibold text-muted-foreground">
+                    {reward.cost}
+                  </Text>
+                </View>
                 {isAdded ? (
                   <Check size={16} color={palette.accentStrong} />
                 ) : (

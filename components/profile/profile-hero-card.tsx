@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, ScrollView, View, Text } from "react-native";
+import { Pressable, View, Text, useWindowDimensions } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Settings, Star, Flame, Trophy, Sparkles } from "lucide-react-native";
 import { Card } from "@/components/ui/card";
@@ -29,6 +29,8 @@ export function ProfileHeroCard({
   onSelectChild,
   onSettingsPress,
 }: ProfileHeroCardProps) {
+  const { width } = useWindowDimensions();
+  const isCompactWidth = width < 380;
   const hasChildSwitcher = Boolean(allChildren && allChildren.length > 1 && onSelectChild);
 
   return (
@@ -72,7 +74,7 @@ export function ProfileHeroCard({
                     className="rounded-full px-2.5 py-1"
                     style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
                   >
-                    <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px]" style={{ color: palette.accentText }}>
+                    <Text className="text-xs font-body-semibold uppercase tracking-[0.6px]" style={{ color: palette.accentText }} numberOfLines={1}>
                       Storyworld
                     </Text>
                   </View>
@@ -81,7 +83,7 @@ export function ProfileHeroCard({
                     style={{ backgroundColor: palette.tabActiveBg }}
                   >
                     <Sparkles size={12} color={palette.accentStrong} />
-                    <Text className="text-[10px] font-body-semibold" style={{ color: palette.accentText }}>
+                    <Text className="text-xs font-body-semibold" style={{ color: palette.accentText }} numberOfLines={1}>
                       Im Flow
                     </Text>
                   </View>
@@ -94,7 +96,7 @@ export function ProfileHeroCard({
                 >
                   {child.name}
                 </Text>
-                <Text className="mt-1 text-sm font-body leading-5" style={{ color: palette.accentText }}>
+                <Text className="mt-1 text-base font-body leading-6" style={{ color: palette.accentText }}>
                   Fortschritt, Sterne und schöne Momente an einem Ort.
                 </Text>
               </View>
@@ -113,9 +115,9 @@ export function ProfileHeroCard({
             ) : null}
           </View>
 
-          <View className="mt-5 flex-row gap-3">
+          <View className={isCompactWidth ? "mt-5 gap-3" : "mt-5 flex-row gap-3"}>
             <View
-              className="flex-1 rounded-[18px] px-4 py-3.5"
+              className={isCompactWidth ? "rounded-[18px] px-4 py-3.5" : "flex-1 rounded-[18px] px-4 py-3.5"}
               style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
             >
               <View className="flex-row items-center gap-2">
@@ -125,13 +127,13 @@ export function ProfileHeroCard({
               <Text className="mt-2 text-[34px] font-headline leading-[39px] text-foreground">
                 {stars}
               </Text>
-              <Text className="mt-1 text-xs font-body text-muted-foreground">
+              <Text className="mt-1 text-base font-body leading-6 text-muted-foreground">
                 Verfügbar für Wünsche.
               </Text>
             </View>
 
             <View
-              className="flex-1 rounded-[18px] px-4 py-3.5"
+              className={isCompactWidth ? "rounded-[18px] px-4 py-3.5" : "flex-1 rounded-[18px] px-4 py-3.5"}
               style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
             >
               <View className="flex-row items-center gap-2">
@@ -141,7 +143,7 @@ export function ProfileHeroCard({
               <Text className="mt-2 text-[34px] font-headline leading-[39px] text-foreground">
                 {streak}
               </Text>
-              <Text className="mt-1 text-xs font-body text-muted-foreground">
+              <Text className="mt-1 text-base font-body leading-6 text-muted-foreground">
                 Tage im Rhythmus.
               </Text>
             </View>
@@ -176,7 +178,7 @@ export function ProfileHeroCard({
                     style={{ backgroundColor: palette.tabActiveBg }}
                   >
                     <Text
-                      className="text-[10px] font-body-semibold"
+                      className="text-xs font-body-semibold"
                       style={{ color: palette.accentText }}
                       numberOfLines={1}
                       adjustsFontSizeToFit
@@ -186,7 +188,7 @@ export function ProfileHeroCard({
                     </Text>
                   </View>
                 </View>
-                <Text className="mt-1 text-xs font-body" style={{ color: palette.accentText }}>
+                <Text className="mt-1 text-base font-body leading-6" style={{ color: palette.accentText }}>
                   {nextReward
                     ? `${nextReward.missingStars} Sterne fehlen noch bis zur nächsten Belohnung.`
                     : "Gerade ist alles freigeschaltet und bereit."}
@@ -200,11 +202,7 @@ export function ProfileHeroCard({
               <Text className="mb-2 text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
                 Kind wechseln
               </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerClassName="gap-2"
-              >
+              <View className="flex-row flex-wrap gap-2">
                 {allChildren?.map((entry) => {
                   const isActive = entry.id === child.id;
                   return (
@@ -229,7 +227,7 @@ export function ProfileHeroCard({
                     </Pressable>
                   );
                 })}
-              </ScrollView>
+              </View>
             </View>
           ) : null}
         </View>

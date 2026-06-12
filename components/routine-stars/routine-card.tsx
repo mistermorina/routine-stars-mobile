@@ -76,7 +76,7 @@ export function RoutineCard({
       <View className="relative">
         <View className="min-h-[76px] pr-[74px]">
           <Text
-            className="text-[16px] font-headline leading-[21px]"
+            className="text-lg font-headline leading-6"
             style={{ color: visual.accent }}
             numberOfLines={1}
             adjustsFontSizeToFit
@@ -89,7 +89,7 @@ export function RoutineCard({
             style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
           >
             <Star size={14} color={visual.accent} fill={visual.accent} />
-            <Text className="text-xs font-body-semibold" style={{ color: visual.accent }}>
+            <Text className="text-sm font-body-semibold" style={{ color: visual.accent }} numberOfLines={1}>
               {completedTasks} / {totalTasks} Aufgaben
             </Text>
           </View>
@@ -135,7 +135,7 @@ export function RoutineCard({
               <Text className="text-base font-headline" style={{ color: visual.accent }}>
                 {visual.completionTitle}
               </Text>
-              <Text className="mt-1 text-xs font-body leading-5 text-muted-foreground">
+              <Text className="mt-1 text-base font-body leading-6 text-muted-foreground">
                 {visual.completionText}
               </Text>
             </View>

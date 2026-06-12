@@ -51,7 +51,7 @@ export function CardDescription({
   children: React.ReactNode;
 }) {
   return (
-    <Text className={cn("text-sm text-muted-foreground font-body mt-1", className)}>
+    <Text className={cn("mt-1 text-base font-body leading-6 text-muted-foreground", className)}>
       {children}
     </Text>
   );

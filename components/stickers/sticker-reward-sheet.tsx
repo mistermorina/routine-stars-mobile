@@ -32,12 +32,15 @@ export function StickerRewardSheet({
   onClose,
 }: StickerRewardSheetProps) {
   const { height: screenHeight } = useWindowDimensions();
+  const { width: screenWidth } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const sheetTopPadding = Math.max(insets.top + 12, 20);
   const sheetBottomPadding = Math.max(insets.bottom + 12, 20);
   const availableSheetHeight = Math.max(1, screenHeight - sheetTopPadding - sheetBottomPadding);
   const sheetMaxHeight = Math.min(screenHeight * 0.88, availableSheetHeight);
   const isDailyReward = rewardEvent?.reason === "daily_complete";
+  const isCompactWidth = screenWidth < 380;
+  const stickerChoiceWidth = isCompactWidth ? "100%" : "48%";
   const eyebrow = isDailyReward ? "Tag geschafft" : "Routine geschafft";
   const rewardSource = rewardEvent?.routineName ?? "deine Routine";
 
@@ -75,7 +78,7 @@ export function StickerRewardSheet({
           <View className="relative" style={{ flexShrink: 1 }}>
             <Pressable
               onPress={onClose}
-              className="absolute right-0 top-0 z-10 h-10 w-10 items-center justify-center rounded-full"
+              className="absolute right-0 top-0 z-10 h-11 w-11 items-center justify-center rounded-full"
               style={{ backgroundColor: "rgba(255,255,255,0.82)" }}
               accessibilityRole="button"
               accessibilityLabel="Sticker-Auswahl schließen"
@@ -95,14 +98,14 @@ export function StickerRewardSheet({
                   className="self-start rounded-full px-3 py-1.5"
                   style={{ backgroundColor: palette.tabActiveBg }}
                 >
-                  <Text className="text-xs font-body-semibold uppercase tracking-[0.7px]" style={{ color: palette.accentText }}>
+                  <Text className="text-xs font-body-semibold uppercase tracking-[0.6px]" style={{ color: palette.accentText }} numberOfLines={1}>
                     {eyebrow}
                   </Text>
                 </View>
                 <Text className="mt-3 text-[26px] font-headline leading-[31px] text-foreground">
                   Such dir einen Sticker aus
                 </Text>
-                <Text className="mt-2 text-sm font-body leading-5 text-muted-foreground">
+                <Text className="mt-2 text-base font-body leading-6 text-muted-foreground">
                   {isDailyReward
                     ? `${childName} hat heute alles geschafft. Dieser Sticker landet direkt in der Sticker-Galerie.`
                     : `${childName} hat "${rewardSource}" abgeschlossen. Dieser Sticker landet direkt in der Sticker-Galerie.`}
@@ -116,7 +119,7 @@ export function StickerRewardSheet({
                     onPress={() => onSelectSticker(sticker)}
                     accessibilityRole="button"
                     accessibilityLabel={`Sticker ${sticker.title} auswählen`}
-                    containerClassName="w-[48%]"
+                    containerStyle={{ width: stickerChoiceWidth }}
                     scaleTo={0.95}
                     className="overflow-hidden rounded-card border px-3 py-3"
                     style={{
@@ -135,10 +138,10 @@ export function StickerRewardSheet({
                         transition={160}
                       />
                     </View>
-                    <Text className="mt-3 text-center text-sm font-headline text-foreground" numberOfLines={1}>
+                    <Text className="mt-3 text-center text-base font-headline text-foreground" numberOfLines={1}>
                       {sticker.title}
                     </Text>
-                    <Text className="mt-1 text-center text-xs font-body text-muted-foreground" numberOfLines={1}>
+                    <Text className="mt-1 text-center text-sm font-body text-muted-foreground" numberOfLines={1}>
                       {sticker.mood}
                     </Text>
                     <View className="mt-2 flex-row justify-center gap-1.5">
@@ -147,7 +150,7 @@ export function StickerRewardSheet({
                         style={{ backgroundColor: `${sticker.accent}14` }}
                       >
                         <Text
-                          className="text-[9px] font-body-semibold"
+                          className="text-xs font-body-semibold"
                           style={{ color: palette.accentText }}
                           numberOfLines={1}
                         >
@@ -158,7 +161,7 @@ export function StickerRewardSheet({
                         className="rounded-full px-2 py-1"
                         style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
                       >
-                        <Text className="text-[9px] font-body-semibold text-muted-foreground" numberOfLines={1}>
+                        <Text className="text-xs font-body-semibold text-muted-foreground" numberOfLines={1}>
                           {getStickerRarityLabel(sticker.rarity)}
                         </Text>
                       </View>

@@ -129,7 +129,7 @@ export default function LegalSettings() {
               className="rounded-[22px] px-3.5 py-3"
               style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
             >
-              <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+              <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
                 Status
               </Text>
               <Text className="mt-1 text-base font-headline" style={{ color: palette.accentText }}>

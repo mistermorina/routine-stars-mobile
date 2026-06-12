@@ -74,20 +74,18 @@ export default function StatsSettings() {
     >
       <ScrollView className="flex-1" contentContainerClassName="p-4 pb-8">
         {children.length > 1 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="mb-4"
-            contentContainerClassName="gap-2"
-          >
+          <View className="mb-4 flex-row flex-wrap gap-2">
             {children.map((child) => (
               <Pressable
                 key={child.id}
                 onPress={() => selectChild(child.id)}
                 className={cn(
-                  "flex-row items-center rounded-full border px-4 py-2",
+                  "min-h-11 flex-row items-center rounded-full border px-4 py-2",
                   selectedChildId === child.id ? "" : "border-border"
                 )}
+                accessibilityRole="button"
+                accessibilityLabel={`${child.name} auswählen`}
+                accessibilityState={{ selected: selectedChildId === child.id }}
                 style={
                   selectedChildId === child.id
                     ? {
@@ -109,12 +107,13 @@ export default function StatsSettings() {
                   style={{
                     color: selectedChildId === child.id ? palette.accentText : "#1a1a2e",
                   }}
+                  numberOfLines={1}
                 >
                   {child.name}
                 </Text>
               </Pressable>
             ))}
-          </ScrollView>
+          </View>
         )}
 
         <Animated.View entering={FadeInDown.duration(300)}>
@@ -173,7 +172,7 @@ export default function StatsSettings() {
                   <Text className="text-lg font-headline" style={{ color: palette.accentText }}>
                     {activeDaysThisWeek}/7
                   </Text>
-                  <Text className="text-[10px] font-body-semibold text-muted-foreground">
+                  <Text className="text-xs font-body-semibold text-muted-foreground">
                     Tagen
                   </Text>
                 </View>
