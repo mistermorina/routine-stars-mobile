@@ -9,7 +9,6 @@ import Animated, {
   SlideOutRight,
 } from "react-native-reanimated";
 import { Progress } from "@/components/ui/progress";
-import { ToastOverlay } from "@/components/ui/toast";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { ChildSetup } from "@/components/onboarding/child-setup";
 import { RoutineSetup } from "@/components/onboarding/routine-setup";
@@ -17,6 +16,7 @@ import type { SavedRoutine } from "@/components/onboarding/routine-setup";
 import { RewardSetup } from "@/components/onboarding/reward-setup";
 import { storage, KEYS } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
+import { useChildren } from "@/hooks/use-children";
 import { getThemePalette } from "@/lib/theme";
 import type { Child, ChildProfile, Routine, Reward } from "@/lib/types";
 
@@ -56,7 +56,8 @@ const setupSteps = [
 
 export default function OnboardingScreen() {
   const router = useRouter();
-  const { toasts, toast, dismiss } = useToast();
+  const { toast } = useToast();
+  const { reload: reloadChildren } = useChildren();
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const [isSaving, setIsSaving] = useState(false);
@@ -122,6 +123,7 @@ export default function OnboardingScreen() {
           await storage.setItem(KEYS.CUSTOM_ROUTINES, newRoutines);
           await storage.setItem(KEYS.CUSTOM_REWARDS, newRewards);
           await storage.setItem(KEYS.HAS_ONBOARDED, true);
+          await reloadChildren();
 
           const names = newChildren.map((c) => c.name).join(" & ");
           const verb = newChildren.length === 1 ? "kann" : "können";
@@ -147,7 +149,7 @@ export default function OnboardingScreen() {
         }
       }
     },
-    [currentStep, formData, isSaving, router, toast]
+    [currentStep, formData, isSaving, reloadChildren, router, toast]
   );
 
   const handleBack = useCallback(() => {
@@ -285,9 +287,6 @@ export default function OnboardingScreen() {
           </View>
         </View>
       </ThemedScreenBackground>
-
-      {/* Toast overlay */}
-      <ToastOverlay toasts={toasts} onDismiss={dismiss} />
     </SafeAreaView>
   );
 }

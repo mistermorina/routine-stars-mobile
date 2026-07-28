@@ -189,7 +189,7 @@ export default function WelcomeScreen() {
   const startSetup = async () => {
     await markWelcomeSeen();
     void triggerFeedback("stars_added");
-    router.replace("/(auth)/login");
+    router.replace("/(auth)/onboarding");
   };
 
   const goNext = () => {

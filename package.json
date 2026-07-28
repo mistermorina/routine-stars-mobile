@@ -13,6 +13,7 @@
     "test:background-skins": "node scripts/check-background-skins.mjs",
     "test:stickers": "node scripts/check-sticker-reward-logic.mjs",
     "test:smoke": "node scripts/check-task-timer-modal-order.mjs",
+    "test:streak": "node scripts/check-streak-logic.mjs",
     "test:progress-smoke": "node scripts/check-local-day-progress.mjs",
     "test:contrast-smoke": "node scripts/check-color-contrast.mjs",
     "test:ui-quality": "node scripts/check-ui-quality.mjs",

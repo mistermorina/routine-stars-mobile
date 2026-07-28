@@ -10,7 +10,6 @@ import { IconPicker } from "@/components/ui/icon-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TemplateSelector } from "@/components/routine-templates/template-selector";
-import { ToastOverlay } from "@/components/ui/toast";
 import { useChildren } from "@/hooks/use-children";
 import { useToast } from "@/hooks/use-toast";
 import { useRoutines } from "@/hooks/use-routines";
@@ -64,7 +63,7 @@ export default function RoutinesSettingsScreen() {
   const isCompactWidth = width < 380;
   const { children } = useChildren();
   const { routines, addRoutine, updateRoutine, removeRoutine, isLoading } = useRoutines();
-  const { toasts, toast, dismiss } = useToast();
+  const { toast } = useToast();
   const familyTheme = children[0]?.theme ?? "sterne";
   const palette = getThemePalette(familyTheme);
   const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null);
@@ -679,8 +678,6 @@ export default function RoutinesSettingsScreen() {
         }}
         onClose={() => setShowIconPickerForTaskId(null)}
       />
-
-      <ToastOverlay toasts={toasts} onDismiss={dismiss} />
     </View>
   );
 }

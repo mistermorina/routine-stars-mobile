@@ -1,54 +1,38 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
 
-interface AuthState {
-  isAuthenticated: boolean;
+/**
+ * Routine Stars has no accounts and no sign-in — everything lives on this
+ * device. The only "auth" in the app is the parent gate: a PIN that unlocks the
+ * parent area for the current session and re-locks on demand or on restart.
+ */
+interface AuthContextType {
+  /** True while the parent area (settings) may be entered without a PIN. */
   isParentAuthorized: boolean;
-}
-
-interface AuthContextType extends AuthState {
-  login: () => void;
-  logout: () => void;
+  /** Called after a successful PIN check. */
   authorizeParent: () => void;
+  /** Re-locks the parent area — settings bounce back to the PIN screen. */
   deauthorizeParent: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [authState, setAuthState] = useState<AuthState>({
-    isAuthenticated: false,
-    isParentAuthorized: false,
-  });
-
-  const login = useCallback(() => {
-    setAuthState((prev) => ({ ...prev, isAuthenticated: true }));
-  }, []);
-
-  const logout = useCallback(() => {
-    setAuthState({ isAuthenticated: false, isParentAuthorized: false });
-  }, []);
+  const [isParentAuthorized, setIsParentAuthorized] = useState(false);
 
   const authorizeParent = useCallback(() => {
-    setAuthState((prev) => ({ ...prev, isParentAuthorized: true }));
+    setIsParentAuthorized(true);
   }, []);
 
   const deauthorizeParent = useCallback(() => {
-    setAuthState((prev) => ({ ...prev, isParentAuthorized: false }));
+    setIsParentAuthorized(false);
   }, []);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        ...authState,
-        login,
-        logout,
-        authorizeParent,
-        deauthorizeParent,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({ isParentAuthorized, authorizeParent, deauthorizeParent }),
+    [authorizeParent, deauthorizeParent, isParentAuthorized]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/card";
 import { IconPicker } from "@/components/ui/icon-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ToastOverlay } from "@/components/ui/toast";
 import { RewardBrowser } from "@/components/rewards/reward-browser";
 import { useToast } from "@/hooks/use-toast";
 import { useRewards } from "@/hooks/use-rewards";
@@ -31,7 +30,7 @@ export default function RewardsSettingsScreen() {
   const { width } = useWindowDimensions();
   const isCompactWidth = width < 380;
   const { rewards, addReward, updateReward, removeReward, isLoading } = useRewards();
-  const { toasts, toast, dismiss } = useToast();
+  const { toast } = useToast();
   const palette = getThemePalette("sterne");
   const [editingRewardId, setEditingRewardId] = useState<string | null>(null);
   const [draftReward, setDraftReward] = useState<Reward | null>(null);
@@ -395,8 +394,6 @@ export default function RewardsSettingsScreen() {
         }
         onClose={() => setShowIconPicker(false)}
       />
-
-      <ToastOverlay toasts={toasts} onDismiss={dismiss} />
     </View>
   );
 }

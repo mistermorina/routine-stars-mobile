@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -6,24 +6,27 @@ import {
   Modal,
   ScrollView,
   StyleSheet,
+  AppState,
   useWindowDimensions,
   type ImageSourcePropType,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import Animated, {
+  ReduceMotion,
   useSharedValue,
   useAnimatedStyle,
   useAnimatedProps,
   withTiming,
   withSpring,
-  Easing,
 } from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
 import { X, Check, Award, ThumbsUp, ThumbsDown, Sparkles, Star, CircleCheckBig } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
+import { ParentGateChallenge } from "@/components/parent-gate-challenge";
 import { Confetti } from "./confetti";
 import { triggerFeedback } from "@/lib/feedback";
+import { durations, easings, sheetSpring, timings } from "@/lib/motion";
 import { getThemePalette } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { ChildTheme, Task } from "@/lib/types";
@@ -57,6 +60,26 @@ const MODAL_MUTED = "#606B80";
 const MODAL_BLUE = "#2F6FDC";
 const MODAL_LAVENDER_SOFT = "#F2EFFF";
 const MODAL_GOLD = "#F7B633";
+
+/**
+ * Wall-clock resync cadence. The interval never *counts* — it only re-reads
+ * `Date.now()` against the stored end timestamp, so locking the phone or
+ * backgrounding the app cannot slow the countdown down.
+ */
+const TIMER_TICK_MS = durations.base;
+
+/**
+ * One tick of ring travel per tick of clock: same duration as the resync
+ * cadence plus linear easing, so the sweep is continuous instead of stepped.
+ */
+const RING_TIMING = {
+  duration: durations.base,
+  easing: easings.linear,
+  reduceMotion: ReduceMotion.System,
+} as const;
+
+/** How long the success screen stays up before the modal reports back. */
+const SUCCESS_CLOSE_DELAY_MS = 2500;
 
 function ModalBadge({ label }: { label: string }) {
   return (
@@ -119,15 +142,21 @@ export function TaskTimerModal({
   onClose,
 }: TaskTimerModalProps) {
   const [timeLeft, setTimeLeft] = useState(0);
-  const [isActive, setIsActive] = useState(false);
+  const [endTimestamp, setEndTimestamp] = useState<number | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [timerState, setTimerState] = useState<TimerState>("running");
+  const [isParentGateVisible, setIsParentGateVisible] = useState(false);
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+
+  const successTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const circleProgress = useSharedValue(0);
   const contentScale = useSharedValue(0.8);
   const contentOpacity = useSharedValue(0);
+
+  const taskId = task?.id ?? null;
+  const totalSeconds = Math.max(0, Math.round((task?.timerInMinutes ?? 0) * 60));
 
   const palette = getThemePalette(childTheme);
   const isCompactLayout = screenHeight < 760;
@@ -156,46 +185,81 @@ export function TaskTimerModal({
   const timerArtImageSize = isCompactLayout ? 86 : 98;
   const modalMaxWidth = Math.min(screenWidth - 34, 372);
 
+  // Anchor the run to a wall-clock end timestamp, keyed on the task identity so
+  // an unrelated re-render of the parent can never restart a running countdown.
   useEffect(() => {
-    if (task && task.timerInMinutes) {
-      setTimeLeft(task.timerInMinutes * 60);
-      setIsActive(true);
-      setTimerState("running");
-      setShowConfetti(false);
-      circleProgress.value = 0;
-      contentScale.value = withSpring(1, { damping: 15, stiffness: 200 });
-      contentOpacity.value = withTiming(1, { duration: 300 });
-    } else {
-      setIsActive(false);
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = null;
     }
-  }, [task, circleProgress, contentOpacity, contentScale]);
 
-  useEffect(() => {
-    if (!isActive || timeLeft <= 0) {
-      if (isActive && timeLeft <= 0) {
-        setIsActive(false);
-        setTimerState("confirming");
-      }
+    setIsParentGateVisible(false);
+
+    if (!taskId || totalSeconds <= 0) {
+      setEndTimestamp(null);
+      contentScale.value = 0.8;
+      contentOpacity.value = 0;
       return;
     }
 
-    const intervalId = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
+    setTimeLeft(totalSeconds);
+    setEndTimestamp(Date.now() + totalSeconds * 1000);
+    setTimerState("running");
+    setShowConfetti(false);
+    circleProgress.value = 0;
+    contentScale.value = withSpring(1, sheetSpring);
+    contentOpacity.value = withTiming(1, timings.base);
+  }, [taskId, totalSeconds, circleProgress, contentOpacity, contentScale]);
 
-    return () => clearInterval(intervalId);
-  }, [isActive, timeLeft]);
-
+  // The only source of truth is `endTimestamp - Date.now()`; the interval and
+  // the foreground listener merely resync. Returning from background past zero
+  // therefore lands directly in the parent-check step.
   useEffect(() => {
-    if (task && task.timerInMinutes) {
-      const totalSeconds = task.timerInMinutes * 60;
-      const progress = totalSeconds > 0 ? (totalSeconds - timeLeft) / totalSeconds : 0;
-      circleProgress.value = withTiming(progress, {
-        duration: 1000,
-        easing: Easing.linear,
-      });
+    if (timerState !== "running" || endTimestamp === null || totalSeconds <= 0) {
+      return;
     }
-  }, [timeLeft, task, circleProgress]);
+
+    const totalMs = totalSeconds * 1000;
+
+    const syncToWallClock = () => {
+      const remainingMs = Math.max(0, endTimestamp - Date.now());
+      const remaining = Math.ceil(remainingMs / 1000);
+
+      setTimeLeft((previous) => (previous === remaining ? previous : remaining));
+      circleProgress.value = withTiming(
+        Math.min(1, Math.max(0, 1 - remainingMs / totalMs)),
+        RING_TIMING
+      );
+
+      if (remainingMs === 0) {
+        setTimerState("confirming");
+      }
+    };
+
+    syncToWallClock();
+
+    const intervalId = setInterval(syncToWallClock, TIMER_TICK_MS);
+    const appStateSubscription = AppState.addEventListener("change", (nextAppState) => {
+      if (nextAppState === "active") {
+        syncToWallClock();
+      }
+    });
+
+    return () => {
+      clearInterval(intervalId);
+      appStateSubscription.remove();
+    };
+  }, [circleProgress, endTimestamp, timerState, totalSeconds]);
+
+  useEffect(
+    () => () => {
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current);
+        successTimeoutRef.current = null;
+      }
+    },
+    []
+  );
 
   const circleAnimatedProps = useAnimatedProps(() => ({
     strokeDashoffset: circumference * (1 - circleProgress.value),
@@ -207,26 +271,47 @@ export function TaskTimerModal({
   }));
 
   const handleChildFinished = () => {
-    setIsActive(false);
     setTimerState("confirming");
   };
 
   const handleParentConfirmation = useCallback(
     (success: boolean) => {
-      if (success) {
-        setTimerState("success");
-        setShowConfetti(true);
-        void triggerFeedback("stars_added");
-        contentScale.value = withSpring(1, { damping: 15, stiffness: 200 });
-        setTimeout(() => {
-          onClose(true);
-        }, 2500);
-      } else {
+      if (!success) {
         onClose(false);
+        return;
       }
+
+      setTimerState("success");
+      setShowConfetti(true);
+      void triggerFeedback("stars_added");
+      contentScale.value = withSpring(1, sheetSpring);
+
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current);
+      }
+
+      successTimeoutRef.current = setTimeout(() => {
+        successTimeoutRef.current = null;
+        onClose(true);
+      }, SUCCESS_CLOSE_DELAY_MS);
     },
     [contentScale, onClose]
   );
+
+  // The bonus is real currency for the child, so only an adult may grant it.
+  // The gate sits on the confirming tap alone — declining stays one tap.
+  const handleParentApprovalRequest = useCallback(() => {
+    setIsParentGateVisible(true);
+  }, []);
+
+  const handleParentGateSuccess = useCallback(() => {
+    setIsParentGateVisible(false);
+    handleParentConfirmation(true);
+  }, [handleParentConfirmation]);
+
+  const handleParentGateCancel = useCallback(() => {
+    setIsParentGateVisible(false);
+  }, []);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -485,7 +570,8 @@ export function TaskTimerModal({
                       )}
                       style={{ color: MODAL_MUTED }}
                     >
-                      Bestätige, ob die Aufgabe rechtzeitig erledigt wurde.
+                      Bestätige, ob die Aufgabe rechtzeitig erledigt wurde. Für „Ja“ folgt eine
+                      kurze Eltern-Frage.
                     </Text>
 
                     <View
@@ -517,7 +603,7 @@ export function TaskTimerModal({
                     </View>
                     <View className="w-full max-w-[320px] flex-row gap-3">
                       <Pressable
-                        onPress={() => handleParentConfirmation(true)}
+                        onPress={handleParentApprovalRequest}
                         className="h-[58px] flex-1 items-center justify-center rounded-[20px]"
                         style={{
                           backgroundColor: MODAL_BLUE,
@@ -528,6 +614,7 @@ export function TaskTimerModal({
                         }}
                         accessibilityRole="button"
                         accessibilityLabel={`${childName} hat die Aufgabe geschafft`}
+                        accessibilityHint="Öffnet den Eltern-Check zum Bestätigen der Bonus-Sterne"
                       >
                         <View className="flex-row items-center gap-2">
                           <ThumbsUp size={24} color="#FFFFFF" />
@@ -658,6 +745,13 @@ export function TaskTimerModal({
             </Pressable>
           </Animated.View>
         </View>
+
+        <ParentGateChallenge
+          visible={isParentGateVisible}
+          title="Eltern-Check"
+          onSuccess={handleParentGateSuccess}
+          onCancel={handleParentGateCancel}
+        />
       </View>
     </Modal>
   );

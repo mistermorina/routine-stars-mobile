@@ -21,7 +21,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { ToastOverlay } from "@/components/ui/toast";
 import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
 import { AvatarImage } from "@/components/ui/avatar-image";
 import {
@@ -64,7 +63,7 @@ export default function ChildrenSettings() {
   const router = useRouter();
   const params = useLocalSearchParams<{ preview?: string | string[] }>();
   const { children, addChild, updateChild, removeChild } = useChildren();
-  const { toasts, toast, dismiss } = useToast();
+  const { toast } = useToast();
   const { routines } = useRoutines();
   const { rewards } = useRewards();
   const [expandedChildId, setExpandedChildId] = useState<string | null>(null);
@@ -963,7 +962,6 @@ export default function ChildrenSettings() {
       )}
       </ScrollView>
       </KeyboardAvoidingView>
-      <ToastOverlay toasts={toasts} onDismiss={dismiss} />
     </View>
   );
 }

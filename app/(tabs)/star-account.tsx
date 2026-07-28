@@ -36,6 +36,9 @@ export default function ProfileScreen() {
   const palette = getThemePalette(selectedChild?.theme);
   const previousStarsRef = useRef(0);
   const previousStreakRef = useRef(0);
+  // `null` is a sentinel no real id can match, so the very first run only
+  // baselines and never buzzes on mount.
+  const childIdRef = useRef<string | null | undefined>(null);
 
   const childLogs = useMemo(
     () => (selectedChildId ? getLogsForChild(selectedChildId) : []),
@@ -53,37 +56,36 @@ export default function ProfileScreen() {
     ? insights.summaries[insights.summaries.length - 1]
     : null;
 
+  // One effect owns both comparisons AND the ref writes. Splitting them let a
+  // separate "sync refs" effect run first and overwrite the baseline, so the
+  // milestone/streak feedback could never fire.
   useEffect(() => {
-    if (selectedChildId) {
-      void triggerFeedback("tab_focus");
-    }
-  }, [selectedChildId]);
-
-  useEffect(() => {
-    previousStarsRef.current = selectedChild?.stars ?? 0;
-    previousStreakRef.current = insights.currentStreak;
-  }, [insights.currentStreak, selectedChild?.id, selectedChild?.stars]);
-
-  useEffect(() => {
-    const previousStars = previousStarsRef.current;
     const currentStars = selectedChild?.stars ?? 0;
+    const currentStreak = insights.currentStreak;
+
+    // A child switch is not progress — re-baseline without any feedback.
+    if (childIdRef.current !== selectedChildId) {
+      childIdRef.current = selectedChildId;
+      previousStarsRef.current = currentStars;
+      previousStreakRef.current = currentStreak;
+      return;
+    }
+
     const crossedMilestone = STAR_MILESTONES.find(
-      (value) => value > previousStars && value <= currentStars
+      (value) => value > previousStarsRef.current && value <= currentStars
     );
 
     if (crossedMilestone) {
       void triggerFeedback("profile_milestone");
     }
 
-    previousStarsRef.current = currentStars;
-  }, [selectedChild?.stars]);
-
-  useEffect(() => {
-    if (insights.currentStreak > previousStreakRef.current && insights.currentStreak > 1) {
+    if (currentStreak > previousStreakRef.current && currentStreak > 1) {
       void triggerFeedback("streak_up");
     }
-    previousStreakRef.current = insights.currentStreak;
-  }, [insights.currentStreak]);
+
+    previousStarsRef.current = currentStars;
+    previousStreakRef.current = currentStreak;
+  }, [insights.currentStreak, selectedChild?.stars, selectedChildId]);
 
   if (isLoading) {
     return (

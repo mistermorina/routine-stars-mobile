@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { useFocusEffect } from "expo-router";
 import { getLocalIsoDate } from "@/lib/local-date";
 import { storage, KEYS } from "@/lib/storage";
@@ -78,12 +79,35 @@ export function useRoutines(selectedChildId?: string) {
   const [progress, setProgress] = useState<RoutineProgress>({});
   const [isLoading, setIsLoading] = useState(true);
   const hasMigrated = useRef(false);
+  // Mirrors of the persisted state. Mutators read these instead of the render
+  // closure, so two writes in the same tick cannot overwrite each other.
+  const routineTemplatesRef = useRef<Routine[]>([]);
+  const progressRef = useRef<RoutineProgress>({});
+  // Bumped on every local write so a slower reload cannot clobber it.
+  const revisionRef = useRef(0);
+
+  const hydrateTemplates = useCallback((next: Routine[]) => {
+    routineTemplatesRef.current = next;
+    setRoutineTemplates(next);
+  }, []);
+
+  const hydrateProgress = useCallback((next: RoutineProgress) => {
+    progressRef.current = next;
+    setProgress(next);
+  }, []);
 
   const loadRoutines = useCallback(async () => {
+    const revisionAtStart = revisionRef.current;
     const [storedRoutines, storedProgress] = await Promise.all([
       storage.getItem<Routine[]>(KEYS.CUSTOM_ROUTINES),
       storage.getItem<LegacyRoutineProgress | RoutineProgress>(KEYS.ROUTINE_PROGRESS),
     ]);
+
+    // A local write landed while we were reading — its value is the newer one.
+    if (revisionRef.current !== revisionAtStart) {
+      setIsLoading(false);
+      return;
+    }
 
     let templates: Routine[] = storedRoutines ?? [];
     const normalizedProgressResult = normalizeRoutineProgress(storedProgress);
@@ -112,7 +136,7 @@ export function useRoutines(selectedChildId?: string) {
             tasks: migratedProgress,
           },
         };
-        setProgress(newProgress);
+        hydrateProgress(newProgress);
         await storage.setItem(KEYS.ROUTINE_PROGRESS, newProgress);
 
         // Reset all tasks in templates to completed: false
@@ -124,15 +148,15 @@ export function useRoutines(selectedChildId?: string) {
         await storage.setItem(KEYS.CUSTOM_ROUTINES, cleanTemplates);
       }
     } else {
-      setProgress(normalizedProgress);
+      hydrateProgress(normalizedProgress);
       if (normalizedProgressResult.changed) {
         await storage.setItem(KEYS.ROUTINE_PROGRESS, normalizedProgress);
       }
     }
 
-    setRoutineTemplates(templates);
+    hydrateTemplates(templates);
     setIsLoading(false);
-  }, [selectedChildId]);
+  }, [hydrateProgress, hydrateTemplates, selectedChildId]);
 
   // Load routine templates and progress
   useEffect(() => {
@@ -161,77 +185,86 @@ export function useRoutines(selectedChildId?: string) {
     }));
   }, [routineTemplates, progress, selectedChildId]);
 
-  const addRoutine = useCallback(async (routine: Routine) => {
-    setRoutineTemplates((prev) => {
-      const updated = [...prev, { ...routine, tasks: routine.tasks.map((t) => ({ ...t, completed: false })) }];
-      storage.setItem(KEYS.CUSTOM_ROUTINES, updated);
-      return updated;
-    });
-  }, []);
+  const commitTemplates = useCallback(
+    async (next: Routine[]) => {
+      revisionRef.current += 1;
+      hydrateTemplates(next);
+      await storage.setItem(KEYS.CUSTOM_ROUTINES, next);
+    },
+    [hydrateTemplates]
+  );
 
-  const updateRoutine = useCallback(async (id: string, updates: Partial<Routine>) => {
-    setRoutineTemplates((prev) => {
-      const updated = prev.map((r) => (r.id === id ? { ...r, ...updates } : r));
-      storage.setItem(KEYS.CUSTOM_ROUTINES, updated);
-      return updated;
-    });
-  }, []);
+  const addRoutine = useCallback(
+    async (routine: Routine) => {
+      await commitTemplates([
+        ...routineTemplatesRef.current,
+        { ...routine, tasks: routine.tasks.map((t) => ({ ...t, completed: false })) },
+      ]);
+    },
+    [commitTemplates]
+  );
 
-  const removeRoutine = useCallback(async (id: string) => {
-    setRoutineTemplates((prev) => {
-      const updated = prev.filter((r) => r.id !== id);
-      storage.setItem(KEYS.CUSTOM_ROUTINES, updated);
-      return updated;
-    });
-  }, []);
+  const updateRoutine = useCallback(
+    async (id: string, updates: Partial<Routine>) => {
+      await commitTemplates(
+        routineTemplatesRef.current.map((r) => (r.id === id ? { ...r, ...updates } : r))
+      );
+    },
+    [commitTemplates]
+  );
 
-  const toggleTaskCompletion = useCallback(async (routineId: string, taskId: string) => {
-    if (!selectedChildId) return;
+  const removeRoutine = useCallback(
+    async (id: string) => {
+      await commitTemplates(routineTemplatesRef.current.filter((r) => r.id !== id));
+    },
+    [commitTemplates]
+  );
 
-    setProgress((prev) => {
+  const toggleTaskCompletion = useCallback(
+    async (routineId: string, taskId: string) => {
+      if (!selectedChildId) return;
+
       const today = getLocalIsoDate();
-      const childEntry = prev[selectedChildId];
-      const childProgress =
-        childEntry?.date === today ? childEntry.tasks : {};
-      const newChildProgress = {
-        ...childProgress,
-        [taskId]: !childProgress[taskId],
-      };
-      const updated = {
-        ...prev,
-        [selectedChildId]: { date: today, tasks: newChildProgress },
-      };
-      storage.setItem(KEYS.ROUTINE_PROGRESS, updated);
-      return updated;
-    });
-
-    // Return the toggled task for star calculation
-    const routine = routineTemplates.find((r) => r.id === routineId);
-    const task = routine?.tasks.find((t) => t.id === taskId);
-    if (task) {
-      const today = getLocalIsoDate();
-      const childEntry = progress[selectedChildId];
-      const childProgress =
-        childEntry?.date === today ? childEntry.tasks : {};
-      return { ...task, completed: !childProgress[taskId] };
-    }
-  }, [selectedChildId, routineTemplates, progress]);
-
-  const resetDailyProgress = useCallback(async () => {
-    if (!selectedChildId) return;
-
-    setProgress((prev) => {
-      const updated = {
-        ...prev,
+      const previous = progressRef.current;
+      const childEntry = previous[selectedChildId];
+      const childProgress = childEntry?.date === today ? childEntry.tasks : {};
+      const nextCompleted = !childProgress[taskId];
+      const updated: RoutineProgress = {
+        ...previous,
         [selectedChildId]: {
-          date: getLocalIsoDate(),
-          tasks: {},
+          date: today,
+          tasks: { ...childProgress, [taskId]: nextCompleted },
         },
       };
-      storage.setItem(KEYS.ROUTINE_PROGRESS, updated);
-      return updated;
-    });
-  }, [selectedChildId]);
+
+      revisionRef.current += 1;
+      hydrateProgress(updated);
+      await storage.setItem(KEYS.ROUTINE_PROGRESS, updated);
+
+      // Return the toggled task for star calculation. `nextCompleted` is the
+      // value that was actually persisted, so a double tap cannot report a
+      // stale completion state.
+      const routine = routineTemplatesRef.current.find((r) => r.id === routineId);
+      const task = routine?.tasks.find((t) => t.id === taskId);
+      if (task) {
+        return { ...task, completed: nextCompleted };
+      }
+    },
+    [hydrateProgress, selectedChildId]
+  );
+
+  // Same signature and (non-persisting) semantics as the raw state setter this
+  // hook used to hand out — it just keeps the mirror in sync as well.
+  const replaceRoutines = useCallback<Dispatch<SetStateAction<Routine[]>>>(
+    (action) => {
+      const next =
+        typeof action === "function"
+          ? (action as (previous: Routine[]) => Routine[])(routineTemplatesRef.current)
+          : action;
+      hydrateTemplates(next);
+    },
+    [hydrateTemplates]
+  );
 
   return {
     routines,
@@ -240,7 +273,6 @@ export function useRoutines(selectedChildId?: string) {
     updateRoutine,
     removeRoutine,
     toggleTaskCompletion,
-    resetDailyProgress,
-    setRoutines: setRoutineTemplates,
+    setRoutines: replaceRoutines,
   };
 }

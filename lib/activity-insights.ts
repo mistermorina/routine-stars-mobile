@@ -104,28 +104,53 @@ export function buildDailySummaries(logs: ActivityLog[]) {
   );
 }
 
-function getCurrentStreak(summaries: DailySummary[]) {
+function getStreakFromSummaries(summaries: DailySummary[], today: string) {
   if (summaries.length === 0) return 0;
 
-  const activeDays = summaries.map((item) => item.date);
-  let streak = 1;
-  let current = parseDate(activeDays[activeDays.length - 1]);
+  const activeDays = new Set(summaries.map((item) => item.date));
+  const cursor = parseDate(today);
 
-  for (let index = activeDays.length - 2; index >= 0; index -= 1) {
-    const previous = parseDate(activeDays[index]);
-    const diffInDays = Math.round(
-      (current.getTime() - previous.getTime()) / (1000 * 60 * 60 * 24)
-    );
+  // Grace rule: when today has no activity yet, anchor on yesterday instead.
+  if (!activeDays.has(formatIsoDate(cursor))) {
+    cursor.setDate(cursor.getDate() - 1);
 
-    if (diffInDays !== 1) {
-      break;
+    if (!activeDays.has(formatIsoDate(cursor))) {
+      return 0;
     }
+  }
 
+  let streak = 0;
+
+  // The set is finite and the cursor strictly decreases, so this always ends.
+  while (activeDays.has(formatIsoDate(cursor))) {
     streak += 1;
-    current = previous;
+    cursor.setDate(cursor.getDate() - 1);
   }
 
   return streak;
+}
+
+/**
+ * Consecutive active days, anchored at the local calendar day — not at the last
+ * log in the list.
+ *
+ * Grace rule: a streak may end **today** or **yesterday**.
+ * - Activity today → the streak is counted backwards starting at today.
+ * - No activity today but activity yesterday → the streak still shows, so the
+ *   child does not appear to lose it before the day is over.
+ * - Last activity older than yesterday → the streak is broken and this is `0`.
+ *
+ * Days are compared on the device's local calendar (noon-anchored, so DST
+ * shifts cannot swallow a day), never in UTC. Future-dated logs are ignored.
+ * Multiple logs on the same day count as one day.
+ *
+ * Pure function — pass `today` (`YYYY-MM-DD`) to make it deterministic in tests.
+ */
+export function getCurrentStreak(
+  logs: ActivityLog[],
+  today: string = getLocalIsoDate()
+) {
+  return getStreakFromSummaries(buildDailySummaries(logs), today);
 }
 
 function buildWeeklyItems(summaryMap: Map<string, DailySummary>) {
@@ -233,7 +258,7 @@ export function getActivityInsights(
   const totalStars = summaries.reduce((sum, item) => sum + item.totalStars, 0);
   const totalActivities = logs.length;
   const activeDays = summaries.length;
-  const currentStreak = getCurrentStreak(summaries);
+  const currentStreak = getStreakFromSummaries(summaries, formatIsoDate(today));
   const bestDay =
     summaries.length > 0
       ? [...summaries].sort((left, right) => right.totalStars - left.totalStars)[0]

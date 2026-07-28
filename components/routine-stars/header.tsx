@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -7,10 +7,11 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from "react-native-reanimated";
-import { ChevronDown, ChevronUp, Star, Settings } from "@/lib/icons";
+import { ChevronDown, ChevronUp, Lock, Star, Settings } from "@/lib/icons";
 import { AvatarImage } from "@/components/ui/avatar-image";
+import { ParentGateChallenge } from "@/components/parent-gate-challenge";
 import { cn } from "@/lib/utils";
-import { getThemePalette } from "@/lib/theme";
+import { getThemePalette, semanticColors } from "@/lib/theme";
 import type { Child } from "@/lib/types";
 
 interface HeaderProps {
@@ -32,6 +33,9 @@ export function Header({
   const starScale = useSharedValue(1);
   const prevStars = useSharedValue(child.stars);
   const palette = getThemePalette(child.theme);
+  // Sibling protection: a child must not be able to switch to another profile
+  // (and spend their stars) alone — the switch waits behind the adult gate.
+  const [pendingChildId, setPendingChildId] = useState<string | null>(null);
 
   useEffect(() => {
     if (child.stars !== prevStars.value) {
@@ -53,6 +57,30 @@ export function Header({
   const handleStarsPress = () => {
     router.push("/(tabs)/star-account");
   };
+
+  const handleChildPress = useCallback(
+    (id: string) => {
+      if (!onSelectChild) return;
+
+      // Tapping the already active profile is not a switch — stays free.
+      if (id === child.id) {
+        onSelectChild(id);
+        return;
+      }
+
+      setPendingChildId(id);
+    },
+    [child.id, onSelectChild]
+  );
+
+  const handleGateSuccess = useCallback(() => {
+    if (pendingChildId) onSelectChild?.(pendingChildId);
+    setPendingChildId(null);
+  }, [onSelectChild, pendingChildId]);
+
+  const handleGateCancel = useCallback(() => {
+    setPendingChildId(null);
+  }, []);
 
   if (collapsed) {
     return (
@@ -254,48 +282,72 @@ export function Header({
           </View>
 
           {allChildren && allChildren.length > 1 && onSelectChild ? (
-            <View className="flex-row flex-wrap gap-2 pt-3">
-              {allChildren.map((c) => {
-                const isActive = c.id === child.id;
-                return (
-                  <Pressable
-                    key={c.id}
-                    onPress={() => onSelectChild(c.id)}
-                    className={cn(
-                      "flex-row items-center gap-1.5 rounded-full border px-3 py-2",
-                      isActive ? "" : "border-border"
-                    )}
-                    style={
-                      isActive
-                        ? {
-                            backgroundColor: palette.tabActiveBg,
-                            borderColor: palette.accent,
-                          }
-                        : {
-                            backgroundColor: "rgba(255,255,255,0.74)",
-                          }
-                    }
-                  >
-                    <AvatarImage
-                      avatar={c.avatar}
-                      size={24}
-                      borderRadius={12}
-                      accessibilityLabel={`${c.name} Avatar`}
-                    />
-                    <Text
+            <>
+              <View className="flex-row flex-wrap gap-2 pt-3">
+                {allChildren.map((c) => {
+                  const isActive = c.id === child.id;
+                  return (
+                    <Pressable
+                      key={c.id}
+                      onPress={() => handleChildPress(c.id)}
                       className={cn(
-                        "text-sm font-body-semibold",
-                        isActive ? "" : "text-muted-foreground"
+                        "min-h-[44px] flex-row items-center gap-1.5 rounded-full border px-3 py-2",
+                        isActive ? "" : "border-border"
                       )}
-                      style={isActive ? { color: palette.accentText } : undefined}
-                      numberOfLines={1}
+                      style={
+                        isActive
+                          ? {
+                              backgroundColor: palette.tabActiveBg,
+                              borderColor: palette.accent,
+                            }
+                          : {
+                              backgroundColor: "rgba(255,255,255,0.74)",
+                            }
+                      }
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: isActive }}
+                      accessibilityLabel={
+                        isActive
+                          ? `${c.name} ist ausgewählt`
+                          : `Zu ${c.name} wechseln`
+                      }
+                      accessibilityHint={
+                        isActive
+                          ? undefined
+                          : "Nur für Erwachsene. Eine Rechenaufgabe muss gelöst werden."
+                      }
                     >
-                      {c.name}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+                      <AvatarImage
+                        avatar={c.avatar}
+                        size={24}
+                        borderRadius={12}
+                        accessibilityLabel={`${c.name} Avatar`}
+                      />
+                      <Text
+                        className={cn(
+                          "text-sm font-body-semibold",
+                          isActive ? "" : "text-muted-foreground"
+                        )}
+                        style={isActive ? { color: palette.accentText } : undefined}
+                        numberOfLines={1}
+                      >
+                        {c.name}
+                      </Text>
+                      {isActive ? null : (
+                        <Lock size={13} color={semanticColors.mutedForeground} />
+                      )}
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <ParentGateChallenge
+                visible={pendingChildId !== null}
+                title="Profil wechseln"
+                onSuccess={handleGateSuccess}
+                onCancel={handleGateCancel}
+              />
+            </>
           ) : null}
         </View>
       </View>
