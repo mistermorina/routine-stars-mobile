@@ -703,7 +703,7 @@ export default function DashboardScreen() {
                       {allDone
                         ? "Du hast dir deine Sterne verdient."
                         : heroRoutine
-                          ? `${heroOpenTasks} ${heroOpenTasks === 1 ? "Aufgabe" : "Aufgaben"} warten auf dich`
+                          ? `${heroOpenTasks} ${heroOpenTasks === 1 ? "Aufgabe wartet" : "Aufgaben warten"} auf dich`
                           : "Wähle eine Routine aus."}
                     </Text>
                     <PressableScale
@@ -828,7 +828,9 @@ export default function DashboardScreen() {
                 </Text>
                 <Text className="mt-2 text-base font-body leading-6" style={{ color: palette.accentText }}>
                   {nextRewardHint
-                    ? `Noch ${nextRewardHint.missingStars} Sterne`
+                    ? `Noch ${nextRewardHint.missingStars} ${
+                        nextRewardHint.missingStars === 1 ? "Stern" : "Sterne"
+                      }`
                     : "Belohnungen sind bereit"}
                 </Text>
                 <Image

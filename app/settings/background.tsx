@@ -18,10 +18,17 @@ import { cn } from "@/lib/utils";
 import type { BackgroundSkinId } from "@/lib/types";
 
 function SkinPreview({ skin }: { skin: BackgroundSkinOption }) {
+  const hasImage = Boolean(skin.image);
+
   return (
     <View
       className="h-28 overflow-hidden rounded-card"
-      style={{ backgroundColor: skin.previewBackground }}
+      // Artwork is layered over the light base at `imageOpacity`, exactly as
+      // ThemedScreenBackground does it — otherwise a scrimmed skin like
+      // Weltraum would preview far darker than it ever renders.
+      style={{
+        backgroundColor: hasImage ? semanticColors.background : skin.previewBackground,
+      }}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
@@ -30,7 +37,7 @@ function SkinPreview({ skin }: { skin: BackgroundSkinOption }) {
           source={skin.image}
           contentFit="cover"
           pointerEvents="none"
-          style={StyleSheet.absoluteFillObject}
+          style={[StyleSheet.absoluteFillObject, { opacity: skin.imageOpacity }]}
         />
       ) : (
         <>
@@ -197,7 +204,9 @@ export default function BackgroundSettingsScreen() {
                     <View
                       className="h-8 w-8 items-center justify-center rounded-full"
                       style={{
-                        backgroundColor: isSelected ? palette.tabActiveBg : skin.previewBackground,
+                        // Neutral rather than the skin colour: dark artwork
+                        // like Weltraum would put a dark glyph on a dark disc.
+                        backgroundColor: isSelected ? palette.tabActiveBg : semanticColors.muted,
                       }}
                     >
                       {isSelected ? (

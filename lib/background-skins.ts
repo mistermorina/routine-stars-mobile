@@ -36,7 +36,7 @@ export const BACKGROUND_SKINS: BackgroundSkinOption[] = [
   {
     id: "wolken",
     label: "Wolken",
-    description: "Himmel zum Träumen",
+    description: "Zum Träumen",
     previewBackground: "#D1F0FD",
     previewAccent: "#C4EAFD",
     previewSoft: "#E2F6FE",
@@ -46,7 +46,7 @@ export const BACKGROUND_SKINS: BackgroundSkinOption[] = [
   {
     id: "sonnenaufgang",
     label: "Sonnenaufgang",
-    description: "Warmes Morgenlicht",
+    description: "Morgenlicht",
     previewBackground: "#FEF0D6",
     previewAccent: "#FEDFB3",
     previewSoft: "#FEE3BF",
@@ -86,7 +86,7 @@ export const BACKGROUND_SKINS: BackgroundSkinOption[] = [
   {
     id: "ozean",
     label: "Ozean",
-    description: "Wellen und Muscheln",
+    description: "Unter Wasser",
     previewBackground: "#C7F5F6",
     previewAccent: "#7CDCE5",
     previewSoft: "#D3F6F9",
@@ -116,7 +116,7 @@ export const BACKGROUND_SKINS: BackgroundSkinOption[] = [
   {
     id: "schatzkarte",
     label: "Schatzkarte",
-    description: "Kompass und Route",
+    description: "Auf Schatzsuche",
     previewBackground: "#FDEDC4",
     previewAccent: "#F4D78F",
     previewSoft: "#FBDD94",
@@ -147,7 +147,7 @@ export const BACKGROUND_SKINS: BackgroundSkinOption[] = [
   {
     id: "weltraum",
     label: "Weltraum",
-    description: "Planeten und Kometen",
+    description: "Ferne Planeten",
     previewBackground: "#353BAB",
     previewAccent: "#4537A8",
     previewSoft: "#0A1048",
