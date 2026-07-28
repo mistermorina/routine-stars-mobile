@@ -10,11 +10,19 @@ import { IconPicker } from "@/components/ui/icon-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TemplateSelector } from "@/components/routine-templates/template-selector";
+import {
+  ScheduleEditor,
+  createScheduleFromTime,
+  describeSchedule,
+  sanitizeReminders,
+  sanitizeSchedule,
+} from "@/components/routine-stars/schedule-editor";
 import { useChildren } from "@/hooks/use-children";
 import { useToast } from "@/hooks/use-toast";
 import { useRoutines } from "@/hooks/use-routines";
 import { getDefaultRoutineColor } from "@/lib/default-values";
 import {
+  CalendarDays,
   Check,
   ChevronDown,
   GripVertical,
@@ -70,6 +78,7 @@ export default function RoutinesSettingsScreen() {
   const [draftRoutine, setDraftRoutine] = useState<Routine | null>(null);
   const [showIconPickerForTaskId, setShowIconPickerForTaskId] = useState<string | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showScheduleSection, setShowScheduleSection] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>();
 
   const activeTaskIcon = useMemo(
@@ -84,6 +93,7 @@ export default function RoutinesSettingsScreen() {
       tasks: routine.tasks.map((task) => ({ ...task })),
     });
     setShowSuggestions(false);
+    setShowScheduleSection(false);
     setSelectedTemplateId(templateId);
   };
 
@@ -92,6 +102,7 @@ export default function RoutinesSettingsScreen() {
     setDraftRoutine(null);
     setShowIconPickerForTaskId(null);
     setShowSuggestions(false);
+    setShowScheduleSection(false);
     setSelectedTemplateId(undefined);
   };
 
@@ -110,6 +121,8 @@ export default function RoutinesSettingsScreen() {
       id: `routine-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       name: template.name,
       color: template.color,
+      // Vorlagen bringen eine Startzeit mit; ohne Wochentage gilt sie täglich.
+      schedule: createScheduleFromTime(template.suggestedTime),
       tasks: template.tasks.map((task, index) => ({
         id: `task-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
         title: task.title,
@@ -176,6 +189,11 @@ export default function RoutinesSettingsScreen() {
       }))
       .filter((task) => task.title.length > 0);
 
+    // Wochentage werden dedupliziert, auf Mo–So sortiert und validiert; die
+    // Uhrzeit muss dem HH:mm-Format entsprechen, sonst faellt sie weg.
+    const sanitizedSchedule = sanitizeSchedule(draftRoutine.schedule);
+    const sanitizedRemindersValue = sanitizeReminders(draftRoutine.reminders);
+
     if (!sanitizedName || sanitizedTasks.length === 0) {
       toast({
         title: "Routine noch unvollständig",
@@ -189,6 +207,8 @@ export default function RoutinesSettingsScreen() {
       ...draftRoutine,
       name: sanitizedName,
       tasks: sanitizedTasks,
+      schedule: sanitizedSchedule,
+      reminders: sanitizedRemindersValue,
     });
     toast({
       title: "Routine gespeichert",
@@ -497,6 +517,11 @@ export default function RoutinesSettingsScreen() {
                       <Text className="mt-1 text-base font-body leading-6 text-muted-foreground">
                         {routine.tasks.length} Aufgaben • familienweit aktiv
                       </Text>
+                      {routine.schedule || routine.reminders ? (
+                        <Text className="mt-1 text-sm font-body leading-5 text-muted-foreground">
+                          {describeSchedule(routine.schedule, routine.reminders)}
+                        </Text>
+                      ) : null}
                     </View>
                     <Pressable
                       onPress={() => (isEditing ? resetEditor() : openEditor(routine))}
@@ -630,6 +655,68 @@ export default function RoutinesSettingsScreen() {
                           }
                           scrollEnabled={false}
                         />
+                      </View>
+
+                      <View
+                        className="rounded-card border px-4 py-4"
+                        style={{
+                          borderColor: palette.accentBorder,
+                          backgroundColor: palette.accentSoft,
+                        }}
+                      >
+                        <Pressable
+                          onPress={() => setShowScheduleSection((prev) => !prev)}
+                          className="min-h-11 flex-row items-center justify-between"
+                          accessibilityRole="button"
+                          accessibilityLabel="Zeitplan und Erinnerung"
+                          accessibilityState={{ expanded: showScheduleSection }}
+                        >
+                          <View className="mr-3 flex-1 flex-row items-start gap-2.5">
+                            <CalendarDays
+                              size={18}
+                              color={palette.accentStrong}
+                              style={{ marginTop: 2 }}
+                            />
+                            <View className="flex-1">
+                              <Text
+                                className="text-sm font-body-semibold"
+                                style={{ color: palette.accentText }}
+                              >
+                                Zeitplan & Erinnerung
+                              </Text>
+                              <Text className="mt-1 text-base font-body leading-6 text-muted-foreground">
+                                {describeSchedule(
+                                  routineDraft.schedule,
+                                  routineDraft.reminders
+                                )}
+                              </Text>
+                            </View>
+                          </View>
+                          <ChevronDown
+                            size={18}
+                            color={palette.accentStrong}
+                            style={{
+                              transform: [
+                                { rotate: showScheduleSection ? "180deg" : "0deg" },
+                              ],
+                            }}
+                          />
+                        </Pressable>
+
+                        {showScheduleSection ? (
+                          <View className="mt-4">
+                            <ScheduleEditor
+                              schedule={routineDraft.schedule}
+                              reminders={routineDraft.reminders}
+                              palette={palette}
+                              onChange={(schedule, reminders) =>
+                                setDraftRoutine((prev) =>
+                                  prev ? { ...prev, schedule, reminders } : prev
+                                )
+                              }
+                            />
+                          </View>
+                        ) : null}
                       </View>
 
                       <View className={isCompactWidth ? "gap-3" : "flex-row gap-3"}>

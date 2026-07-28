@@ -20,14 +20,16 @@ import { RoutineCompleteDialog } from "@/components/routine-stars/routine-comple
 import { Confetti } from "@/components/routine-stars/confetti";
 import { StickerRewardSheet } from "@/components/stickers/sticker-reward-sheet";
 import { Card } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { PressableScale } from "@/components/ui/pressable-scale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
+import { toast } from "@/hooks/use-toast";
 import { triggerFeedback } from "@/lib/feedback";
 import { getActivityInsights } from "@/lib/activity-insights";
-import { getLocalIsoDate } from "@/lib/local-date";
+import { getLocalIsoDate, isRoutineDueOn } from "@/lib/local-date";
 import {
   canClaimStickerRewardEvent,
   createStickerRewardEvent,
@@ -57,14 +59,6 @@ const CATEGORY_FILTERS: { key: RoutineVisualKey; label: string }[] = [
   { key: "generic", label: "Weitere" },
 ];
 
-const WEEKDAY_BY_INDEX = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"] as const;
-
-function isRoutineDueToday(routine: Routine): boolean {
-  const days = routine.schedule?.days;
-  if (!days || days.length === 0) return true;
-  return days.includes(WEEKDAY_BY_INDEX[new Date().getDay()]);
-}
-
 export default function DashboardScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -76,6 +70,8 @@ export default function DashboardScreen() {
     isLoading,
     selectChild,
     addStars,
+    deductStars,
+    todayIso,
   } = useChildren();
   const { getLogsForChild, logActivity } = useActivityLogs();
   const { rewards } = useRewards();
@@ -106,6 +102,7 @@ export default function DashboardScreen() {
     toggleHeaderCollapsed,
   } = useCollapsibleHeader();
   const [routineFilter, setRoutineFilter] = useState<RoutineFilter>("heute");
+  const [pendingUndoTaskId, setPendingUndoTaskId] = useState<string | null>(null);
   const [pendingScrollRoutineId, setPendingScrollRoutineId] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   const routineListY = useRef(0);
@@ -130,9 +127,14 @@ export default function DashboardScreen() {
   const showTimeFilters = routines.length > 1;
   const displayRoutines = useMemo(() => {
     if (!showTimeFilters || routineFilter === "alle") return routines;
-    if (routineFilter === "heute") return routines.filter(isRoutineDueToday);
+    // `todayIso` comes from ChildrenProvider, so the list re-filters itself on a
+    // midnight rollover / foreground without this screen owning a timer.
+    // A routine without a schedule (or with an empty day list) is always due.
+    if (routineFilter === "heute") {
+      return routines.filter((routine) => isRoutineDueOn(routine.schedule, todayIso));
+    }
     return routines.filter((routine) => routineCategories.get(routine.id) === routineFilter);
-  }, [routineCategories, routineFilter, routines, showTimeFilters]);
+  }, [routineCategories, routineFilter, routines, showTimeFilters, todayIso]);
 
   const totalTasks = routines.reduce((count, routine) => count + routine.tasks.length, 0);
   const completedTasks = routines.reduce(
@@ -184,12 +186,26 @@ export default function DashboardScreen() {
       }
     : undefined;
   const hasPendingStickerReward = Boolean(pendingStickerRewardEvent);
-  const starsToday = useMemo(() => {
-    const today = getLocalIsoDate();
-    return childLogs
-      .filter((log) => log.date === today)
-      .reduce((sum, log) => sum + log.stars, 0);
-  }, [childLogs]);
+  const starsToday = useMemo(
+    () =>
+      childLogs
+        .filter((log) => log.date === todayIso)
+        .reduce((sum, log) => sum + log.stars, 0),
+    [childLogs, todayIso]
+  );
+
+  /**
+   * Task behind the open undo dialog, resolved from the live routine list so a
+   * reload cannot leave the dialog pointing at a stale copy.
+   */
+  const pendingUndo = useMemo(() => {
+    if (!pendingUndoTaskId) return null;
+    for (const routine of routines) {
+      const task = routine.tasks.find((entry) => entry.id === pendingUndoTaskId);
+      if (task) return { routine, task };
+    }
+    return null;
+  }, [pendingUndoTaskId, routines]);
 
   const handleHeroPress = useCallback(() => {
     if (allDone || !heroRoutine) {
@@ -258,7 +274,14 @@ export default function DashboardScreen() {
 
       if (!parentRoutine) return;
       const task = parentRoutine.tasks.find((entry) => entry.id === taskId);
-      if (!task || task.completed) return;
+      if (!task) return;
+
+      // Already checked off: the tap is an undo intent, never a second award.
+      // Everything below therefore still runs exactly once per task and day.
+      if (task.completed) {
+        setPendingUndoTaskId(taskId);
+        return;
+      }
 
       const previousInsights = getActivityInsights(getLogsForChild(selectedChildId));
       const totalRoutineCountToday = routines.filter((routine) => routine.tasks.length > 0).length;
@@ -351,6 +374,58 @@ export default function DashboardScreen() {
       toggleTaskCompletion,
     ]
   );
+
+  const handleCancelTaskUndo = useCallback(() => {
+    setPendingUndoTaskId(null);
+  }, []);
+
+  /**
+   * Same-day un-complete.
+   *
+   * No extra date guard is needed: `useRoutines` stores progress as
+   * `{ date, tasks }` per child and only merges `tasks` when `date` equals the
+   * local day, so a task that renders as completed was completed *today*.
+   * Yesterday's flags are dropped (and rewritten) on load.
+   */
+  const handleConfirmTaskUndo = useCallback(async () => {
+    const target = pendingUndo;
+    setPendingUndoTaskId(null);
+
+    if (!target || !selectedChildId || !target.task.completed) return;
+
+    // Give back exactly what was awarded — the completion may have included a
+    // timer bonus, which `task.stars` alone does not cover.
+    const awardedStars = childLogs
+      .filter((log) => log.taskId === target.task.id && log.date === todayIso)
+      .reduce((sum, log) => sum + log.stars, 0);
+    const starsToRevoke = awardedStars > 0 ? awardedStars : target.task.stars;
+
+    await toggleTaskCompletion(target.routine.id, target.task.id);
+    await deductStars(selectedChildId, starsToRevoke);
+    // The log has no undo flag, so the correction is a negative-star entry that
+    // keeps the ledger and "Heute geschafft" in sync with the balance.
+    await logActivity(selectedChildId, {
+      ...target.task,
+      completed: false,
+      title: `Zurückgenommen: ${target.task.title}`,
+      stars: -starsToRevoke,
+      bonusStars: undefined,
+    });
+
+    void triggerFeedback("theme_preview", { disableSound: true });
+    toast({
+      title: "Aufgabe zurückgenommen",
+      description: `${starsToRevoke} ${starsToRevoke === 1 ? "Stern" : "Sterne"} wieder abgezogen.`,
+    });
+  }, [
+    childLogs,
+    deductStars,
+    logActivity,
+    pendingUndo,
+    selectedChildId,
+    todayIso,
+    toggleTaskCompletion,
+  ]);
 
   const handleStartTimer = useCallback((task: Task) => {
     setTimerTask(task);
@@ -917,6 +992,15 @@ export default function DashboardScreen() {
           isOpen={showCompleteDialog}
           onClose={() => setShowCompleteDialog(false)}
           childTheme={selectedChild.theme}
+        />
+
+        <ConfirmDialog
+          visible={pendingUndo !== null}
+          title="Aufgabe zurücknehmen?"
+          description="Die Sterne werden wieder abgezogen."
+          confirmLabel="Zurücknehmen"
+          onConfirm={handleConfirmTaskUndo}
+          onCancel={handleCancelTaskUndo}
         />
 
         <StickerRewardSheet

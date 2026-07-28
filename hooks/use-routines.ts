@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { useFocusEffect } from "expo-router";
 import { getLocalIsoDate } from "@/lib/local-date";
+import { syncRoutineReminders } from "@/lib/notifications";
 import { storage, KEYS } from "@/lib/storage";
 import type { Routine } from "@/lib/types";
 
@@ -190,6 +191,14 @@ export function useRoutines(selectedChildId?: string) {
       revisionRef.current += 1;
       hydrateTemplates(next);
       await storage.setItem(KEYS.CUSTOM_ROUTINES, next);
+
+      // Every template mutation can change a name, a weekday, a time or a
+      // reminder switch, so the schedule is rebuilt from `next` here — the
+      // single choke point add/update/remove all pass through. Fire and
+      // forget: notification scheduling must never delay or fail a save,
+      // and syncRoutineReminders() resolves with a status instead of
+      // throwing.
+      void syncRoutineReminders(next);
     },
     [hydrateTemplates]
   );
@@ -216,6 +225,22 @@ export function useRoutines(selectedChildId?: string) {
   const removeRoutine = useCallback(
     async (id: string) => {
       await commitTemplates(routineTemplatesRef.current.filter((r) => r.id !== id));
+    },
+    [commitTemplates]
+  );
+
+  /**
+   * Targeted toggle for the notification settings screen: flips only
+   * `reminders.enabled` and keeps a custom message intact. Goes through
+   * commitTemplates, so the reminder schedule is rebuilt automatically.
+   */
+  const setRoutineReminderEnabled = useCallback(
+    async (routineId: string, enabled: boolean) => {
+      await commitTemplates(
+        routineTemplatesRef.current.map((r) =>
+          r.id === routineId ? { ...r, reminders: { ...r.reminders, enabled } } : r
+        )
+      );
     },
     [commitTemplates]
   );
@@ -272,6 +297,7 @@ export function useRoutines(selectedChildId?: string) {
     addRoutine,
     updateRoutine,
     removeRoutine,
+    setRoutineReminderEnabled,
     toggleTaskCompletion,
     setRoutines: replaceRoutines,
   };

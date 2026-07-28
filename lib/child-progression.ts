@@ -215,14 +215,27 @@ function getMaxStreak(logs: ActivityLog[]) {
   return best;
 }
 
+// Undo entries carry negative stars; a task only counts as completed when its
+// net star sum for the day stays positive (manual adjustments log 0 and drop out).
+function getNetCompletedTaskIds(logs: ActivityLog[], date: string): Set<string> {
+  const netByTask = new Map<string, number>();
+  for (const log of logs) {
+    if (log.date !== date) continue;
+    netByTask.set(log.taskId, (netByTask.get(log.taskId) ?? 0) + log.stars);
+  }
+  const completed = new Set<string>();
+  for (const [taskId, net] of netByTask) {
+    if (net > 0) completed.add(taskId);
+  }
+  return completed;
+}
+
 function countCompletedRoutinesForDate(
   logs: ActivityLog[],
   routines: Routine[],
   date: string
 ) {
-  const completedTaskIds = new Set(
-    logs.filter((log) => log.date === date).map((log) => log.taskId)
-  );
+  const completedTaskIds = getNetCompletedTaskIds(logs, date);
 
   return routines.filter(
     (routine) =>
@@ -257,7 +270,7 @@ export function getMissionProgress(
 
   switch (mission.kind) {
     case "complete_3_tasks":
-      current = todayLogs.length;
+      current = getNetCompletedTaskIds(todayLogs, date).size;
       break;
     case "earn_5_stars":
       current = todayLogs.reduce((sum, log) => sum + log.stars, 0);

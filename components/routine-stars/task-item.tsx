@@ -82,7 +82,13 @@ export function TaskItem({
   };
 
   const handlePress = () => {
-    if (isCompleted || isAnimating) return;
+    if (isAnimating) return;
+
+    // Completed tasks stay tappable so the dashboard can offer same-day undo
+    if (isCompleted) {
+      onComplete();
+      return;
+    }
 
     // If task has timer, delegate to timer modal
     if (task.timerInMinutes && task.timerInMinutes > 0) {
@@ -177,7 +183,7 @@ export function TaskItem({
       ? `${task.title}, Timer starten`
       : `${task.title}, Aufgabe erledigen`;
   const taskAccessibilityHint = isCompleted
-    ? undefined
+    ? "Doppeltippen zum Zurücknehmen."
     : hasTimer
       ? "Öffnet den Timer für diese Aufgabe."
       : "Tippen oder nach links wischen, um die Aufgabe zu erledigen.";
@@ -242,11 +248,11 @@ export function TaskItem({
               onPress={handlePress}
               onPressIn={handlePressIn}
               onPressOut={handlePressOut}
-              disabled={isCompleted || isAnimating}
+              disabled={isAnimating}
               accessibilityRole="button"
               accessibilityLabel={taskAccessibilityLabel}
               accessibilityHint={taskAccessibilityHint}
-              accessibilityState={{ disabled: isCompleted || isAnimating, checked: isCompleted }}
+              accessibilityState={{ disabled: isAnimating, checked: isCompleted }}
             >
               <Animated.View
             style={[

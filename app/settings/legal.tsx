@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, Linking } from "react-native";
+import { View, Text, ScrollView, Linking, ActivityIndicator } from "react-native";
 import Animated from "react-native-reanimated";
 import Constants from "expo-constants";
 import {
@@ -25,6 +25,7 @@ import { Separator } from "@/components/ui/separator";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
 import { useToast } from "@/hooks/use-toast";
+import { exportAppData } from "@/lib/backup";
 import { triggerFeedback } from "@/lib/feedback";
 import { enterFade, enterStagger, exitFade } from "@/lib/motion";
 import { getThemePalette, semanticColors, shadowPresets } from "@/lib/theme";
@@ -70,6 +71,7 @@ export default function LegalSettings() {
   const { selectedChild } = useChildren();
   const { toast } = useToast();
   const [expandedId, setExpandedId] = useState<LegalDocumentId | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const palette = getThemePalette(selectedChild?.theme);
   const appVersion = Constants.expoConfig?.version ?? null;
 
@@ -84,11 +86,30 @@ export default function LegalSettings() {
     });
   }
 
-  function handleExportData() {
-    toast({
-      title: "Datenexport folgt später",
-      description: "In dieser Version gibt es noch keinen lokalen Export als Datei.",
-    });
+  async function handleExportData() {
+    if (isExporting) return;
+
+    setIsExporting(true);
+
+    try {
+      const result = await exportAppData();
+
+      if (result.ok) {
+        toast({
+          title: "Export erstellt",
+          description: "Die JSON-Datei wurde zum Teilen bereitgestellt.",
+        });
+        return;
+      }
+
+      toast({
+        title: "Export fehlgeschlagen",
+        description: result.error,
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   return (
@@ -284,23 +305,33 @@ export default function LegalSettings() {
               <View className="flex-1">
                 <Text className="text-lg font-headline text-foreground">Datenexport</Text>
                 <Text className="mt-1 text-sm font-body leading-6 text-muted-foreground">
-                  Ein Export deiner lokalen Daten als Datei ist vorgesehen, in dieser Version
-                  aber noch nicht verfügbar.
+                  Sichere alle lokal gespeicherten Daten als JSON-Datei und teile sie mit dir
+                  selbst. Avatar-Fotos und die Eltern-PIN sind nicht enthalten.
                 </Text>
               </View>
             </View>
             <Button
               variant="outline"
-              onPress={handleExportData}
+              onPress={() => {
+                void handleExportData();
+              }}
+              disabled={isExporting}
               accessibilityRole="button"
-              accessibilityLabel="Datenexport folgt später"
+              accessibilityLabel="Daten als JSON-Datei exportieren"
+              accessibilityState={{ busy: isExporting, disabled: isExporting }}
               className="mt-4 w-full rounded-card border"
               style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.82)" }}
             >
               <View className="flex-row items-center gap-2">
-                <Download size={18} color={palette.accentText} />
+                <View className="h-[18px] w-[18px] items-center justify-center">
+                  {isExporting ? (
+                    <ActivityIndicator size="small" color={palette.accentText} />
+                  ) : (
+                    <Download size={18} color={palette.accentText} />
+                  )}
+                </View>
                 <Text className="text-base font-body-semibold" style={{ color: palette.accentText }}>
-                  Datenexport folgt später
+                  {isExporting ? "Export wird erstellt …" : "Daten exportieren"}
                 </Text>
               </View>
             </Button>

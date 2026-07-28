@@ -43,14 +43,35 @@ export interface Task {
   bonusStars?: number;
 }
 
+/* ------------------------------------------------------------------ *
+ * WEEKDAY CONVENTION — read this before touching a schedule.
+ *
+ * A weekday is stored as the German two-letter LABEL ("Mo" … "So"),
+ * never as a number. That convention predates the notification engine:
+ * `lib/default-values.ts` produces these strings, the dashboard "Heute"
+ * filter reads them, and installed apps already carry them in
+ * AsyncStorage. Renaming it to 0–6 would cost a storage migration for
+ * zero benefit, so the labels stay and every numeric conversion is
+ * centralised in exactly two places:
+ *
+ *   JS `Date.getDay()` (0 = Sunday)      → getLocalWeekday()  in lib/local-date.ts
+ *   expo weekly trigger (1 = Sunday)     → toExpoWeekday()    in lib/notifications.ts
+ *
+ * Do not derive a weekday number anywhere else.
+ * ------------------------------------------------------------------ */
+export type Weekday = "Mo" | "Di" | "Mi" | "Do" | "Fr" | "Sa" | "So";
+
 export interface Schedule {
-  days: ("Mo" | "Di" | "Mi" | "Do" | "Fr" | "Sa" | "So")[];
-  time: string; // HH:mm format
+  /** Missing or empty means: the routine is due every day. */
+  days: Weekday[];
+  /** Local 24h time as "HH:mm". Without it no reminder can be scheduled. */
+  time?: string;
 }
 
 export interface Reminders {
   enabled: boolean;
-  message: string;
+  /** Custom notification body; falls back to a German default per routine. */
+  message?: string;
 }
 
 export interface Routine {
@@ -69,12 +90,18 @@ export interface Reward {
   iconName: string;
 }
 
+/**
+ * Master switch for routine reminders, persisted under
+ * `KEYS.NOTIFICATION_SETTINGS`. `syncRoutineReminders()` honours it: while it
+ * is off nothing is scheduled, no matter what a single routine says.
+ *
+ * The former `pushNotifications` / `rewardNotifications` / `quietFrom` /
+ * `quietTo` fields were removed — nothing ever read them and the app has no
+ * push backend and no quiet-hours implementation, so the switches promised
+ * behaviour that did not exist.
+ */
 export interface NotificationSettings {
   routineReminders: boolean;
-  pushNotifications: boolean;
-  rewardNotifications: boolean;
-  quietFrom: string;
-  quietTo: string;
 }
 
 export interface ActivityLog {

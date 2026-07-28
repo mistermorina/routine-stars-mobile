@@ -15,11 +15,14 @@ import Animated, {
   FadeOutUp,
   Layout,
 } from "react-native-reanimated";
+import { useActivityLogs } from "@/hooks/use-activity-logs";
 import { useChildren } from "@/hooks/use-children";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { Separator } from "@/components/ui/separator";
 import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
 import { AvatarImage } from "@/components/ui/avatar-image";
@@ -31,8 +34,10 @@ import {
 import { pickAvatarPhotoAsync } from "@/lib/avatar-photo-picker";
 import { useRoutines } from "@/hooks/use-routines";
 import { useRewards } from "@/hooks/use-rewards";
+import { triggerFeedback } from "@/lib/feedback";
 import {
   ChevronRight,
+  Minus,
   Plus,
   Trash2,
   Check,
@@ -43,7 +48,7 @@ import {
   ImagePlus,
   getIcon,
 } from "@/lib/icons";
-import { getThemePalette } from "@/lib/theme";
+import { getThemePalette, semanticColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { AgeGroup, AvatarValue, Child, ChildTheme } from "@/lib/types";
 
@@ -59,11 +64,47 @@ const AGE_GROUP_OPTIONS: { value: AgeGroup; label: string }[] = [
   { value: "9-12", label: "9-12" },
 ];
 
+const STAR_ADJUST_REASONS = [
+  "Bonus",
+  "Ausgleich",
+  "Versehen korrigiert",
+  "Sonstiges",
+] as const;
+
+type StarAdjustReason = (typeof STAR_ADJUST_REASONS)[number];
+
+/** Upper bound for one correction. Larger moves are applied in several steps. */
+const MAX_STAR_ADJUSTMENT = 50;
+
+/**
+ * Task id every manual parent correction is logged under.
+ *
+ * No routine task can ever carry this id, so `countCompletedRoutinesForDate`
+ * in `lib/child-progression.ts` — which matches logged `taskId`s against the
+ * task ids of a routine — can never mistake a correction for a finished
+ * routine. The `first_routine` sticker stays tied to real completions.
+ */
+const MANUAL_ADJUSTMENT_TASK_ID = "manual-adjustment";
+
+function formatStarCount(amount: number) {
+  return `${amount} ${amount === 1 ? "Stern" : "Sterne"}`;
+}
+
+function formatSignedStars(delta: number) {
+  return `${delta > 0 ? "+" : delta < 0 ? "-" : "±"}${Math.abs(delta)}`;
+}
+
+/** A correction may never push a balance below zero, and never above the cap. */
+function clampStarDraft(value: number, currentStars: number) {
+  return Math.max(-currentStars, Math.min(MAX_STAR_ADJUSTMENT, value));
+}
+
 export default function ChildrenSettings() {
   const router = useRouter();
   const params = useLocalSearchParams<{ preview?: string | string[] }>();
-  const { children, addChild, updateChild, removeChild } = useChildren();
+  const { children, addChild, updateChild, removeChild, addStars, deductStars } = useChildren();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogs();
   const { routines } = useRoutines();
   const { rewards } = useRewards();
   const [expandedChildId, setExpandedChildId] = useState<string | null>(null);
@@ -75,6 +116,11 @@ export default function ChildrenSettings() {
   const [newChildAvatar, setNewChildAvatar] = useState<AvatarValue>(DEFAULT_AVATAR_VALUE);
   const [newChildTheme, setNewChildTheme] = useState<ChildTheme>("sterne");
   const [newChildAgeGroup, setNewChildAgeGroup] = useState<AgeGroup>("6-8");
+  // Only one child card is expanded at a time, so a single draft is enough —
+  // it is reset whenever the expanded card changes.
+  const [starDraft, setStarDraft] = useState(0);
+  const [starReason, setStarReason] = useState<StarAdjustReason | null>(null);
+  const [starConfirmChildId, setStarConfirmChildId] = useState<string | null>(null);
   const newChildNameInputRef = useRef<RNTextInput>(null);
 
   const allAvatars = Object.entries(avatarCategories);
@@ -85,6 +131,7 @@ export default function ChildrenSettings() {
     [children]
   );
   const childCountLabel = `${children.length} ${children.length === 1 ? "Kind" : "Kinder"}`;
+  const starConfirmChild = children.find((child) => child.id === starConfirmChildId);
 
   useEffect(() => {
     if (!__DEV__) return;
@@ -126,6 +173,77 @@ export default function ChildrenSettings() {
     setExpandedChildId((prev) => (prev === childId ? null : childId));
     setEditingNameId(null);
     setShowAvatarPicker(null);
+    resetStarAdjustment();
+  }
+
+  function resetStarAdjustment() {
+    setStarDraft(0);
+    setStarReason(null);
+    setStarConfirmChildId(null);
+  }
+
+  function changeStarDraft(child: Child, delta: number) {
+    const next = clampStarDraft(starDraft + delta, child.stars);
+    if (next === starDraft) return;
+
+    setStarDraft(next);
+    void triggerFeedback("theme_preview", { disableSound: true });
+  }
+
+  function selectStarReason(reason: StarAdjustReason) {
+    setStarReason(reason);
+    void triggerFeedback("theme_preview", { disableSound: true });
+  }
+
+  /**
+   * Applies the pending correction to the balance and writes an audit entry.
+   *
+   * The log entry carries `stars: 0` on purpose. `child.stars` is the balance
+   * and is moved by `addStars`/`deductStars`; the activity log is the record of
+   * stars *earned by completing tasks*, which every statistic, the daily
+   * mission "Fünf Sterne sammeln" and `getCumulativeEarnedStars` read. Booking
+   * the delta there would let a parent correction move the child's mission and
+   * sticker progress, and a negative value would render as "+-2" in
+   * `app/settings/stats.tsx` and pull day totals below zero. The signed delta
+   * lives in the label instead, so the correction stays fully traceable.
+   */
+  async function applyStarAdjustment(child: Child) {
+    const delta = clampStarDraft(starDraft, child.stars);
+    const reason = starReason;
+
+    setStarConfirmChildId(null);
+
+    if (delta === 0 || reason === null) return;
+
+    const amount = Math.abs(delta);
+    const isAddition = delta > 0;
+
+    if (isAddition) {
+      await addStars(child.id, amount);
+    } else {
+      await deductStars(child.id, amount);
+    }
+
+    await logActivity(child.id, {
+      id: MANUAL_ADJUSTMENT_TASK_ID,
+      title: `Sterne angepasst: ${formatSignedStars(delta)} (${reason})`,
+      iconName: "star",
+      completed: true,
+      stars: 0,
+    });
+
+    // Parent area stays quiet — haptics only, no sound.
+    void triggerFeedback(isAddition ? "stars_added" : "reward_redeemed", {
+      disableSound: true,
+    });
+
+    toast({
+      title: `${formatStarCount(amount)} ${isAddition ? "hinzugefügt" : "abgezogen"}`,
+      description: `Grund: ${reason} · Neues Guthaben: ${formatStarCount(child.stars + delta)}`,
+    });
+
+    setStarDraft(0);
+    setStarReason(null);
   }
 
   function startEditName(child: Child) {
@@ -272,6 +390,11 @@ export default function ChildrenSettings() {
 
       {children.map((child) => {
         const childPalette = getThemePalette(child.theme);
+        const starPreview = Math.max(0, child.stars + starDraft);
+        const canDecreaseStars = child.stars + starDraft > 0;
+        const canIncreaseStars = starDraft < MAX_STAR_ADJUSTMENT;
+        const canApplyStars = starDraft !== 0 && starReason !== null;
+        const canResetStars = starDraft !== 0 || starReason !== null;
 
         return (
           <Animated.View
@@ -581,6 +704,208 @@ export default function ChildrenSettings() {
                           </Pressable>
                         );
                       })}
+                    </View>
+                  </View>
+
+                  {/* Star correction */}
+                  <View
+                    className="rounded-card border px-4 py-4"
+                    style={{ borderColor: childPalette.accentBorder, backgroundColor: "rgba(255,255,255,0.84)" }}
+                  >
+                    <View className="mb-1 flex-row items-center gap-2">
+                      <Star size={16} color={childPalette.accentStrong} />
+                      <Text className="text-sm font-body-semibold" style={{ color: childPalette.accentText }}>
+                        Sterne anpassen
+                      </Text>
+                    </View>
+                    <Text className="mb-3 text-xs font-body text-muted-foreground">
+                      Korrekturen landen mit Grund im Verlauf.
+                    </Text>
+
+                    <View
+                      className="flex-row items-center justify-between rounded-tile px-4 py-3"
+                      style={{ backgroundColor: childPalette.tabActiveBg }}
+                    >
+                      <Text className="text-sm font-body text-muted-foreground">
+                        Aktuelles Guthaben
+                      </Text>
+                      <View className="flex-row items-center gap-1.5">
+                        <Star size={18} color={semanticColors.goldDeep} fill={semanticColors.gold} />
+                        <Text
+                          className="text-lg font-headline"
+                          style={{ color: childPalette.accentText }}
+                          maxFontSizeMultiplier={1.4}
+                        >
+                          {child.stars}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View className="mt-3 flex-row items-center justify-between gap-2">
+                      <PressableScale
+                        onPress={() => changeStarDraft(child, -5)}
+                        disabled={!canDecreaseStars}
+                        className="h-12 min-w-[52px] items-center justify-center rounded-tile border px-3"
+                        style={{
+                          backgroundColor: "rgba(255,255,255,0.78)",
+                          borderColor: childPalette.accentBorder,
+                          opacity: canDecreaseStars ? 1 : 0.4,
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel="Fünf Sterne abziehen"
+                        accessibilityState={{ disabled: !canDecreaseStars }}
+                      >
+                        <Text
+                          className="text-sm font-body-semibold"
+                          style={{ color: childPalette.accentText }}
+                          maxFontSizeMultiplier={1.3}
+                        >
+                          -5
+                        </Text>
+                      </PressableScale>
+
+                      <PressableScale
+                        onPress={() => changeStarDraft(child, -1)}
+                        disabled={!canDecreaseStars}
+                        className="h-12 w-12 items-center justify-center rounded-tile border"
+                        style={{
+                          backgroundColor: childPalette.accentSoft,
+                          borderColor: childPalette.accent,
+                          opacity: canDecreaseStars ? 1 : 0.4,
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel="Einen Stern abziehen"
+                        accessibilityState={{ disabled: !canDecreaseStars }}
+                      >
+                        <Minus size={20} color={childPalette.accentStrong} />
+                      </PressableScale>
+
+                      <View className="flex-1 items-center">
+                        <Text
+                          className="text-xl font-headline"
+                          style={{
+                            color:
+                              starDraft === 0
+                                ? semanticColors.mutedForeground
+                                : childPalette.accentText,
+                          }}
+                          maxFontSizeMultiplier={1.3}
+                        >
+                          {formatSignedStars(starDraft)}
+                        </Text>
+                        <Text
+                          className="mt-0.5 text-xs font-body text-muted-foreground"
+                          maxFontSizeMultiplier={1.4}
+                        >
+                          Neu: {starPreview}
+                        </Text>
+                      </View>
+
+                      <PressableScale
+                        onPress={() => changeStarDraft(child, 1)}
+                        disabled={!canIncreaseStars}
+                        className="h-12 w-12 items-center justify-center rounded-tile border"
+                        style={{
+                          backgroundColor: childPalette.accentSoft,
+                          borderColor: childPalette.accent,
+                          opacity: canIncreaseStars ? 1 : 0.4,
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel="Einen Stern hinzufügen"
+                        accessibilityState={{ disabled: !canIncreaseStars }}
+                      >
+                        <Plus size={20} color={childPalette.accentStrong} />
+                      </PressableScale>
+
+                      <PressableScale
+                        onPress={() => changeStarDraft(child, 5)}
+                        disabled={!canIncreaseStars}
+                        className="h-12 min-w-[52px] items-center justify-center rounded-tile border px-3"
+                        style={{
+                          backgroundColor: "rgba(255,255,255,0.78)",
+                          borderColor: childPalette.accentBorder,
+                          opacity: canIncreaseStars ? 1 : 0.4,
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel="Fünf Sterne hinzufügen"
+                        accessibilityState={{ disabled: !canIncreaseStars }}
+                      >
+                        <Text
+                          className="text-sm font-body-semibold"
+                          style={{ color: childPalette.accentText }}
+                          maxFontSizeMultiplier={1.3}
+                        >
+                          +5
+                        </Text>
+                      </PressableScale>
+                    </View>
+
+                    <Text className="mt-4 text-xs font-body-semibold uppercase tracking-[0.6px] text-muted-foreground">
+                      Grund (Pflicht)
+                    </Text>
+                    <View className="mt-2 flex-row flex-wrap gap-2">
+                      {STAR_ADJUST_REASONS.map((reason) => {
+                        const isActive = starReason === reason;
+
+                        return (
+                          <PressableScale
+                            key={reason}
+                            onPress={() => selectStarReason(reason)}
+                            className="min-h-11 justify-center rounded-chip border px-3 py-2"
+                            style={{
+                              backgroundColor: isActive
+                                ? childPalette.tabActiveBg
+                                : "rgba(255,255,255,0.76)",
+                              borderColor: isActive ? childPalette.accent : childPalette.accentBorder,
+                            }}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: isActive }}
+                            accessibilityLabel={`Grund ${reason} auswählen`}
+                          >
+                            <Text
+                              className="text-sm font-body-semibold"
+                              style={{
+                                color: isActive ? childPalette.accentText : semanticColors.foreground,
+                              }}
+                            >
+                              {reason}
+                            </Text>
+                          </PressableScale>
+                        );
+                      })}
+                    </View>
+
+                    {starDraft !== 0 && starReason === null ? (
+                      <Text className="mt-2 text-xs font-body text-muted-foreground">
+                        Wähle einen Grund, damit die Anpassung nachvollziehbar bleibt.
+                      </Text>
+                    ) : null}
+
+                    <View className="mt-4 flex-row gap-3">
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onPress={resetStarAdjustment}
+                        disabled={!canResetStars}
+                        accessibilityRole="button"
+                        accessibilityLabel="Anpassung verwerfen"
+                        style={{
+                          borderColor: childPalette.accentBorder,
+                          opacity: canResetStars ? 1 : 0.5,
+                        }}
+                      >
+                        Verwerfen
+                      </Button>
+                      <Button
+                        className="flex-1"
+                        onPress={() => setStarConfirmChildId(child.id)}
+                        disabled={!canApplyStars}
+                        accessibilityRole="button"
+                        accessibilityLabel="Sternenanpassung übernehmen"
+                        style={{ opacity: canApplyStars ? 1 : 0.5 }}
+                      >
+                        Übernehmen
+                      </Button>
                     </View>
                   </View>
 
@@ -962,6 +1287,30 @@ export default function ChildrenSettings() {
       )}
       </ScrollView>
       </KeyboardAvoidingView>
+
+      <ConfirmDialog
+        visible={starConfirmChild !== undefined && starDraft !== 0 && starReason !== null}
+        title={
+          starDraft < 0
+            ? `${formatStarCount(Math.abs(starDraft))} abziehen?`
+            : `${formatStarCount(Math.abs(starDraft))} hinzufügen?`
+        }
+        description={
+          starConfirmChild
+            ? `${starConfirmChild.name}: ${starConfirmChild.stars} → ${Math.max(
+                0,
+                starConfirmChild.stars + starDraft
+              )} Sterne. Grund: ${starReason}.`
+            : undefined
+        }
+        confirmLabel={starDraft < 0 ? "Abziehen" : "Hinzufügen"}
+        onConfirm={() => {
+          if (starConfirmChild) {
+            void applyStarAdjustment(starConfirmChild);
+          }
+        }}
+        onCancel={() => setStarConfirmChildId(null)}
+      />
     </View>
   );
 }

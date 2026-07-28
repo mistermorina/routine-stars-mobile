@@ -360,7 +360,7 @@ export default function StatsSettings() {
                             {entry.taskTitle}
                           </Text>
                           <Text className="text-sm font-body-semibold text-muted-foreground">
-                            +{entry.stars}
+                            {entry.stars >= 0 ? `+${entry.stars}` : `${entry.stars}`}
                           </Text>
                         </View>
                       ))}
