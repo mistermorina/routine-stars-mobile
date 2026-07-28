@@ -314,7 +314,20 @@ export type AgeGroup = '3-5' | '6-8' | '9-12';
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'flexible';
 export type RoutineCategory = 'hygiene' | 'school' | 'household' | 'meals' | 'sport' | 'evening' | 'weekend' | 'special';
 export type ChildTheme = 'sterne' | 'tiere' | 'galaxy';
-export type BackgroundSkinId = "none" | "space" | "animals" | "magic" | "nature" | "heroes";
+export type BackgroundSkinId =
+  | "none"
+  | "wolken"
+  | "sonnenaufgang"
+  | "regenbogen"
+  | "konfetti"
+  | "sportplatz"
+  | "ozean"
+  | "minzwald"
+  | "dschungel"
+  | "schatzkarte"
+  | "schneewelt"
+  | "sternennacht"
+  | "weltraum";
 
 export interface TaskTemplate {
   title: string;

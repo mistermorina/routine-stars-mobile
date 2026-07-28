@@ -10,6 +10,9 @@ module.exports = defineConfig([
       "dist/**",
       "web-build/**",
       "coverage/**",
+      // Git worktrees live inside the repo; their copies are linted on their
+      // own checkout, and from here they sit outside every `files` pattern.
+      ".claude/worktrees/**",
     ],
   },
   {
