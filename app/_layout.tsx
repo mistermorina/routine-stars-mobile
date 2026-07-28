@@ -10,6 +10,7 @@ import { ToastHost } from "@/components/ui/toast";
 import { AuthProvider } from "@/contexts/auth-context";
 import { ChildrenProvider } from "@/contexts/children-context";
 import { StarFlightTargetProvider } from "@/contexts/star-flight-target";
+import { DesignModeProvider } from "@/contexts/design-mode-context";
 import { initFeedback } from "@/lib/sound-adapter";
 import { semanticColors } from "@/lib/theme";
 import "../global.css";
@@ -58,9 +59,10 @@ export default function RootLayout() {
       {/* Outside the boundary so the fallback screen keeps dark status bar icons. */}
       <StatusBar style="dark" />
       <ErrorBoundary>
-        <AuthProvider>
-          <ChildrenProvider>
-            <StarFlightTargetProvider>
+        <DesignModeProvider>
+          <AuthProvider>
+            <ChildrenProvider>
+              <StarFlightTargetProvider>
               <Stack
                 screenOptions={{
                   headerShown: false,
@@ -81,10 +83,11 @@ export default function RootLayout() {
                 />
                 <Stack.Screen name="settings" />
               </Stack>
-              <ToastHost />
-            </StarFlightTargetProvider>
-          </ChildrenProvider>
-        </AuthProvider>
+                <ToastHost />
+              </StarFlightTargetProvider>
+            </ChildrenProvider>
+          </AuthProvider>
+        </DesignModeProvider>
       </ErrorBoundary>
     </GestureHandlerRootView>
   );

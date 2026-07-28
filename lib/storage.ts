@@ -18,6 +18,7 @@ const KEYS = {
   LEGAL_PREFERENCES: "legalPreferences",
   SOUND_ENABLED: "soundEnabled",
   HAPTICS_ENABLED: "hapticsEnabled",
+  DESIGN_MODE: "designMode",
   SCHEMA_VERSION: "schemaVersion",
 } as const;
 

@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, View, type ViewStyle } from "react-native";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { getBackgroundSkinOption } from "@/lib/background-skins";
 import { getThemePalette } from "@/lib/theme";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { useDesignMode } from "@/contexts/design-mode-context";
 import type { BackgroundSkinId, ChildTheme } from "@/lib/types";
 
 interface FloatingShapeProps {
@@ -91,6 +93,8 @@ export function ThemedScreenBackground({
   className?: string;
 }) {
   const palette = getThemePalette(theme);
+  const { designMode } = useDesignMode();
+  const isGlass = designMode === "glass";
   const skin = getBackgroundSkinOption(backgroundSkin);
   const hasSkin = skin.id !== "none" && Boolean(skin.image);
 
@@ -183,18 +187,32 @@ export function ThemedScreenBackground({
 
   return (
     <View className={cn("flex-1 overflow-hidden", className)} style={{ backgroundColor: palette.backgroundBase }}>
-      <View
-        className="absolute inset-x-0 top-0 h-[320px]"
-        style={{ backgroundColor: palette.screenGradient[0], opacity: 0.65 }}
-      />
-      <View
-        className="absolute left-10 top-24 h-64 w-64 rounded-full"
-        style={{ backgroundColor: palette.screenGradient[1], opacity: 0.26 }}
-      />
-      <View
-        className="absolute bottom-10 right-[-40px] h-72 w-72 rounded-full"
-        style={{ backgroundColor: palette.screenGradient[2], opacity: 0.22 }}
-      />
+      {isGlass ? (
+        // Frosted panes need something to refract; a flat fill gives them
+        // nothing, so glass mode replaces the tinted blobs with a real ramp.
+        <LinearGradient
+          colors={palette.screenGradient}
+          start={{ x: 0.1, y: 0 }}
+          end={{ x: 0.9, y: 1 }}
+          pointerEvents="none"
+          style={StyleSheet.absoluteFillObject}
+        />
+      ) : (
+        <>
+          <View
+            className="absolute inset-x-0 top-0 h-[320px]"
+            style={{ backgroundColor: palette.screenGradient[0], opacity: 0.65 }}
+          />
+          <View
+            className="absolute left-10 top-24 h-64 w-64 rounded-full"
+            style={{ backgroundColor: palette.screenGradient[1], opacity: 0.26 }}
+          />
+          <View
+            className="absolute bottom-10 right-[-40px] h-72 w-72 rounded-full"
+            style={{ backgroundColor: palette.screenGradient[2], opacity: 0.22 }}
+          />
+        </>
+      )}
       {hasSkin ? (
         <>
           <Image

@@ -15,6 +15,7 @@ import {
   Vibrate,
   Volume2,
 } from "@/lib/icons";
+import { useDesignMode } from "@/contexts/design-mode-context";
 import { storage } from "@/lib/storage";
 import { isHapticsGloballyEnabled } from "@/lib/feedback";
 import {
@@ -173,6 +174,7 @@ function SettingsRow({
 
 export default function SettingsIndex() {
   const router = useRouter();
+  const { designMode, setDesignMode } = useDesignMode();
   const [soundOn, setSoundOn] = useState(true);
   const [hapticsOn, setHapticsOn] = useState(true);
 
@@ -274,6 +276,36 @@ export default function SettingsIndex() {
               accessibilityRole="switch"
               accessibilityLabel="Vibration ein- oder ausschalten"
               accessibilityState={{ checked: hapticsOn }}
+            />
+          </View>
+        </View>
+
+        {/* Design experiment — remove along with lib/design-mode.ts once the
+            look is decided either way. */}
+        <SectionLabel>Design (Test)</SectionLabel>
+
+        <View className="rounded-card bg-card px-4" style={shadowPresets.shadowCard}>
+          <View className="flex-row items-center py-4">
+            <View className="h-11 w-11 items-center justify-center rounded-tile bg-secondary/80">
+              <Sparkles size={20} color={semanticColors.foreground} />
+            </View>
+            <View className="ml-3 min-w-0 flex-1 pr-3">
+              <Text className="text-base font-body-semibold text-foreground">Glas-Optik</Text>
+              <Text className="mt-1 text-sm font-body leading-5 text-muted-foreground">
+                Milchige Flächen und Farbverlauf statt flächiger Pastelltöne.
+              </Text>
+            </View>
+            <Switch
+              value={designMode === "glass"}
+              onValueChange={(next) => {
+                void setDesignMode(next ? "glass" : "soft");
+              }}
+              trackColor={SWITCH_TRACK_COLOR}
+              thumbColor={designMode === "glass" ? semanticColors.gold : semanticColors.card}
+              ios_backgroundColor={semanticColors.border}
+              accessibilityRole="switch"
+              accessibilityLabel="Glas-Optik ein- oder ausschalten"
+              accessibilityState={{ checked: designMode === "glass" }}
             />
           </View>
         </View>

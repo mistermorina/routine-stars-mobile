@@ -1,5 +1,9 @@
 import React from "react";
-import { View, Text, type TextStyle, type ViewStyle } from "react-native";
+import { StyleSheet, View, Text, type TextStyle, type ViewStyle } from "react-native";
+import { BlurView } from "expo-blur";
+import { useDesignMode } from "@/contexts/design-mode-context";
+import { getSurfaceTokens } from "@/lib/design-mode";
+import { getThemePalette } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 interface CardProps {
@@ -18,7 +22,51 @@ interface CardProps {
 const HAS_RADIUS_CLASS = /(?:^|\s)rounded-/;
 
 export function Card({ className, children, style }: CardProps) {
+  const { designMode } = useDesignMode();
   const hasRadiusOverride = className ? HAS_RADIUS_CLASS.test(className) : false;
+  const isGlass = designMode === "glass";
+
+  if (isGlass) {
+    // Glass tokens are palette-independent, so the default palette is fine —
+    // the frosted look comes from what shows through, not from a tint.
+    const tokens = getSurfaceTokens("glass", getThemePalette(null), "flat");
+    // Call sites paint their own opaque fill (palette.heroSurface and friends).
+    // In glass mode the surface belongs to the mode, so the caller's background
+    // and border colour are dropped — everything else they pass is kept.
+    const { backgroundColor: _ignoredFill, borderColor: _ignoredBorder, ...callerStyle } =
+      StyleSheet.flatten(style) ?? {};
+
+    return (
+      <View
+        className={cn(
+          "overflow-hidden p-4",
+          hasRadiusOverride ? undefined : "rounded-card",
+          className
+        )}
+        style={[
+          callerStyle,
+          tokens.shadow,
+          {
+            borderWidth: tokens.borderWidth,
+            borderColor: tokens.borderColor,
+            backgroundColor: "transparent",
+          },
+        ]}
+      >
+        <BlurView
+          intensity={tokens.blurIntensity}
+          tint="light"
+          pointerEvents="none"
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFillObject, { backgroundColor: tokens.backgroundColor }]}
+        />
+        {children}
+      </View>
+    );
+  }
 
   return (
     <View
