@@ -21,3 +21,7 @@ expo-env.d.ts
 
 # graphify (rebuild with: graphify update .)
 graphify-out/
+.gitignore.ai-graphify-backup-*
+
+# NOTE: EAS Build reads .easignore INSTEAD of this file.
+# Keep the mirrored block at the top of .easignore in sync with the above.
