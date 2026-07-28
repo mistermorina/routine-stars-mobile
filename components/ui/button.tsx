@@ -16,6 +16,9 @@ import Animated, {
 import { triggerFeedback } from "@/lib/feedback";
 import { springs } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import { useDesignMode } from "@/contexts/design-mode-context";
+import { getAccentTokens } from "@/lib/design-mode";
+import { getThemePalette } from "@/lib/theme";
 
 /**
  * The Pressable itself is animated instead of being wrapped in an extra view:
@@ -92,6 +95,9 @@ export function Button({
   ...props
 }: ButtonProps) {
   const scale = useSharedValue(1);
+  const { designMode } = useDesignMode();
+  const accents = getAccentTokens(designMode, getThemePalette(null));
+  const isGlassPrimary = designMode === "glass" && variant === "default";
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -122,19 +128,21 @@ export function Button({
       {...props}
       className={cn(
         "flex-row items-center justify-center rounded-lg",
-        buttonVariants[variant],
+        // Glass mode paints the primary fill itself (azure), so the pastel
+        // class is dropped for that one variant.
+        isGlassPrimary ? "" : buttonVariants[variant],
         buttonSizes[size],
         className
       )}
       disabled={disabled}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={[style, animatedStyle]}
+      style={[isGlassPrimary ? { backgroundColor: accents.accent } : null, style, animatedStyle]}
     >
       {typeof children === "string" ? (
         <Text
           className={cn(
-            textVariants[variant],
+            isGlassPrimary ? "font-body-semibold text-base text-white" : textVariants[variant],
             textSizes[size],
             textClassName
           )}

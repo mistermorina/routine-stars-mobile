@@ -6,6 +6,7 @@ import Animated from "react-native-reanimated";
 import { Sparkles } from "@/lib/icons";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { useChildren } from "@/hooks/use-children";
+import { useGlassTabInset } from "@/hooks/use-glass-tab-inset";
 import { useRewards } from "@/hooks/use-rewards";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
 import { useStickerWall } from "@/hooks/use-sticker-wall";
@@ -28,6 +29,7 @@ const STAR_MILESTONES = [5, 10, 25, 50, 100];
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const glassTabInset = useGlassTabInset();
   const { width } = useWindowDimensions();
   const isCompactWidth = width < 380;
   const { children, selectedChild, selectChild, selectedChildId, isLoading } = useChildren();
@@ -134,6 +136,7 @@ export default function ProfileScreen() {
         <ScrollView
           className="flex-1"
           contentContainerClassName="px-4 pb-8 pt-2"
+          contentContainerStyle={glassTabInset}
           showsVerticalScrollIndicator={false}
         >
           {/* Screen headline */}

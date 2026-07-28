@@ -6,6 +6,7 @@ import { Image } from "expo-image";
 import Animated, { LinearTransition, ReduceMotion } from "react-native-reanimated";
 import { ArrowRight, Flame, Plus, Sparkles, Star, Trophy } from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
+import { useGlassTabInset } from "@/hooks/use-glass-tab-inset";
 import { useChildProgression } from "@/hooks/use-child-progression";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
 import { useRoutines } from "@/hooks/use-routines";
@@ -92,6 +93,7 @@ interface StarFlightRequest {
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const glassTabInset = useGlassTabInset();
   const { width } = useWindowDimensions();
   const isCompactWidth = width < 380;
   const {
@@ -595,6 +597,7 @@ export default function DashboardScreen() {
             ref={scrollRef}
             className="flex-1"
             contentContainerClassName="pb-8"
+            contentContainerStyle={glassTabInset}
             onScroll={handleHeaderScroll}
             scrollEventThrottle={16}
             showsVerticalScrollIndicator={false}

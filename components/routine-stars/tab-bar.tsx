@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, Text, View, type LayoutChangeEvent } from "react-native";
+import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import Animated, {
@@ -13,6 +13,9 @@ import Animated, {
 import { triggerFeedback } from "@/lib/feedback";
 import { springs, timings } from "@/lib/motion";
 import { getThemePalette, semanticColors } from "@/lib/theme";
+import { BlurView } from "expo-blur";
+import { useDesignMode } from "@/contexts/design-mode-context";
+import { getAccentTokens, getChromeTokens } from "@/lib/design-mode";
 
 // Brand colors on purpose (not per-child theme): useChildren keeps local
 // state per consumer, so a themed tab bar would go stale on child switch.
@@ -20,7 +23,6 @@ import { getThemePalette, semanticColors } from "@/lib/theme";
 const brandPalette = getThemePalette();
 const ACTIVE_TEXT = brandPalette.accentText;
 const INACTIVE_TEXT = semanticColors.mutedForeground;
-const ACTIVE_PILL = brandPalette.tabActiveBg;
 
 /** Pill geometry. Kept in JS because the pill is positioned, not laid out. */
 const PILL_WIDTH = 64;
@@ -99,6 +101,7 @@ function TabButton({ label, focused, onPress, onLayout, icon }: TabButtonProps) 
 /** Custom bottom tab bar: sliding pill, focus bounce, haptic tick. */
 export function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { designMode } = useDesignMode();
 
   // Measured tab centers keep the pill honest even if a label wraps or a tab
   // is hidden via `href: null` — no assumptions about equal-width columns.
@@ -152,16 +155,39 @@ export function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps)
     transform: [{ translateX: pillTranslateX.value }, { scaleX: pillStretch.value }],
   }));
 
+  const chrome = getChromeTokens(designMode, brandPalette);
+  const accents = getAccentTokens(designMode, brandPalette);
+  const isGlass = chrome.blurIntensity > 0;
+
   return (
     <View
-      className="border-t"
-      style={{
-        backgroundColor: semanticColors.card,
-        borderTopColor: semanticColors.border,
-        paddingBottom: Math.max(insets.bottom, 10),
-        paddingTop: ROW_PADDING_TOP,
-      }}
+      className="border-t overflow-hidden"
+      style={[
+        {
+          backgroundColor: isGlass ? "transparent" : semanticColors.card,
+          borderTopColor: isGlass ? chrome.borderColor : semanticColors.border,
+          paddingBottom: Math.max(insets.bottom, 10),
+          paddingTop: ROW_PADDING_TOP,
+        },
+        // Custom tab bars ignore `tabBarStyle`, so the float has to happen
+        // here: over the scene, where the blur can sample the backdrop.
+        isGlass ? { position: "absolute", left: 0, right: 0, bottom: 0 } : null,
+      ]}
     >
+      {isGlass ? (
+        <>
+          <BlurView
+            intensity={chrome.blurIntensity}
+            tint="light"
+            pointerEvents="none"
+            style={StyleSheet.absoluteFillObject}
+          />
+          <View
+            pointerEvents="none"
+            style={[StyleSheet.absoluteFillObject, { backgroundColor: chrome.backgroundColor }]}
+          />
+        </>
+      ) : null}
       <View className="flex-row">
         <Animated.View
           pointerEvents="none"
@@ -171,7 +197,7 @@ export function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps)
               top: TAB_PADDING_TOP,
               height: PILL_HEIGHT,
               width: PILL_WIDTH,
-              backgroundColor: ACTIVE_PILL,
+              backgroundColor: accents.pillFill,
             },
             pillAnimatedStyle,
           ]}

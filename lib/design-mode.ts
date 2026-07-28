@@ -89,6 +89,81 @@ export function getSurfaceTokens(
 }
 
 /**
+ * Accent set for the small filled shapes — icon tiles, the active tab pill, the
+ * star pill. The shipped look uses pastel vanilla; against frosted surfaces
+ * that reads muddy, so glass mode swaps it for azure and lets the fills go
+ * translucent. Gold stays gold everywhere: it is the star currency, not decor.
+ */
+export interface AccentTokens {
+  /** Solid accent for strokes, active labels, progress. */
+  accent: string;
+  /** Fill behind icons and inactive pills. */
+  tileFill: string;
+  tileBorder: string | null;
+  /** Fill behind the active tab pill / selected chip. */
+  pillFill: string;
+  pillBorder: string | null;
+  /** Whether tiles should blur what is behind them. 0 = plain fill. */
+  tileBlurIntensity: number;
+  /** Bright top edge that sells the material. Null in soft mode. */
+  tileHighlight: string | null;
+  /** Icon stroke colour on top of a tile. */
+  iconColor: string;
+}
+
+/** Azure, chosen to sit with the cool gradients rather than fight them. */
+const GLASS_AZURE = "#1E7FBF";
+const GLASS_AZURE_DEEP = "#125C8F";
+
+export function getAccentTokens(mode: DesignMode, palette: ThemePalette): AccentTokens {
+  if (mode === "glass") {
+    return {
+      accent: GLASS_AZURE,
+      tileFill: "rgba(255,255,255,0.38)",
+      tileBorder: "rgba(255,255,255,0.62)",
+      pillFill: "rgba(30,127,191,0.18)",
+      pillBorder: "rgba(255,255,255,0.55)",
+      tileBlurIntensity: 20,
+      tileHighlight: "rgba(255,255,255,0.8)",
+      iconColor: GLASS_AZURE_DEEP,
+    };
+  }
+
+  return {
+    accent: palette.accent,
+    tileFill: palette.surface,
+    tileBorder: null,
+    pillFill: palette.tabActiveBg,
+    pillBorder: null,
+    tileBlurIntensity: 0,
+    tileHighlight: null,
+    iconColor: palette.accentText,
+  };
+}
+
+/**
+ * Chrome — header and tab bar. These float above content, so they blur harder
+ * than a card and keep a visible edge to stay separated from what scrolls under.
+ */
+export function getChromeTokens(mode: DesignMode, palette: ThemePalette) {
+  if (mode === "glass") {
+    return {
+      backgroundColor: "rgba(255,255,255,0.30)",
+      borderColor: "rgba(255,255,255,0.55)",
+      blurIntensity: 55,
+      highlightColor: "rgba(255,255,255,0.8)",
+    };
+  }
+
+  return {
+    backgroundColor: palette.headerGlass,
+    borderColor: palette.accentBorder,
+    blurIntensity: 0,
+    highlightColor: null,
+  };
+}
+
+/**
  * Screen backdrop. Soft mode keeps the flat base colour (the decorative blobs
  * are drawn separately); glass mode needs a real gradient, because frosted
  * panes have nothing to refract over a flat fill.

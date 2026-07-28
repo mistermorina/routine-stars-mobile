@@ -3,10 +3,12 @@ import { Tabs } from "expo-router";
 import { Home, Trophy, Star } from "@/lib/icons";
 import { AppTabBar } from "@/components/routine-stars/tab-bar";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { useDesignMode } from "@/contexts/design-mode-context";
 import { semanticColors } from "@/lib/theme";
 
 export default function TabsLayout() {
   const reduceMotion = useReducedMotion();
+  const { designMode } = useDesignMode();
 
   return (
     <Tabs
@@ -19,6 +21,9 @@ export default function TabsLayout() {
         // switch reads as a move instead of a hard cut; under Reduce Motion we
         // drop the travel and keep the cross-fade, the way iOS does.
         animation: reduceMotion ? "fade" : "shift",
+        // The scene must not paint its own fill in glass mode, otherwise the
+        // floating bar frosts that instead of the screen backdrop.
+        sceneStyle: designMode === "glass" ? { backgroundColor: "transparent" } : undefined,
       }}
     >
       <Tabs.Screen

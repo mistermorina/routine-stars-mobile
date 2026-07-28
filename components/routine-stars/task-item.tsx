@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, Pressable } from "react-native";
+import { StyleSheet, View, Text, Pressable } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -18,6 +18,10 @@ import { getThemePalette, semanticColors, shadowPresets } from "@/lib/theme";
 import { durations, easings, springs, timings } from "@/lib/motion";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useStarFlightLauncher, type StarFlightLauncher } from "./star-flight";
+import { GlassTile } from "@/components/ui/glass-tile";
+import { BlurView } from "expo-blur";
+import { useDesignMode } from "@/contexts/design-mode-context";
+import { getSurfaceTokens } from "@/lib/design-mode";
 import type { ChildTheme, Task } from "@/lib/types";
 
 const SWIPE_THRESHOLD = -80;
@@ -285,11 +289,16 @@ export function TaskItem({
   const hasBonus = task.bonusStars && task.bonusStars > 0;
 
   const starColor = routineColor || semanticColors.mutedForeground;
-  const taskSurface = isCompleted
-    ? semanticColors.card
-    : isSuggested
-      ? palette.heroSurface
-      : semanticColors.card;
+  const { designMode } = useDesignMode();
+  const surfaceTokens = getSurfaceTokens(designMode, palette, "flat");
+  const isGlassRow = surfaceTokens.blurIntensity > 0;
+  const taskSurface = isGlassRow
+    ? surfaceTokens.backgroundColor
+    : isCompleted
+      ? semanticColors.card
+      : isSuggested
+        ? palette.heroSurface
+        : semanticColors.card;
   const taskAccessibilityLabel = isCompleted
     ? `${task.title}, erledigt`
     : hasTimer
@@ -385,13 +394,16 @@ export function TaskItem({
                     flexDirection: "row",
                     alignItems: "center",
                     borderRadius: 18,
-                    backgroundColor: taskSurface,
+                    overflow: "hidden",
+                    backgroundColor: isGlassRow ? "transparent" : taskSurface,
                     borderWidth: 1,
-                    borderColor: isCompleted
-                      ? "rgba(157,184,216,0.28)"
-                      : isSuggested
-                        ? palette.accentBorder
-                        : semanticColors.border,
+                    borderColor: isGlassRow
+                      ? surfaceTokens.borderColor
+                      : isCompleted
+                        ? "rgba(157,184,216,0.28)"
+                        : isSuggested
+                          ? palette.accentBorder
+                          : semanticColors.border,
                     paddingHorizontal: 12,
                     paddingVertical: 10,
                     ...shadowPresets.shadowCard,
@@ -399,18 +411,36 @@ export function TaskItem({
                   },
                 ]}
               >
+                {isGlassRow ? (
+                  <>
+                    <BlurView
+                      intensity={surfaceTokens.blurIntensity}
+                      tint="light"
+                      pointerEvents="none"
+                      style={StyleSheet.absoluteFillObject}
+                    />
+                    <View
+                      pointerEvents="none"
+                      style={[
+                        StyleSheet.absoluteFillObject,
+                        { backgroundColor: taskSurface },
+                      ]}
+                    />
+                  </>
+                ) : null}
                 {/* Icon squircle */}
-                <View
-                  className="mr-3 h-[52px] w-[52px] items-center justify-center rounded-tile"
-                  style={{
-                    backgroundColor: isCompleted || isSuggested ? palette.tabActiveBg : palette.surface,
-                  }}
+                <GlassTile
+                  theme={childTheme}
+                  variant={isCompleted || isSuggested ? "pill" : "tile"}
+                  softFill={isCompleted || isSuggested ? palette.tabActiveBg : palette.surface}
+                  radius={18}
+                  className="mr-3 h-[52px] w-[52px]"
                 >
                   <Icon
                     size={26}
                     color={isCompleted ? starColor : routineColor || semanticColors.mutedForeground}
                   />
-                </View>
+                </GlassTile>
 
                 {/* Title + reward chip */}
                 <View className="flex-1 min-w-0 pr-3">

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { View, Text, Pressable } from "react-native";
+import { StyleSheet, View, Text, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Animated, {
@@ -16,6 +16,9 @@ import { useRegisterStarFlightTarget } from "@/contexts/star-flight-target";
 import { cn } from "@/lib/utils";
 import { durations, enterStagger, springs } from "@/lib/motion";
 import { getThemePalette, semanticColors } from "@/lib/theme";
+import { BlurView } from "expo-blur";
+import { useDesignMode } from "@/contexts/design-mode-context";
+import { getAccentTokens, getChromeTokens } from "@/lib/design-mode";
 import type { Child } from "@/lib/types";
 
 /** Travel distance of the collapse/expand content swap (px). */
@@ -55,6 +58,10 @@ export function Header({
   const starScale = useSharedValue(1);
   const prevStars = useSharedValue(child.stars);
   const palette = getThemePalette(child.theme);
+  const { designMode } = useDesignMode();
+  const chrome = getChromeTokens(designMode, palette);
+  const accents = getAccentTokens(designMode, palette);
+  const isGlass = chrome.blurIntensity > 0;
   // Landing point for flying stars — the pill registers itself, both variants.
   const starTarget = useRegisterStarFlightTarget();
   // Sibling protection: a child must not be able to switch to another profile
@@ -118,15 +125,32 @@ export function Header({
   const starsAccessibilityLabel = `${child.stars} Sterne. Sternenkonto öffnen`;
 
   return (
-    <SafeAreaView edges={["top"]} style={{ backgroundColor: palette.headerGlass }}>
+    <SafeAreaView
+      edges={["top"]}
+      style={{ backgroundColor: isGlass ? "transparent" : palette.headerGlass }}
+    >
+      {isGlass ? (
+        <>
+          <BlurView
+            intensity={chrome.blurIntensity}
+            tint="light"
+            pointerEvents="none"
+            style={StyleSheet.absoluteFillObject}
+          />
+          <View
+            pointerEvents="none"
+            style={[StyleSheet.absoluteFillObject, { backgroundColor: chrome.backgroundColor }]}
+          />
+        </>
+      ) : null}
       <View className="px-4 pb-2 pt-2">
         {collapsed ? (
           <Animated.View key="header-collapsed" entering={enterSwap(1)}>
             <View
               className="flex-row items-center gap-2 overflow-hidden rounded-tile border px-3 py-2"
               style={{
-                backgroundColor: palette.cardTint,
-                borderColor: palette.accentBorder,
+                backgroundColor: isGlass ? "transparent" : palette.cardTint,
+                borderColor: isGlass ? "transparent" : palette.accentBorder,
               }}
             >
               <Pressable
@@ -137,7 +161,7 @@ export function Header({
               >
                 <View
                   className="h-11 w-11 items-center justify-center rounded-chip"
-                  style={{ backgroundColor: palette.heroSurface }}
+                  style={{ backgroundColor: isGlass ? accents.tileFill : palette.heroSurface }}
                 >
                   <AvatarImage
                     avatar={child.avatar}
@@ -180,7 +204,7 @@ export function Header({
                     starAnimatedStyle,
                     {
                       alignItems: "center",
-                      backgroundColor: palette.surface,
+                      backgroundColor: isGlass ? accents.pillFill : palette.surface,
                       borderRadius: 999,
                       borderColor: palette.accentBorder,
                       borderWidth: 1,
@@ -217,8 +241,8 @@ export function Header({
             <View
               className="overflow-hidden rounded-card border px-4 pb-4 pt-3"
               style={{
-                backgroundColor: palette.cardTint,
-                borderColor: palette.accentBorder,
+                backgroundColor: isGlass ? "transparent" : palette.cardTint,
+                borderColor: isGlass ? "transparent" : palette.accentBorder,
               }}
             >
               <View
@@ -230,7 +254,7 @@ export function Header({
                 <View className="flex-1 flex-row items-center gap-3">
                   <View
                     className="h-[54px] w-[54px] items-center justify-center rounded-tile"
-                    style={{ backgroundColor: palette.heroSurface }}
+                    style={{ backgroundColor: isGlass ? accents.tileFill : palette.heroSurface }}
                   >
                     <AvatarImage
                       avatar={child.avatar}
@@ -247,7 +271,7 @@ export function Header({
                       </Text>
                       <View
                         className="rounded-full px-2.5 py-1"
-                        style={{ backgroundColor: palette.tabActiveBg }}
+                        style={{ backgroundColor: isGlass ? accents.pillFill : palette.tabActiveBg }}
                       >
                         <Text
                           className="text-xs font-body-semibold uppercase tracking-[0.6px]"
@@ -283,7 +307,7 @@ export function Header({
                           starAnimatedStyle,
                           {
                             alignItems: "center",
-                            backgroundColor: palette.surface,
+                            backgroundColor: isGlass ? accents.pillFill : palette.surface,
                             borderRadius: 999,
                             borderColor: palette.accentBorder,
                             borderWidth: 1,

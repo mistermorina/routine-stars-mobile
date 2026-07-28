@@ -10,6 +10,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useChildren } from "@/hooks/use-children";
+import { useGlassTabInset } from "@/hooks/use-glass-tab-inset";
 import { useToast } from "@/hooks/use-toast";
 import { useRewards } from "@/hooks/use-rewards";
 import { useCollapsibleHeader } from "@/hooks/use-collapsible-header";
@@ -218,6 +219,7 @@ export default function RewardsScreen() {
   const { toast } = useToast();
   const { rewards, isLoading: rewardsLoading } = useRewards();
   const reduceMotion = useReducedMotion();
+  const glassTabInset = useGlassTabInset();
   const palette = getThemePalette(selectedChild?.theme);
   const [recentlyRedeemedRewardId, setRecentlyRedeemedRewardId] = useState<string | null>(null);
   const [celebration, setCelebration] = useState<RedeemCelebrationState | null>(null);
@@ -377,6 +379,7 @@ export default function RewardsScreen() {
         <ScrollView
           className="flex-1"
           contentContainerClassName="px-4 pb-8"
+          contentContainerStyle={glassTabInset}
           onScroll={handleHeaderScroll}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
