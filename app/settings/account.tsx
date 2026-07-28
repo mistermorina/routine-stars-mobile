@@ -110,7 +110,11 @@ export default function AccountSettings() {
           </View>
         </Card>
 
-        <Text className="mb-2 ml-1 text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground">
+        <Text
+          className="mb-2 ml-1 text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground"
+          accessibilityRole="header"
+          maxFontSizeMultiplier={1.3}
+        >
           PIN-Schutz
         </Text>
 
@@ -138,7 +142,12 @@ export default function AccountSettings() {
                 : "Schütze den Eltern-Bereich mit einem vierstelligen PIN."}
             </Text>
           </View>
-          <ChevronRight size={18} color={semanticColors.mutedForeground} />
+          <ChevronRight
+            size={18}
+            color={semanticColors.mutedForeground}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          />
         </PressableScale>
 
         <Button
@@ -151,13 +160,21 @@ export default function AccountSettings() {
         >
           <View className="flex-row items-center gap-2">
             <Lock size={18} color={palette.accentText} />
-            <Text className="text-base font-body-semibold" style={{ color: palette.accentText }}>
+            <Text
+              className="text-base font-body-semibold"
+              style={{ color: palette.accentText }}
+              maxFontSizeMultiplier={1.3}
+            >
               Eltern-Bereich sperren
             </Text>
           </View>
         </Button>
 
-        <Text className="mb-2 ml-1 mt-6 text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground">
+        <Text
+          className="mb-2 ml-1 mt-6 text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground"
+          accessibilityRole="header"
+          maxFontSizeMultiplier={1.3}
+        >
           Zurücksetzen
         </Text>
 

@@ -21,6 +21,13 @@ Never a raw hex in a component. Three sources, in this order: **Tailwind classes
 **`semanticColors`** when a raw string is unavoidable (SVG `fill`, icon `color`,
 animated styles). Tailwind and `semanticColors` are the same values, kebab vs camel.
 
+`npm run test:ui-quality` fails on any hex in `app/` or `components/` that is not
+already budgeted in `scripts/hex-allowlist.json`. That file is frozen design debt,
+one occurrence cap per file per value — **shrink it, never grow it**. A genuinely
+one-off decorative fill (inside an SVG illustration) is the only reason to add an
+entry, and it lands via `npm run guardrails:hex-allowlist` so the growth shows up
+in the diff.
+
 | Token / class | Hex | Use |
 |---|---|---|
 | `background` / `foreground` | `#F8E9D7` / `#1a1a2e` | App background, primary text |
@@ -252,10 +259,17 @@ Pass `{ disableSound: true }` for quiet contexts (parent area, settings, gates).
 - No `width` / `height` / `margin` / layout animations — `transform` and `opacity` only.
 - No new hex literals in components. Tokens, palette or `semanticColors`.
 - No `Alert.alert` — use `components/ui/confirm-dialog.tsx`.
-- No `fontSize` below 12; body and interactive labels ≥14.
+- No `fontSize` below 12 — **no exemptions, tab labels included**; body and
+  interactive labels ≥14.
 - No touch target below 44×44pt.
 - No raw `Pressable` for primary actions — `PressableScale` or `Button`.
+  `Button` already carries haptic + scale: never wrap it in `PressableScale`
+  and never open its `onPress` with a generic `triggerFeedback` press tick.
 - No `shadow-lg`/`shadow-md`, no ad-hoc shadow objects, no blur layers.
+  Inline `shadowOpacity` above 0.08 fails the build.
+- No `animationType="fade"` on `Modal` — dialogs animate via Reanimated
+  (`components/ui/dialog.tsx` defaults to `"none"`); RN's fade double-animates
+  the overlay.
 - No horizontal `ScrollView` in visible UI (`test:ui-quality` fails the build).
 - No deprecated radii (`rounded-lg`/`md`/`sm`/`xl`/`2xl`) in new code.
 
@@ -266,16 +280,17 @@ Pass `{ disableSound: true }` for quiet contexts (parent area, settings, gates).
 Run before reporting done:
 
 ```bash
-npm run typecheck
-npm run lint
-npm run test:ui-quality
-npm run test:contrast-smoke
-npm run test:background-skins
-npm run test:stickers
-npm run test:smoke
-npm run test:progress-smoke
-npm run test:onboarding
+npm run test:all          # typecheck + lint + every read-only guardrail
+npm run test:stickers     # compiles TS into a temp dir — kept out of test:all
+npm run test:streak       # same
 ```
 
-`test:ui-quality` enforces the 44pt / 12px / no-horizontal-ScrollView rules,
-`test:contrast-smoke` guards theme and icon-picker contrast.
+`test:all` expands to `typecheck` · `lint` · `test:ui-quality` ·
+`test:contrast-smoke` · `test:background-skins` · `test:smoke` ·
+`test:progress-smoke` · `test:onboarding`; each also runs standalone.
+
+`test:ui-quality` is the contract's enforcement arm: new hex literals (against
+`scripts/hex-allowlist.json`), `fontSize` < 12, `text-[<14px]`, inline
+`shadowOpacity` > 0.08, `animationType="fade"`, sub-44pt targets and horizontal
+ScrollViews. `test:contrast-smoke` guards theme and icon-picker contrast.
+`lint` must report "No issues found" — there are no tolerated legacy warnings.

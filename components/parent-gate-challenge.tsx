@@ -234,7 +234,11 @@ export function ParentGateChallenge({
       <Animated.View style={cardStyle}>
         <DialogContent className="rounded-card p-6" style={shadowPresets.shadowFloating}>
           <View className="items-center">
-            <View className="mb-4 h-14 w-14 items-center justify-center rounded-full bg-primary/40">
+            <View
+              className="mb-4 h-14 w-14 items-center justify-center rounded-full bg-primary/40"
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
               <Lock size={24} color={semanticColors.foreground} />
             </View>
 
@@ -265,18 +269,24 @@ export function ParentGateChallenge({
                 placeholderTextColor={semanticColors.mutedForeground}
                 accessibilityLabel="Antwort eingeben"
                 className="mt-4 h-14 w-32 rounded-tile border-2 border-input bg-card text-center font-headline text-xl text-foreground"
+                // Fixed 56pt field — cap Dynamic Type so the answer stays visible.
+                maxFontSizeMultiplier={1.2}
                 style={{ letterSpacing: 4 }}
               />
             </Animated.View>
 
             {isCoolingDown ? (
-              <Text className="mt-3 text-center font-body text-xs text-muted-foreground">
+              <Text
+                className="mt-3 text-center font-body text-sm text-muted-foreground"
+                accessibilityLiveRegion="polite"
+              >
                 {`Zu viele Versuche. Bitte warte noch ${cooldownRemaining} Sekunden.`}
               </Text>
             ) : hasFailed ? (
               <Text
-                className="mt-3 text-center font-body text-xs"
+                className="mt-3 text-center font-body text-sm"
                 style={{ color: semanticColors.destructiveStrong }}
+                accessibilityLiveRegion="polite"
               >
                 Das stimmt leider nicht. Hier ist eine neue Aufgabe.
               </Text>

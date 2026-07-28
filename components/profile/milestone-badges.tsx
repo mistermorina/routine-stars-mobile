@@ -12,7 +12,7 @@ import { Flame, Lock, Sparkles, Star } from "@/lib/icons";
 
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { durations, easings, enterStagger, springs, timings } from "@/lib/motion";
-import type { ThemePalette } from "@/lib/theme";
+import { semanticColors, type ThemePalette } from "@/lib/theme";
 
 interface MilestoneBadgesProps {
   totalStars: number;
@@ -36,6 +36,11 @@ interface MilestoneDef {
 
 /** Scale the tile pops in from. */
 const POP_FROM = 0.9;
+/**
+ * Locked badges are deliberately washed out — a disabled affordance, not
+ * readable copy. No semantic token covers this "not yet earned" tint.
+ */
+const LOCKED_TINT = "#ADB7C2";
 /** Mirrors enterStagger's defaults so tile scale and fade travel together. */
 const STAGGER_STEP = 40;
 const STAGGER_CAP = 240;
@@ -110,7 +115,7 @@ function MilestoneBadge({ milestone, index, width, palette, isNew }: MilestoneBa
           tileStyle,
           {
             backgroundColor: milestone.achieved ? palette.cardTint : "rgba(255,255,255,0.6)",
-            borderColor: milestone.achieved ? palette.accentBorder : "#E7EDF3",
+            borderColor: milestone.achieved ? palette.accentBorder : semanticColors.border,
           },
         ]}
         accessible
@@ -125,30 +130,36 @@ function MilestoneBadge({ milestone, index, width, palette, isNew }: MilestoneBa
           <View
             className="h-12 w-12 items-center justify-center rounded-full"
             style={{
-              backgroundColor: milestone.achieved ? palette.surface : "#F1F4F8",
+              backgroundColor: milestone.achieved ? palette.surface : semanticColors.muted,
               borderWidth: 2,
-              borderColor: milestone.achieved ? "#F7C948" : "#E2E8EF",
+              borderColor: milestone.achieved ? semanticColors.gold : semanticColors.border,
             }}
           >
             {milestone.achieved ? (
-              <Icon size={20} color="#B97E0B" fill={milestone.icon === Star ? "#F7C948" : "none"} />
+              <Icon
+                size={20}
+                color={semanticColors.goldText}
+                fill={milestone.icon === Star ? semanticColors.gold : "none"}
+              />
             ) : (
-              <Lock size={16} color="#ADB7C2" />
+              <Lock size={16} color={LOCKED_TINT} />
             )}
           </View>
         </View>
         <Text
           className="mt-2 text-base font-headline leading-5"
-          style={{ color: milestone.achieved ? palette.accentText : "#ADB7C2" }}
+          style={{ color: milestone.achieved ? palette.accentText : LOCKED_TINT }}
+          maxFontSizeMultiplier={1.2}
         >
           {milestone.value}
         </Text>
         <Text
           className="text-xs font-body-semibold"
-          style={{ color: milestone.achieved ? "#6B7785" : "#ADB7C2" }}
+          style={{ color: milestone.achieved ? semanticColors.mutedForeground : LOCKED_TINT }}
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.82}
+          maxFontSizeMultiplier={1.2}
         >
           {milestone.label}
         </Text>
@@ -212,12 +223,18 @@ export function MilestoneBadges({
   return (
     <View>
       <View className="flex-row items-center justify-between gap-3 px-1">
-        <Text className="text-lg font-headline text-foreground">Meilensteine</Text>
+        <Text className="text-lg font-headline text-foreground" accessibilityRole="header">
+          Meilensteine
+        </Text>
         <View
           className="rounded-full px-3 py-1.5"
           style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
         >
-          <Text className="text-xs font-body-semibold" style={{ color: palette.accentText }}>
+          <Text
+            className="text-xs font-body-semibold"
+            style={{ color: palette.accentText }}
+            maxFontSizeMultiplier={1.3}
+          >
             {achievedCount} erreicht
           </Text>
         </View>

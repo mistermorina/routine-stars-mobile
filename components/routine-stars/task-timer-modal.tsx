@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
-  Pressable,
   Modal,
   ScrollView,
   StyleSheet,
@@ -27,12 +26,13 @@ import Animated, {
 import Svg, { Circle } from "react-native-svg";
 import { X, Check, Award, ThumbsUp, ThumbsDown, Sparkles, Star, CircleCheckBig } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { ParentGateChallenge } from "@/components/parent-gate-challenge";
 import { Confetti } from "./confetti";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { triggerFeedback } from "@/lib/feedback";
 import { durations, easings, modalSpring, springs, timings } from "@/lib/motion";
-import { getThemePalette } from "@/lib/theme";
+import { getThemePalette, semanticColors, shadowPresets } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { ChildTheme, Task } from "@/lib/types";
 import timerChallengeBackground from "@/assets/images/timer-challenge-bg.png";
@@ -60,11 +60,19 @@ interface TaskTimerModalProps {
   onClose: (success: boolean) => void;
 }
 
-const MODAL_NAVY = "#071A49";
-const MODAL_MUTED = "#606B80";
+const MODAL_NAVY = semanticColors.foreground;
+const MODAL_MUTED = semanticColors.mutedForeground;
+const MODAL_GOLD = semanticColors.goldDeep;
+/**
+ * Bespoke skin of the timer modal — a lavender/blue world that exists nowhere
+ * else in the app and has no counterpart in the token set. Kept as named
+ * constants (never inline literals) so the surface stays swappable.
+ */
 const MODAL_BLUE = "#2F6FDC";
 const MODAL_LAVENDER_SOFT = "#F2EFFF";
-const MODAL_GOLD = "#F7B633";
+const MODAL_LAVENDER_INK = "#5364A9";
+const MODAL_SPARKLE = "#B9AAF2";
+const MODAL_GLOW = "#DDD3FF";
 const MODAL_BACKDROP = "rgba(16, 24, 48, 0.42)";
 
 /** Card entrance scale — small enough to read as "arriving", not as a zoom. */
@@ -121,7 +129,8 @@ function ModalBadge({ label }: { label: string }) {
     >
       <Text
         className="text-xs font-body-bold uppercase tracking-[1px]"
-        style={{ color: "#5364A9" }}
+        style={{ color: MODAL_LAVENDER_INK }}
+        maxFontSizeMultiplier={1.2}
       >
         {label}
       </Text>
@@ -483,23 +492,17 @@ export function TaskTimerModal({
               {
                 maxWidth: modalMaxWidth,
                 maxHeight: modalMaxHeight,
-                shadowColor: "#2E3A68",
-                shadowOpacity: 0.2,
-                shadowRadius: 30,
-                shadowOffset: { width: 0, height: 18 },
+                ...shadowPresets.shadowFloating,
               },
             ]}
           >
             <View
               className="w-full overflow-hidden rounded-[32px] border"
               style={{
-                backgroundColor: "#FBFAFF",
+                backgroundColor: semanticColors.card,
                 borderColor: "rgba(255,255,255,0.88)",
                 maxHeight: modalMaxHeight,
-                shadowColor: "#9DB8D8",
-                shadowOpacity: 0.18,
-                shadowRadius: 28,
-                shadowOffset: { width: 0, height: 12 },
+                ...shadowPresets.shadowCard,
               }}
             >
               <Image
@@ -507,6 +510,8 @@ export function TaskTimerModal({
                 style={StyleSheet.absoluteFillObject}
                 contentFit="cover"
                 transition={160}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
               />
               <View
                 style={[
@@ -611,6 +616,8 @@ export function TaskTimerModal({
                             }}
                             contentFit="contain"
                             transition={160}
+                            accessibilityElementsHidden
+                            importantForAccessibility="no-hide-descendants"
                           />
                         </View>
                         <Animated.View style={countdownAnimatedStyle}>
@@ -635,23 +642,25 @@ export function TaskTimerModal({
 
                     <Button
                       onPress={handleChildFinished}
+                      accessibilityRole="button"
+                      accessibilityLabel="Aufgabe als fertig melden"
                       className={cn(
-                        "mb-4 w-full max-w-[320px] rounded-[22px]",
+                        "mb-4 w-full max-w-[320px] rounded-card",
                         isCompactLayout ? "h-[54px]" : "h-[60px]"
                       )}
                       size="lg"
                       style={{
                         backgroundColor: MODAL_BLUE,
-                        shadowColor: MODAL_BLUE,
-                        shadowOpacity: 0.26,
-                        shadowRadius: 12,
-                        shadowOffset: { width: 0, height: 8 },
+                        ...shadowPresets.shadowCard,
                       }}
                       textClassName="text-white"
                     >
                       <View className="flex-row items-center gap-3">
-                        <Check size={22} color="#FFFFFF" />
-                        <Text className="text-lg font-body-bold leading-6 text-white">
+                        <Check size={22} color={semanticColors.card} />
+                        <Text
+                          className="text-lg font-body-bold leading-6 text-white"
+                          maxFontSizeMultiplier={1.3}
+                        >
                           Fertig!
                         </Text>
                       </View>
@@ -660,7 +669,11 @@ export function TaskTimerModal({
                     {visibleBonusStars > 0 ? (
                       <View className="flex-row items-center gap-2">
                         <Award size={19} color={MODAL_GOLD} />
-                        <Text className="text-sm font-body-semibold leading-5" style={{ color: "#5364A9" }}>
+                        <Text
+                          className="text-sm font-body-semibold leading-5"
+                          style={{ color: MODAL_LAVENDER_INK }}
+                          maxFontSizeMultiplier={1.3}
+                        >
                           +{visibleBonusStars} Bonus-Sterne
                         </Text>
                       </View>
@@ -708,45 +721,52 @@ export function TaskTimerModal({
                         }}
                         contentFit="contain"
                         transition={160}
+                        accessibilityElementsHidden
+                        importantForAccessibility="no-hide-descendants"
                       />
                       <Sparkles
                         size={18}
-                        color="#B9AAF2"
+                        color={MODAL_SPARKLE}
                         style={{ position: "absolute", right: 4, top: 18 }}
                       />
                       <Star
                         size={13}
-                        color="#B9AAF2"
-                        fill="#B9AAF2"
+                        color={MODAL_SPARKLE}
+                        fill={MODAL_SPARKLE}
                         style={{ position: "absolute", left: 10, bottom: 26 }}
                       />
                     </View>
                     <View className="w-full max-w-[320px] flex-row gap-3">
-                      <Pressable
+                      <PressableScale
                         onPress={handleParentApprovalRequest}
-                        className="h-[58px] flex-1 items-center justify-center rounded-[20px]"
+                        containerClassName="flex-1"
+                        className="h-[58px] items-center justify-center rounded-card"
                         style={{
                           backgroundColor: MODAL_BLUE,
-                          shadowColor: MODAL_BLUE,
-                          shadowOpacity: 0.24,
-                          shadowRadius: 10,
-                          shadowOffset: { width: 0, height: 7 },
+                          ...shadowPresets.shadowCard,
                         }}
                         accessibilityRole="button"
                         accessibilityLabel={`${childName} hat die Aufgabe geschafft`}
                         accessibilityHint="Öffnet den Eltern-Check zum Bestätigen der Bonus-Sterne"
                       >
                         <View className="flex-row items-center gap-2">
-                          <ThumbsUp size={24} color="#FFFFFF" />
-                          <Text className="text-lg font-body-bold leading-6 text-white">
+                          <ThumbsUp size={24} color={semanticColors.card} />
+                          <Text
+                            className="text-lg font-body-bold leading-6 text-white"
+                            maxFontSizeMultiplier={1.3}
+                          >
                             Ja!
                           </Text>
                         </View>
-                      </Pressable>
-                      <Pressable
+                      </PressableScale>
+                      <PressableScale
                         onPress={() => handleParentConfirmation(false)}
-                        className="h-[58px] flex-1 items-center justify-center rounded-[20px] border"
-                        style={{ backgroundColor: "#FFFFFF", borderColor: "rgba(7,26,73,0.28)" }}
+                        containerClassName="flex-1"
+                        className="h-[58px] items-center justify-center rounded-card border"
+                        style={{
+                          backgroundColor: semanticColors.card,
+                          borderColor: "rgba(7,26,73,0.28)",
+                        }}
                         accessibilityRole="button"
                         accessibilityLabel={`${childName} hat die Aufgabe nicht geschafft`}
                       >
@@ -755,11 +775,12 @@ export function TaskTimerModal({
                           <Text
                             className="text-lg font-body-bold leading-6"
                             style={{ color: MODAL_BLUE }}
+                            maxFontSizeMultiplier={1.3}
                           >
                             Nein
                           </Text>
                         </View>
-                      </Pressable>
+                      </PressableScale>
                     </View>
                   </>
                 )}
@@ -774,11 +795,11 @@ export function TaskTimerModal({
                     >
                       <View
                         className="absolute h-32 w-32 rounded-full"
-                        style={{ backgroundColor: "#DDD3FF", opacity: 0.8 }}
+                        style={{ backgroundColor: MODAL_GLOW, opacity: 0.8 }}
                       />
                       <Sparkles
                         size={18}
-                        color="#B9AAF2"
+                        color={MODAL_SPARKLE}
                         style={{ position: "absolute", left: 24, top: 22 }}
                       />
                       <Star
@@ -795,6 +816,8 @@ export function TaskTimerModal({
                         }}
                         contentFit="contain"
                         transition={160}
+                        accessibilityElementsHidden
+                        importantForAccessibility="no-hide-descendants"
                       />
                     </View>
                     <Text
@@ -814,17 +837,21 @@ export function TaskTimerModal({
                     </Text>
                     <View
                       className="mb-1 h-[58px] w-[58px] items-center justify-center rounded-full"
-                      style={{ backgroundColor: "#F0F7EC" }}
+                      style={{ backgroundColor: semanticColors.successSoft }}
                     >
                       <View
                         className="h-[42px] w-[42px] items-center justify-center rounded-full"
                         style={{
-                          backgroundColor: "#FFFFFF",
-                          borderColor: "#DCEED3",
+                          backgroundColor: semanticColors.card,
+                          borderColor: semanticColors.success,
                           borderWidth: 1,
                         }}
                       >
-                        <CircleCheckBig size={27} color="#7FB565" strokeWidth={3} />
+                        <CircleCheckBig
+                          size={27}
+                          color={semanticColors.success}
+                          strokeWidth={3}
+                        />
                       </View>
                     </View>
                     {visibleBonusStars > 0 ? (
@@ -835,7 +862,8 @@ export function TaskTimerModal({
                         <Award size={28} color={MODAL_GOLD} />
                         <Text
                           className="text-center text-base font-body-bold leading-6"
-                          style={{ color: "#5364A9" }}
+                          style={{ color: MODAL_LAVENDER_INK }}
+                          maxFontSizeMultiplier={1.3}
                         >
                           +{visibleBonusStars} Bonus-Sterne!
                         </Text>
@@ -847,22 +875,20 @@ export function TaskTimerModal({
               </ScrollView>
             </View>
 
-            <Pressable
+            <PressableScale
               onPress={() => onClose(false)}
-              className="absolute right-[-8px] top-[-12px] z-50 h-12 w-12 items-center justify-center rounded-full"
+              containerClassName="absolute right-[-8px] top-[-12px] z-50"
+              className="h-12 w-12 items-center justify-center rounded-full"
               style={{
-                backgroundColor: "#FFFFFF",
-                shadowColor: "#2E3A68",
-                shadowOpacity: 0.14,
-                shadowRadius: 10,
-                shadowOffset: { width: 0, height: 5 },
+                backgroundColor: semanticColors.card,
+                ...shadowPresets.shadowSubtle,
               }}
               hitSlop={12}
               accessibilityRole="button"
               accessibilityLabel="Timer schließen"
             >
               <X size={25} color={MODAL_NAVY} />
-            </Pressable>
+            </PressableScale>
           </Animated.View>
         </View>
 

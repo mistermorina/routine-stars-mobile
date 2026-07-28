@@ -5,14 +5,18 @@ import { existsSync, readFileSync } from "node:fs";
 const registryPath = "lib/background-skins.ts";
 const backgroundSourcePath = "components/ui/themed-screen-background.tsx";
 const typesPath = "lib/types.ts";
-const useChildrenPath = "hooks/use-children.ts";
+// Child normalization moved out of hooks/use-children.ts into the provider in
+// Phase 1. hooks/use-children.ts is now a thin re-export, so asserting there
+// only proved the compat shim still mentions the helper in a docstring.
+const childrenProviderPath = "contexts/children-context.tsx";
 
 assert.equal(existsSync(registryPath), true, "background skin registry is missing");
+assert.equal(existsSync(childrenProviderPath), true, "children provider is missing");
 
 const registrySource = readFileSync(registryPath, "utf8");
 const backgroundSource = readFileSync(backgroundSourcePath, "utf8");
 const typesSource = readFileSync(typesPath, "utf8");
-const useChildrenSource = readFileSync(useChildrenPath, "utf8");
+const childrenProviderSource = readFileSync(childrenProviderPath, "utf8");
 
 const expectedSkinIds = ["none", "space", "animals", "magic", "nature", "heroes"];
 const expectedAssets = [
@@ -33,7 +37,16 @@ for (const skinId of expectedSkinIds) {
 
 assert.match(typesSource, /export type BackgroundSkinId/, "BackgroundSkinId type is missing");
 assert.match(typesSource, /backgroundSkin\?: BackgroundSkinId/, "Child.backgroundSkin is missing");
-assert.match(useChildrenSource, /normalizeBackgroundSkin/, "children are not normalizing background skins");
+assert.match(
+  childrenProviderSource,
+  /import\s*\{[^}]*normalizeBackgroundSkin[^}]*\}\s*from\s*"@\/lib\/background-skins"/,
+  "children provider does not import normalizeBackgroundSkin"
+);
+assert.match(
+  childrenProviderSource,
+  /backgroundSkin:\s*normalizeBackgroundSkin\(/,
+  "children provider does not normalize Child.backgroundSkin on read/write"
+);
 assert.match(
   backgroundSource,
   /backgroundSkin\?: BackgroundSkinId/,

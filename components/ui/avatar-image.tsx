@@ -19,6 +19,11 @@ interface AvatarImageProps {
    * cannot be loaded (deleted photo, stale path). Falls back to the default emoji.
    */
   fallbackLabel?: string;
+  /**
+   * Set when the avatar only repeats a label that is already read out next to it.
+   * Removes the whole node from the accessibility tree on both platforms.
+   */
+  accessibilityElementsHidden?: boolean;
 }
 
 export function AvatarImage({
@@ -30,6 +35,7 @@ export function AvatarImage({
   style,
   accessibilityLabel = "Avatar",
   fallbackLabel,
+  accessibilityElementsHidden = false,
 }: AvatarImageProps) {
   const normalizedAvatar = normalizeAvatarValue(avatar);
   const avatarKey = getAvatarKey(normalizedAvatar);
@@ -43,9 +49,10 @@ export function AvatarImage({
     setFailedAvatarKey(avatarKey);
   }, [avatarKey]);
 
+  // Clamped to the 12px type floor so a small avatar never renders sub-legible.
   const emojiTextStyle = {
-    fontSize: Math.round(size * 0.55),
-    lineHeight: Math.round(size * 0.64),
+    fontSize: Math.max(12, Math.round(size * 0.55)),
+    lineHeight: Math.max(14, Math.round(size * 0.64)),
   };
 
   const fallbackInitial = fallbackLabel?.trim().charAt(0).toUpperCase();
@@ -65,8 +72,8 @@ export function AvatarImage({
           <Text
             className="font-body-bold text-foreground"
             style={{
-              fontSize: Math.round(size * 0.42),
-              lineHeight: Math.round(size * 0.52),
+              fontSize: Math.max(12, Math.round(size * 0.42)),
+              lineHeight: Math.max(14, Math.round(size * 0.52)),
             }}
             maxFontSizeMultiplier={1.2}
           >
@@ -117,8 +124,10 @@ export function AvatarImage({
         },
         style,
       ]}
-      accessibilityRole="image"
-      accessibilityLabel={accessibilityLabel}
+      accessibilityRole={accessibilityElementsHidden ? undefined : "image"}
+      accessibilityLabel={accessibilityElementsHidden ? undefined : accessibilityLabel}
+      accessibilityElementsHidden={accessibilityElementsHidden}
+      importantForAccessibility={accessibilityElementsHidden ? "no-hide-descendants" : "auto"}
     >
       {renderContent()}
     </View>

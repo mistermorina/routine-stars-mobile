@@ -214,7 +214,12 @@ export default function LegalSettings() {
                         {document.summary}
                       </Text>
                     </View>
-                    <Chevron size={18} color={palette.accentText} />
+                    <Chevron
+                      size={18}
+                      color={palette.accentText}
+                      accessibilityElementsHidden
+                      importantForAccessibility="no-hide-descendants"
+                    />
                   </PressableScale>
 
                   {isExpanded ? (
@@ -330,7 +335,11 @@ export default function LegalSettings() {
                     <Download size={18} color={palette.accentText} />
                   )}
                 </View>
-                <Text className="text-base font-body-semibold" style={{ color: palette.accentText }}>
+                <Text
+                  className="text-base font-body-semibold"
+                  style={{ color: palette.accentText }}
+                  maxFontSizeMultiplier={1.3}
+                >
                   {isExporting ? "Export wird erstellt …" : "Daten exportieren"}
                 </Text>
               </View>
@@ -348,7 +357,11 @@ export default function LegalSettings() {
             }}
           >
             <View className="px-4 pt-4">
-              <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+              <Text
+                className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground"
+                accessibilityRole="header"
+                maxFontSizeMultiplier={1.3}
+              >
                 Online-Version
               </Text>
               <Text className="mt-1 text-sm font-body leading-5 text-muted-foreground">
@@ -373,7 +386,12 @@ export default function LegalSettings() {
                       <Text className="ml-3 flex-1 text-sm font-body text-foreground">
                         {item.label}
                       </Text>
-                      <ChevronRight size={16} color={palette.accentText} />
+                      <ChevronRight
+                        size={16}
+                        color={palette.accentText}
+                        accessibilityElementsHidden
+                        importantForAccessibility="no-hide-descendants"
+                      />
                     </PressableScale>
                     {index < onlineLinks.length - 1 ? <Separator /> : null}
                   </View>
@@ -384,7 +402,7 @@ export default function LegalSettings() {
         </Animated.View>
 
         <View className="mt-6 items-center gap-1">
-          <Text className="text-xs font-body text-muted-foreground">
+          <Text className="text-xs font-body text-muted-foreground" maxFontSizeMultiplier={1.3}>
             {appVersion ? `Routine Stars v${appVersion}` : "Routine Stars"}
           </Text>
           <Text className="text-xs font-body text-muted-foreground">

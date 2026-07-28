@@ -531,6 +531,7 @@ export function StickerWallGallery({
           className="mt-2 h-2.5"
           indicatorColor={palette.chartPrimary}
           trackStyle={{ backgroundColor: PROGRESS_TRACK }}
+          accessibilityLabel={`${filledCount} von ${totalCount} Stickern gesammelt`}
         />
       </View>
       <View

@@ -1,0 +1,50 @@
+{
+  "$comment": [
+    "Sanctioned remainder of raw hex literals in app/ + components/.",
+    "SHRINK THIS LIST, NEVER GROW IT. Every entry is design debt: the token",
+    "contract (.claude/skills/routine-stars-polish/SKILL.md) says colours come",
+    "from Tailwind classes, getThemePalette() or semanticColors — in that order.",
+    "Values are per-file occurrence caps; adding one more fails the check.",
+    "Regenerate only after a sanctioned sweep:",
+    "  node scripts/check-ui-quality.mjs --write-allowlist"
+  ],
+  "exemptPaths": [
+    "lib/theme.ts",
+    "tailwind.config.ts"
+  ],
+  "generatedFrom": [
+    "app",
+    "components"
+  ],
+  "totalAllowedOccurrences": 21,
+  "allowed": {
+    "app/settings/routines.tsx": {
+      "#14B8A6": 1,
+      "#3B82F6": 1,
+      "#8B5CF6": 1,
+      "#EF4444": 1,
+      "#F59E0B": 1,
+      "#F97316": 1
+    },
+    "components/profile/milestone-badges.tsx": {
+      "#ADB7C2": 1
+    },
+    "components/profile/monthly-completion-calendar.tsx": {
+      "#B9B9B9": 1
+    },
+    "components/routine-stars/routine-complete-dialog.tsx": {
+      "#8BCDEB": 2,
+      "#A793F4": 1,
+      "#B9AAF2": 1,
+      "#F2A6CA": 1,
+      "#F7B633": 3
+    },
+    "components/routine-stars/task-timer-modal.tsx": {
+      "#2F6FDC": 1,
+      "#5364A9": 1,
+      "#B9AAF2": 1,
+      "#DDD3FF": 1,
+      "#F2EFFF": 1
+    }
+  }
+}

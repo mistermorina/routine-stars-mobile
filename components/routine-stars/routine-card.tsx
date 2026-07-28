@@ -5,7 +5,7 @@ import { Star } from "@/lib/icons";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { TaskItem } from "./task-item";
-import { getThemePalette } from "@/lib/theme";
+import { getThemePalette, semanticColors, shadowPresets } from "@/lib/theme";
 import { getRoutineVisual } from "@/lib/routine-visuals";
 import type { ChildTheme, Routine, Task } from "@/lib/types";
 
@@ -35,14 +35,11 @@ export function RoutineCard({
 
   return (
     <Card
-      className="mb-4 overflow-hidden rounded-[22px] px-4 pb-4 pt-5"
+      className="mb-4 overflow-hidden rounded-card px-4 pb-4 pt-5"
       style={{
         backgroundColor: palette.cardTint,
         borderColor: palette.accentBorder,
-        shadowColor: "#9DB8D8",
-        shadowOpacity: 0.14,
-        shadowRadius: 18,
-        shadowOffset: { width: 0, height: 10 },
+        ...shadowPresets.shadowCard,
       }}
     >
       <View
@@ -51,7 +48,7 @@ export function RoutineCard({
       />
       <View
         className="absolute left-[-40px] top-14 h-28 w-28 rounded-full"
-        style={{ backgroundColor: "#FFFFFF", opacity: 0.34 }}
+        style={{ backgroundColor: semanticColors.card, opacity: 0.34 }}
       />
       <View
         className="absolute right-[-34px] top-[-36px] h-40 w-40 rounded-full"
@@ -70,6 +67,8 @@ export function RoutineCard({
           }}
           contentFit="contain"
           transition={160}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
         />
       ) : null}
 
@@ -79,6 +78,7 @@ export function RoutineCard({
             className="text-lg font-headline leading-6"
             style={{ color: visual.accent }}
             numberOfLines={1}
+            maxFontSizeMultiplier={1.3}
             adjustsFontSizeToFit
             minimumFontScale={0.82}
           >
@@ -89,7 +89,12 @@ export function RoutineCard({
             style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
           >
             <Star size={14} color={visual.accent} fill={visual.accent} />
-            <Text className="text-sm font-body-semibold" style={{ color: visual.accent }} numberOfLines={1}>
+            <Text
+              className="text-sm font-body-semibold"
+              style={{ color: visual.accent }}
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.2}
+            >
               {completedTasks} / {totalTasks} Aufgaben
             </Text>
           </View>
@@ -122,7 +127,7 @@ export function RoutineCard({
 
         {isComplete ? (
           <View
-            className="mt-4 flex-row items-center overflow-hidden rounded-[20px] px-4 py-3"
+            className="mt-4 flex-row items-center overflow-hidden rounded-tile px-4 py-3"
             style={{ backgroundColor: visual.accentSoft }}
           >
             <Image
@@ -130,6 +135,8 @@ export function RoutineCard({
               style={{ width: 66, height: 66, opacity: 0.9 }}
               contentFit="contain"
               transition={160}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
             />
             <View className="ml-3 flex-1">
               <Text className="text-base font-headline" style={{ color: visual.accent }}>

@@ -71,6 +71,8 @@ function FloatingShape({
       className={cn("absolute", className)}
       style={[animatedStyle, style]}
       pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
     >
       {children}
     </Animated.View>

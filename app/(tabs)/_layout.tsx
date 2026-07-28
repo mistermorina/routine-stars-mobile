@@ -3,6 +3,7 @@ import { Tabs } from "expo-router";
 import { Home, Trophy, Star } from "@/lib/icons";
 import { AppTabBar } from "@/components/routine-stars/tab-bar";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { semanticColors } from "@/lib/theme";
 
 export default function TabsLayout() {
   const reduceMotion = useReducedMotion();
@@ -39,7 +40,11 @@ export default function TabsLayout() {
         options={{
           title: "Profil",
           tabBarIcon: ({ color, size, focused }) => (
-            <Star size={size} color={color} fill={focused ? "#FFD700" : "transparent"} />
+            <Star
+              size={size}
+              color={color}
+              fill={focused ? semanticColors.gold : "transparent"}
+            />
           ),
         }}
       />

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { RewardBrowser } from "@/components/rewards/reward-browser";
 import { getStarterRewardSuggestions } from "@/lib/reward-suggestions";
-import { getThemePalette } from "@/lib/theme";
+import { getThemePalette, semanticColors } from "@/lib/theme";
 import type { RewardSuggestion, ChildProfile } from "@/lib/types";
 
 interface RewardItem {
@@ -88,7 +88,7 @@ export function RewardSetup({ onNext, onBack, formData, isSaving = false }: Rewa
         <CardContent>
           <View className="gap-5">
             <View
-              className="rounded-2xl border px-4 py-4"
+              className="rounded-tile border px-4 py-4"
               style={{
                 borderColor: palette.accentBorder,
                 backgroundColor: palette.accentSoft,
@@ -98,6 +98,8 @@ export function RewardSetup({ onNext, onBack, formData, isSaving = false }: Rewa
                 <View
                   className="h-11 w-11 items-center justify-center rounded-full"
                   style={{ backgroundColor: palette.surface }}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
                 >
                   <Gift size={20} color={palette.accentStrong} />
                 </View>
@@ -105,7 +107,7 @@ export function RewardSetup({ onNext, onBack, formData, isSaving = false }: Rewa
                   <Text className="text-base font-body-semibold text-foreground">
                     Warmes Starterpaket
                   </Text>
-                  <Text className="mt-0.5 text-xs font-body" style={{ color: palette.accentText }}>
+                  <Text className="mt-0.5 text-sm font-body" style={{ color: palette.accentText }}>
                     Vier kleine Ziele für schnelle Erfolgserlebnisse
                   </Text>
                 </View>
@@ -118,11 +120,13 @@ export function RewardSetup({ onNext, onBack, formData, isSaving = false }: Rewa
                   return (
                     <View
                       key={reward.id}
-                      className="max-w-full min-w-0 flex-row items-center rounded-2xl border px-3 py-2"
+                      className="max-w-full min-w-0 flex-row items-center rounded-tile border px-3 py-2"
                       style={{
                         borderColor: palette.accentBorder,
-                        backgroundColor: "#FFFFFF",
+                        backgroundColor: semanticColors.card,
                       }}
+                      accessible
+                      accessibilityLabel={`${reward.title}, ${reward.cost} Sterne`}
                     >
                       <View
                         className="h-8 w-8 shrink-0 items-center justify-center rounded-full"
@@ -140,8 +144,15 @@ export function RewardSetup({ onNext, onBack, formData, isSaving = false }: Rewa
                         </Text>
                       </View>
                       <View className="ml-2 shrink-0 flex-row items-center gap-1">
-                        <Star size={13} color="#B97E0B" fill="#B97E0B" />
-                        <Text className="text-sm font-body text-muted-foreground">
+                        <Star
+                          size={13}
+                          color={semanticColors.goldText}
+                          fill={semanticColors.goldText}
+                        />
+                        <Text
+                          className="text-sm font-body text-muted-foreground"
+                          maxFontSizeMultiplier={1.3}
+                        >
                           {reward.cost}
                         </Text>
                       </View>
@@ -156,6 +167,9 @@ export function RewardSetup({ onNext, onBack, formData, isSaving = false }: Rewa
                     onPress={handleStarterPack}
                     style={{ backgroundColor: palette.button }}
                     disabled={isSaving}
+                    accessibilityRole="button"
+                    accessibilityLabel="Starterpaket wählen"
+                    accessibilityState={{ disabled: isSaving }}
                   >
                     Starterpaket wählen
                   </Button>
@@ -164,8 +178,15 @@ export function RewardSetup({ onNext, onBack, formData, isSaving = false }: Rewa
                     onPress={() => setIsManualMode(true)}
                     style={{ borderColor: palette.accent }}
                     disabled={isSaving}
+                    accessibilityRole="button"
+                    accessibilityLabel="Belohnungen selbst auswählen"
+                    accessibilityState={{ disabled: isSaving }}
                   >
-                    <Text className="text-sm font-body-semibold" style={{ color: palette.accent }}>
+                    <Text
+                      className="text-sm font-body-semibold"
+                      style={{ color: palette.accent }}
+                      maxFontSizeMultiplier={1.3}
+                    >
                       Belohnungen selbst auswählen
                     </Text>
                   </Button>
@@ -187,7 +208,7 @@ export function RewardSetup({ onNext, onBack, formData, isSaving = false }: Rewa
                         return (
                           <View
                             key={reward.id}
-                            className="max-w-full min-w-0 flex-row items-center rounded-2xl border px-3 py-2"
+                            className="max-w-full min-w-0 flex-row items-center rounded-tile border px-3 py-2"
                             style={{
                               borderColor: palette.accentBorder,
                               backgroundColor: palette.accentSoft,
@@ -209,19 +230,26 @@ export function RewardSetup({ onNext, onBack, formData, isSaving = false }: Rewa
                               </Text>
                             </View>
                             <View className="ml-2 shrink-0 flex-row items-center gap-1">
-                              <Star size={13} color="#B97E0B" fill="#B97E0B" />
-                              <Text className="text-sm font-body text-muted-foreground">
+                              <Star
+                                size={13}
+                                color={semanticColors.goldText}
+                                fill={semanticColors.goldText}
+                              />
+                              <Text
+                                className="text-sm font-body text-muted-foreground"
+                                maxFontSizeMultiplier={1.3}
+                              >
                                 {reward.cost}
                               </Text>
                             </View>
                             <Pressable
                               onPress={() => handleRemoveReward(reward.id)}
-                              className="ml-1 h-11 w-11 shrink-0 items-center justify-center rounded-full"
+                              className="ml-1 h-11 w-11 shrink-0 items-center justify-center rounded-full active:opacity-70"
                               accessibilityRole="button"
                               accessibilityLabel={`Belohnung ${reward.title} entfernen`}
-                              hitSlop={4}
+                              hitSlop={8}
                             >
-                              <X size={14} color="#737373" />
+                              <X size={14} color={semanticColors.mutedForeground} />
                             </Pressable>
                           </View>
                         );
@@ -232,8 +260,9 @@ export function RewardSetup({ onNext, onBack, formData, isSaving = false }: Rewa
 
                 {selectedRewards.length === 0 ? (
                   <View
-                    className="rounded-[18px] px-4 py-3"
+                    className="rounded-tile px-4 py-3"
                     style={{ backgroundColor: palette.heroSurface }}
+                    accessibilityLiveRegion="polite"
                   >
                     <Text className="text-sm font-body leading-5" style={{ color: palette.accentText }}>
                       Noch keine Belohnung gewählt. Tippe unten auf eine Idee oder nutze das Starterpaket.
@@ -253,8 +282,15 @@ export function RewardSetup({ onNext, onBack, formData, isSaving = false }: Rewa
                   onPress={handleStarterPack}
                   style={{ borderColor: palette.accent }}
                   disabled={isSaving}
+                  accessibilityRole="button"
+                  accessibilityLabel="Stattdessen Starterpaket verwenden"
+                  accessibilityState={{ disabled: isSaving }}
                 >
-                  <Text className="text-sm font-body-semibold" style={{ color: palette.accent }}>
+                  <Text
+                    className="text-sm font-body-semibold"
+                    style={{ color: palette.accent }}
+                    maxFontSizeMultiplier={1.3}
+                  >
                     Stattdessen Starterpaket verwenden
                   </Text>
                 </Button>
@@ -268,6 +304,9 @@ export function RewardSetup({ onNext, onBack, formData, isSaving = false }: Rewa
                 onPress={onBack}
                 className="min-w-[100px]"
                 disabled={isSaving}
+                accessibilityRole="button"
+                accessibilityLabel="Zurück zu den Routinen"
+                accessibilityState={{ disabled: isSaving }}
               >
                 Zurück
               </Button>
@@ -276,8 +315,19 @@ export function RewardSetup({ onNext, onBack, formData, isSaving = false }: Rewa
                 disabled={isSaving || (isManualMode && selectedRewards.length === 0)}
                 className="min-w-[100px]"
                 style={{ backgroundColor: palette.button }}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  isSaving ? "Einrichtung wird gespeichert" : "Einrichtung abschließen"
+                }
+                accessibilityState={{
+                  disabled: isSaving || (isManualMode && selectedRewards.length === 0),
+                  busy: isSaving,
+                }}
               >
-                <Text className="text-base font-body-semibold text-primary-foreground">
+                <Text
+                  className="text-base font-body-semibold text-primary-foreground"
+                  maxFontSizeMultiplier={1.2}
+                >
                   {isSaving ? "Wird gespeichert..." : "In die App"}
                 </Text>
               </Button>

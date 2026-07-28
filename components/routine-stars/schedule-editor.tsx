@@ -476,6 +476,7 @@ export function ScheduleEditor({
               >
                 <Text
                   className="font-body-semibold text-base"
+                  maxFontSizeMultiplier={1.3}
                   style={{ color: semanticColors.accentForeground }}
                 >
                   Übernehmen

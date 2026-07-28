@@ -356,7 +356,11 @@ export default function ParentLoginScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="flex-1 items-center justify-center p-6">
-        <View className="mb-6 h-20 w-20 items-center justify-center rounded-full bg-primary/30">
+        <View
+          className="mb-6 h-20 w-20 items-center justify-center rounded-full bg-primary/30"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
           <Lock size={36} color={semanticColors.foreground} />
         </View>
 
@@ -384,6 +388,8 @@ export default function ParentLoginScreen() {
               editable={isInputEnabled}
               accessibilityLabel="Vierstelligen Eltern-PIN eingeben"
               accessibilityState={{ disabled: !isInputEnabled }}
+              // Fixed 56pt field with wide tracking — cap Dynamic Type growth.
+              maxFontSizeMultiplier={1.2}
               style={{ height: 56, textAlign: "center", fontSize: 24, letterSpacing: 12 }}
               className={cn(
                 "w-full rounded-tile border-2 bg-card font-headline text-foreground",
@@ -450,10 +456,16 @@ export default function ParentLoginScreen() {
         <PressableScale
           onPress={dismiss}
           accessibilityRole="button"
-          accessibilityLabel="Abbrechen"
+          accessibilityLabel="Abbrechen und zurückgehen"
+          hitSlop={8}
           className="mt-4 min-h-[44px] justify-center rounded-chip px-6"
         >
-          <Text className="text-center font-body text-base text-muted-foreground">Abbrechen</Text>
+          <Text
+            className="text-center font-body text-base text-muted-foreground"
+            maxFontSizeMultiplier={1.4}
+          >
+            Abbrechen
+          </Text>
         </PressableScale>
       </View>
 

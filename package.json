@@ -10,14 +10,16 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx",
-    "test:background-skins": "node scripts/check-background-skins.mjs",
-    "test:stickers": "node scripts/check-sticker-reward-logic.mjs",
-    "test:smoke": "node scripts/check-task-timer-modal-order.mjs",
-    "test:streak": "node scripts/check-streak-logic.mjs",
-    "test:progress-smoke": "node scripts/check-local-day-progress.mjs",
-    "test:contrast-smoke": "node scripts/check-color-contrast.mjs",
     "test:ui-quality": "node scripts/check-ui-quality.mjs",
-    "test:onboarding": "node scripts/check-onboarding-flow.mjs"
+    "test:contrast-smoke": "node scripts/check-color-contrast.mjs",
+    "test:background-skins": "node scripts/check-background-skins.mjs",
+    "test:smoke": "node scripts/check-task-timer-modal-order.mjs",
+    "test:progress-smoke": "node scripts/check-local-day-progress.mjs",
+    "test:onboarding": "node scripts/check-onboarding-flow.mjs",
+    "test:stickers": "node scripts/check-sticker-reward-logic.mjs",
+    "test:streak": "node scripts/check-streak-logic.mjs",
+    "test:all": "npm run typecheck && npm run lint && node scripts/check-ui-quality.mjs && node scripts/check-color-contrast.mjs && node scripts/check-background-skins.mjs && node scripts/check-task-timer-modal-order.mjs && node scripts/check-local-day-progress.mjs && node scripts/check-onboarding-flow.mjs",
+    "guardrails:hex-allowlist": "node scripts/check-ui-quality.mjs --write-allowlist"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",

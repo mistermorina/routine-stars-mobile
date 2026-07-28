@@ -178,7 +178,7 @@ export default function OnboardingScreen() {
       <ThemedScreenBackground theme={formData.children[0]?.theme}>
         <View className="flex-1 min-h-0 px-4 pt-4">
           <View
-            className="mb-5 rounded-[26px] border px-4 py-4"
+            className="mb-5 rounded-card border px-4 py-4"
             style={{
               backgroundColor: onboardingTheme.cardTint,
               borderColor: onboardingTheme.accentBorder,
@@ -186,23 +186,30 @@ export default function OnboardingScreen() {
           >
             <View className="flex-row items-start justify-between gap-3">
               <View className="min-w-0 flex-1">
-                <Text className="text-xs font-body-semibold uppercase text-muted-foreground">
+                <Text
+                  className="text-xs font-body-semibold uppercase text-muted-foreground"
+                  maxFontSizeMultiplier={1.3}
+                >
                   {activeStep.eyebrow}
                 </Text>
                 <Text className="mt-1 text-lg font-headline leading-6 text-foreground">
                   {activeStep.title}
                 </Text>
-                <Text className="mt-1 text-xs font-body leading-5 text-muted-foreground">
+                <Text className="mt-1 text-sm font-body leading-5 text-muted-foreground">
                   {activeStep.description}
                 </Text>
                 <Progress
                   value={progressValue}
                   className="mt-4 h-3 w-full"
-                  indicatorClassName="bg-[#FFD700]"
+                  indicatorClassName="bg-gold"
                   indicatorColor={onboardingTheme.progress}
+                  accessibilityLabel={`Einrichtung, Schritt ${currentStep + 1} von ${TOTAL_STEPS}`}
                 />
                 <View className="mt-3">
-                  <Animated.Text className="text-xs font-body text-muted-foreground">
+                  <Animated.Text
+                    className="text-xs font-body text-muted-foreground"
+                    maxFontSizeMultiplier={1.4}
+                  >
                     Schritt {currentStep + 1} von {TOTAL_STEPS}
                   </Animated.Text>
                 </View>
@@ -214,6 +221,7 @@ export default function OnboardingScreen() {
                 <Animated.Text
                   className="text-xs font-body-semibold"
                   style={{ color: onboardingTheme.accentText }}
+                  maxFontSizeMultiplier={1.3}
                 >
                   Einrichtung
                 </Animated.Text>
@@ -223,16 +231,16 @@ export default function OnboardingScreen() {
 
           {saveError ? (
             <View
-              className="mb-4 rounded-[18px] border px-4 py-3"
-              style={{
-                backgroundColor: "#FFF4F4",
-                borderColor: "#F5B7B7",
-              }}
+              className="mb-4 rounded-tile border border-destructive/30 bg-destructive-soft px-4 py-3"
+              accessible
+              accessibilityRole="alert"
+              accessibilityLiveRegion="polite"
+              accessibilityLabel={`${saveError} Deine Eingaben bleiben auf diesem Screen erhalten.`}
             >
-              <Text className="text-sm font-body-semibold text-[#8A1F1F]">
+              <Text className="text-sm font-body-semibold text-destructive-strong">
                 {saveError}
               </Text>
-              <Text className="mt-1 text-xs font-body leading-5 text-[#8A1F1F]">
+              <Text className="mt-1 text-sm font-body leading-5 text-destructive-strong">
                 Deine Eingaben bleiben auf diesem Screen erhalten.
               </Text>
             </View>

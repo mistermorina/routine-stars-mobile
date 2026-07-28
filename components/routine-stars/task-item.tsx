@@ -12,8 +12,9 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { Star, Check, Play, getIcon } from "@/lib/icons";
-import { getThemePalette, semanticColors } from "@/lib/theme";
+import { getThemePalette, semanticColors, shadowPresets } from "@/lib/theme";
 import { durations, easings, springs, timings } from "@/lib/motion";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useStarFlightLauncher, type StarFlightLauncher } from "./star-flight";
@@ -283,12 +284,12 @@ export function TaskItem({
   const hasTimer = task.timerInMinutes && task.timerInMinutes > 0;
   const hasBonus = task.bonusStars && task.bonusStars > 0;
 
-  const starColor = routineColor || "#737373";
+  const starColor = routineColor || semanticColors.mutedForeground;
   const taskSurface = isCompleted
-    ? "#FFFFFF"
+    ? semanticColors.card
     : isSuggested
       ? palette.heroSurface
-      : "#FFFFFF";
+      : semanticColors.card;
   const taskAccessibilityLabel = isCompleted
     ? `${task.title}, erledigt`
     : hasTimer
@@ -338,19 +339,26 @@ export function TaskItem({
         {/* "Erledigt" backdrop revealed on swipe (only for incomplete tasks) */}
         {!isCompleted && (
           <View
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
             style={{
               position: "absolute",
               right: 0,
               top: 0,
               bottom: 0,
               width: 120,
-              backgroundColor: routineColor || "#22c55e",
+              backgroundColor: routineColor || semanticColors.success,
               justifyContent: "center",
               alignItems: "center",
             }}
           >
-            <Check size={24} color="#FFFFFF" />
-            <Text style={{ color: "#FFFFFF", fontSize: 12, marginTop: 2, fontWeight: "600" }} numberOfLines={1}>
+            <Check size={24} color={semanticColors.card} />
+            <Text
+              className="mt-0.5 text-xs font-body-semibold"
+              style={{ color: semanticColors.card }}
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.2}
+            >
               Erledigt
             </Text>
           </View>
@@ -383,13 +391,10 @@ export function TaskItem({
                       ? "rgba(157,184,216,0.28)"
                       : isSuggested
                         ? palette.accentBorder
-                        : "#EAF1F7",
+                        : semanticColors.border,
                     paddingHorizontal: 12,
                     paddingVertical: 10,
-                    shadowColor: "#9DB8D8",
-                    shadowOpacity: 0.11,
-                    shadowRadius: 12,
-                    shadowOffset: { width: 0, height: 6 },
+                    ...shadowPresets.shadowCard,
                     width: "100%",
                   },
                 ]}
@@ -403,7 +408,7 @@ export function TaskItem({
                 >
                   <Icon
                     size={26}
-                    color={isCompleted ? starColor : routineColor || "#737373"}
+                    color={isCompleted ? starColor : routineColor || semanticColors.mutedForeground}
                   />
                 </View>
 
@@ -412,6 +417,7 @@ export function TaskItem({
                   <Text
                     className="text-base font-body-semibold leading-6 text-foreground"
                     numberOfLines={2}
+                    maxFontSizeMultiplier={1.4}
                   >
                     {task.title}
                   </Text>
@@ -419,14 +425,26 @@ export function TaskItem({
                     <View className="flex-row items-center gap-1">
                       {/* Launch point of the star flight — measured on press. */}
                       <View ref={starAnchorRef} collapsable={false}>
-                        <Star size={12} color="#F7A313" fill="#F7A313" />
+                        <Star
+                          size={12}
+                          color={semanticColors.goldDeep}
+                          fill={semanticColors.goldDeep}
+                        />
                       </View>
-                      <Text className="text-sm font-body-semibold" style={{ color: "#B97E0B" }}>
+                      <Text
+                        className="text-sm font-body-semibold"
+                        style={{ color: semanticColors.goldText }}
+                        maxFontSizeMultiplier={1.3}
+                      >
                         +{task.stars}
                       </Text>
                     </View>
                     {hasTimer && !isCompleted ? (
-                      <Text className="text-sm font-body text-muted-foreground" numberOfLines={1}>
+                      <Text
+                        className="text-sm font-body text-muted-foreground"
+                        numberOfLines={1}
+                        maxFontSizeMultiplier={1.3}
+                      >
                         · {task.timerInMinutes} Min.{hasBonus ? ` · +${task.bonusStars} Bonus` : ""}
                       </Text>
                     ) : null}
@@ -437,29 +455,30 @@ export function TaskItem({
                 {isCompleted ? (
                   <View
                     className="h-11 w-11 shrink-0 items-center justify-center rounded-full"
-                    style={{ backgroundColor: "#4FD17A" }}
+                    style={{ backgroundColor: semanticColors.success }}
                   >
-                    <Check size={22} color="#FFFFFF" strokeWidth={3} />
+                    <Check size={22} color={semanticColors.card} strokeWidth={3} />
                   </View>
                 ) : hasTimer ? (
-                  <Pressable
+                  <PressableScale
                     onPress={(e) => {
                       e.stopPropagation?.();
                       onStartTimer(task);
                     }}
-                    className="h-11 w-11 shrink-0 items-center justify-center rounded-full"
+                    containerClassName="shrink-0"
+                    className="h-11 w-11 items-center justify-center rounded-full"
                     style={{ backgroundColor: palette.button }}
-                    hitSlop={6}
+                    hitSlop={8}
                     accessibilityRole="button"
                     accessibilityLabel={`Timer für ${task.title} starten`}
                   >
-                    <Play size={18} color="#FFFFFF" fill="#FFFFFF" />
-                  </Pressable>
+                    <Play size={18} color={semanticColors.card} fill={semanticColors.card} />
+                  </PressableScale>
                 ) : (
                   <View
                     className="h-11 w-11 shrink-0 items-center justify-center rounded-full"
                     style={{
-                      backgroundColor: "#FFFFFF",
+                      backgroundColor: semanticColors.card,
                       borderWidth: 2,
                       borderColor: routineColor || palette.accentBorder,
                     }}

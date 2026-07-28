@@ -116,7 +116,11 @@ function StickerDetailSheet({
             paddingBottom: sheetBottomPadding,
           }}
         >
-          <View className="mb-4 self-center h-1.5 w-16 rounded-full bg-black/10" />
+          <View
+            className="mb-4 self-center h-1.5 w-16 rounded-full bg-black/10"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          />
 
           <ScrollView
             bounces={false}
@@ -157,6 +161,7 @@ function StickerDetailSheet({
                   numberOfLines={1}
                   adjustsFontSizeToFit
                   minimumFontScale={0.86}
+                  maxFontSizeMultiplier={1.3}
                 >
                   {entry.unlocked ? "Freigeschaltet" : "In Arbeit"}
                 </Text>
@@ -303,12 +308,16 @@ function StickerCard({
 
         <View className="mt-auto pt-4">
           <View className="mb-2 flex-row items-center justify-between">
-            <Text className="text-xs font-body-semibold text-muted-foreground">
+            <Text
+              className="text-xs font-body-semibold text-muted-foreground"
+              maxFontSizeMultiplier={1.3}
+            >
               {entry.unlocked ? "Freigeschaltet" : "Fortschritt"}
             </Text>
             <Text
               className="text-xs font-body-semibold"
               style={{ color: entry.unlocked ? palette.accentText : lockedText }}
+              maxFontSizeMultiplier={1.3}
             >
               {entry.unlocked ? "100%" : `${entry.progressPercent}%`}
             </Text>
@@ -353,6 +362,8 @@ export function StickerAlbum({
         <View
           className="absolute right-[-14px] top-[-10px] h-24 w-24 rounded-full"
           style={{ backgroundColor: palette.motifSecondary, opacity: 0.22 }}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
         />
 
         <PressableScale
@@ -381,10 +392,17 @@ export function StickerAlbum({
                 className="rounded-tile px-3 py-2"
                 style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
               >
-                <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+                <Text
+                  className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground"
+                  maxFontSizeMultiplier={1.3}
+                >
                   {THEME_BADGES[childTheme]}
                 </Text>
-                <Text className="mt-1 text-sm font-headline" style={{ color: palette.accentText }}>
+                <Text
+                  className="mt-1 text-sm font-headline"
+                  style={{ color: palette.accentText }}
+                  maxFontSizeMultiplier={1.3}
+                >
                   {unlockedCount}/9
                 </Text>
               </View>
@@ -418,7 +436,10 @@ export function StickerAlbum({
           />
           <View className="flex-row items-start justify-between gap-3 px-4 pb-4 pt-4">
             <View className="flex-1">
-              <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+              <Text
+                className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground"
+                maxFontSizeMultiplier={1.3}
+              >
                 Als Nächstes
               </Text>
               <Text className="mt-1 text-lg font-headline text-foreground">
@@ -473,7 +494,11 @@ export function StickerAlbum({
                 className="rounded-full px-2.5 py-1"
                 style={{ backgroundColor: palette.tabActiveBg }}
               >
-                <Text className="text-xs font-body-semibold" style={{ color: palette.accentText }}>
+                <Text
+                  className="text-xs font-body-semibold"
+                  style={{ color: palette.accentText }}
+                  maxFontSizeMultiplier={1.3}
+                >
                   {group.entries.filter((entry) => entry.unlocked).length}/{group.entries.length}
                 </Text>
               </View>

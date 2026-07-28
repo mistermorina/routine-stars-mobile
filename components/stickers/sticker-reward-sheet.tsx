@@ -28,7 +28,7 @@ import {
   type AnimalSticker,
 } from "@/lib/animal-stickers";
 import type { StickerRewardEvent } from "@/lib/sticker-reward-logic";
-import type { ThemePalette } from "@/lib/theme";
+import { shadowPresets, type ThemePalette } from "@/lib/theme";
 
 const BACKDROP_COLOR = "rgba(246,250,255,0.86)";
 
@@ -156,30 +156,34 @@ export function StickerRewardSheet({
         <Animated.View style={sheetStyle}>
           <View
             className="overflow-hidden rounded-[30px] border px-4 pb-5 pt-4"
-            style={{
-              backgroundColor: palette.cardTint,
-              borderColor: palette.accentBorder,
-              maxHeight: sheetMaxHeight,
-              shadowColor: "#9DB8D8",
-              shadowOpacity: 0.22,
-              shadowRadius: 28,
-              shadowOffset: { width: 0, height: 18 },
-            }}
+            style={[
+              shadowPresets.shadowFloating,
+              {
+                backgroundColor: palette.cardTint,
+                borderColor: palette.accentBorder,
+                maxHeight: sheetMaxHeight,
+              },
+            ]}
           >
             <View
               className="absolute inset-x-0 top-0 h-36 rounded-[30px]"
               style={{ backgroundColor: palette.heroSurface }}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
             />
             <View
               className="absolute right-[-24px] top-[-24px] h-32 w-32 rounded-full"
               style={{ backgroundColor: palette.motifSecondary, opacity: 0.28 }}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
             />
 
             <View className="relative" style={{ flexShrink: 1 }}>
               <Pressable
                 onPress={onClose}
-                className="absolute right-0 top-0 z-10 h-11 w-11 items-center justify-center rounded-full"
+                className="absolute right-0 top-0 z-10 h-11 w-11 items-center justify-center rounded-full active:opacity-70"
                 style={{ backgroundColor: "rgba(255,255,255,0.82)" }}
+                hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel="Sticker-Auswahl schließen"
               >
@@ -198,11 +202,19 @@ export function StickerRewardSheet({
                     className="self-start rounded-full px-3 py-1.5"
                     style={{ backgroundColor: palette.tabActiveBg }}
                   >
-                    <Text className="text-xs font-body-semibold uppercase tracking-[0.6px]" style={{ color: palette.accentText }} numberOfLines={1}>
+                    <Text
+                      className="text-xs font-body-semibold uppercase tracking-[0.6px]"
+                      style={{ color: palette.accentText }}
+                      numberOfLines={1}
+                      maxFontSizeMultiplier={1.2}
+                    >
                       {eyebrow}
                     </Text>
                   </View>
-                  <Text className="mt-3 text-[26px] font-headline leading-[31px] text-foreground">
+                  <Text
+                    className="mt-3 text-[26px] font-headline leading-[31px] text-foreground"
+                    maxFontSizeMultiplier={1.2}
+                  >
                     Such dir einen Sticker aus
                   </Text>
                   <Text className="mt-2 text-base font-body leading-6 text-muted-foreground">
@@ -232,7 +244,7 @@ export function StickerRewardSheet({
                         }}
                       >
                         <View
-                          className="mx-auto h-24 w-24 items-center justify-center rounded-[24px]"
+                          className="mx-auto h-24 w-24 items-center justify-center rounded-card"
                           style={{ backgroundColor: `${sticker.accent}18` }}
                         >
                           <Image
@@ -242,10 +254,18 @@ export function StickerRewardSheet({
                             transition={160}
                           />
                         </View>
-                        <Text className="mt-3 text-center text-base font-headline text-foreground" numberOfLines={1}>
+                        <Text
+                          className="mt-3 text-center text-base font-headline text-foreground"
+                          numberOfLines={1}
+                          maxFontSizeMultiplier={1.3}
+                        >
                           {sticker.title}
                         </Text>
-                        <Text className="mt-1 text-center text-sm font-body text-muted-foreground" numberOfLines={1}>
+                        <Text
+                          className="mt-1 text-center text-sm font-body text-muted-foreground"
+                          numberOfLines={1}
+                          maxFontSizeMultiplier={1.3}
+                        >
                           {sticker.mood}
                         </Text>
                         <View className="mt-2 flex-row justify-center gap-1.5">
@@ -257,6 +277,7 @@ export function StickerRewardSheet({
                               className="text-xs font-body-semibold"
                               style={{ color: palette.accentText }}
                               numberOfLines={1}
+                              maxFontSizeMultiplier={1.2}
                             >
                               {getStickerThemeWorldLabel(sticker.themeWorld)}
                             </Text>
@@ -265,7 +286,11 @@ export function StickerRewardSheet({
                             className="rounded-full px-2 py-1"
                             style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
                           >
-                            <Text className="text-xs font-body-semibold text-muted-foreground" numberOfLines={1}>
+                            <Text
+                              className="text-xs font-body-semibold text-muted-foreground"
+                              numberOfLines={1}
+                              maxFontSizeMultiplier={1.2}
+                            >
                               {getStickerRarityLabel(sticker.rarity)}
                             </Text>
                           </View>

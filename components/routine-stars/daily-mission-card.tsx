@@ -1,11 +1,12 @@
 import React from "react";
 import { View, Text } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { CheckCircle2, Sparkles, Star, Trophy } from "@/lib/icons";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { MissionProgress } from "@/lib/child-progression";
 import type { DailyMission, StickerDefinition } from "@/lib/types";
+import { enterStagger } from "@/lib/motion";
 import type { ThemePalette } from "@/lib/theme";
 
 interface DailyMissionCardProps {
@@ -42,9 +43,9 @@ export function DailyMissionCard({
   const visibleMissionCurrent = Math.min(missionProgress.current, missionProgress.target);
 
   return (
-    <Animated.View entering={FadeInDown.delay(55).duration(320)} className="mt-4">
+    <Animated.View entering={enterStagger(1)} className="mt-4">
       <Card
-        className="overflow-hidden rounded-[22px]"
+        className="overflow-hidden rounded-card"
         style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
       >
         <View
@@ -53,14 +54,17 @@ export function DailyMissionCard({
         />
         <View className="flex-row items-start gap-3">
           <View
-            className="h-12 w-12 items-center justify-center rounded-[16px]"
+            className="h-12 w-12 items-center justify-center rounded-tile"
             style={{ backgroundColor: palette.heroSurface }}
           >
             <MissionIcon size={20} color={palette.accentStrong} />
           </View>
           <View className="min-w-0 flex-1">
             <View className="flex-row flex-wrap items-center gap-2">
-              <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+              <Text
+                className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground"
+                maxFontSizeMultiplier={1.2}
+              >
                 Heute-Mission
               </Text>
               <View
@@ -70,6 +74,7 @@ export function DailyMissionCard({
                 <Text
                   className="text-xs font-body-semibold"
                   style={{ color: palette.accentText }}
+                  maxFontSizeMultiplier={1.2}
                 >
                   Ziel
                 </Text>
@@ -85,14 +90,21 @@ export function DailyMissionCard({
         </View>
 
         <View
-          className="mt-4 rounded-[18px] px-3.5 py-3"
+          className="mt-4 rounded-tile px-3.5 py-3"
           style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
         >
           <View className="mb-2 flex-row items-center justify-between gap-3">
-            <Text className="text-sm font-body-semibold text-muted-foreground">
+            <Text
+              className="text-sm font-body-semibold text-muted-foreground"
+              maxFontSizeMultiplier={1.3}
+            >
               {visibleMissionCurrent} von {missionProgress.target} {missionProgress.unitLabel}
             </Text>
-            <Text className="shrink-0 text-sm font-headline" style={{ color: palette.accentText }}>
+            <Text
+              className="shrink-0 text-sm font-headline"
+              style={{ color: palette.accentText }}
+              maxFontSizeMultiplier={1.3}
+            >
               {isMissionComplete
                 ? "Geschafft"
                 : `${visibleMissionCurrent}/${missionProgress.target}`}
@@ -107,7 +119,7 @@ export function DailyMissionCard({
         </View>
 
         <View
-          className="mt-4 rounded-[18px] border px-4 py-3"
+          className="mt-4 rounded-tile border px-4 py-3"
           style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.74)" }}
         >
           <View className="flex-row items-start gap-2">
@@ -124,10 +136,13 @@ export function DailyMissionCard({
 
           {recentUnlocks.length > 0 ? (
             <View
-              className="mt-3 rounded-[18px] px-3 py-3"
+              className="mt-3 rounded-tile px-3 py-3"
               style={{ backgroundColor: palette.heroSurface }}
             >
-              <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+              <Text
+                className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground"
+                maxFontSizeMultiplier={1.2}
+              >
                 Neue Meilensteine
               </Text>
               <Text className="mt-1 text-sm font-headline text-foreground">

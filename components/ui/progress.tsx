@@ -21,6 +21,8 @@ interface ProgressProps {
   indicatorClassName?: string;
   indicatorColor?: string;
   trackStyle?: ViewStyle;
+  /** German description of what is progressing ("Fortschritt der Einrichtung"). */
+  accessibilityLabel?: string;
 }
 
 function clampRatio(value: number): number {
@@ -46,9 +48,11 @@ export function Progress({
   indicatorClassName,
   indicatorColor,
   trackStyle,
+  accessibilityLabel = "Fortschritt",
 }: ProgressProps) {
   const reduceMotion = useReducedMotion();
   const target = clampRatio(value);
+  const percent = Math.round(target * 100);
 
   const progress = useSharedValue(0);
   const trackWidth = useSharedValue(0);
@@ -104,10 +108,16 @@ export function Progress({
       className={cn("h-3 w-full overflow-hidden rounded-full bg-secondary", className)}
       style={[trackStyle, trackPopStyle]}
       onLayout={handleTrackLayout}
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityValue={{ min: 0, max: 100, now: percent, text: `${percent} Prozent` }}
     >
       <Animated.View
         className={cn("absolute inset-0 rounded-full bg-primary", indicatorClassName)}
         style={[indicatorColor ? { backgroundColor: indicatorColor } : null, fillStyle]}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
       />
     </Animated.View>
   );

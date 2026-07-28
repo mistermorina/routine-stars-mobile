@@ -1,11 +1,13 @@
 import React, { useMemo } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { CalendarDays, CheckCircle2, ShieldCheck, Sparkles } from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
 import { useStickerWall } from "@/hooks/use-sticker-wall";
 import { Card } from "@/components/ui/card";
+import { SkeletonCard } from "@/components/ui/skeleton";
 import { AvatarImage } from "@/components/ui/avatar-image";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
 import { SettingsMetricCard } from "@/components/settings/settings-metric-card";
@@ -15,7 +17,7 @@ import {
   getAnimalSticker,
   getStickerRarityLabel,
 } from "@/lib/animal-stickers";
-import { getThemePalette } from "@/lib/theme";
+import { getThemePalette, semanticColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { StickerRewardMode } from "@/lib/types";
 
@@ -38,6 +40,13 @@ const REWARD_MODE_OPTIONS: {
     icon: CalendarDays,
   },
 ];
+
+/**
+ * Derived from the catalog itself so the caption can never drift when stickers
+ * or whole theme worlds are added — it used to claim a hardcoded "3 Themenwelten".
+ */
+const THEME_WORLD_COUNT = new Set(STICKER_CATALOG.map((sticker) => sticker.themeWorld)).size;
+const CATALOG_SUMMARY = `${THEME_WORLD_COUNT} Themenwelten · ${STICKER_CATALOG.length} Sticker`;
 
 function formatDateLabel(value: string) {
   const [, month, day] = value.split("-");
@@ -96,7 +105,7 @@ export default function StickerSettingsScreen() {
               const isSelected = selectedChildId === child.id;
 
               return (
-                <Pressable
+                <PressableScale
                   key={child.id}
                   onPress={() => selectChild(child.id)}
                   className="min-h-11 flex-row items-center rounded-full border px-4 py-2"
@@ -117,12 +126,15 @@ export default function StickerSettingsScreen() {
                   />
                   <Text
                     className="text-sm font-body-semibold"
-                    style={{ color: isSelected ? childPalette.accentText : "#1a1a2e" }}
+                    style={{
+                      color: isSelected ? childPalette.accentText : semanticColors.foreground,
+                    }}
                     numberOfLines={1}
+                    maxFontSizeMultiplier={1.3}
                   >
                     {child.name}
                   </Text>
-                </Pressable>
+                </PressableScale>
               );
             })}
           </View>
@@ -140,7 +152,7 @@ export default function StickerSettingsScreen() {
         <SettingsMetricCard
           label="Offen"
           value={`${remainingCount}`}
-          caption="3 Themenwelten"
+          caption={CATALOG_SUMMARY}
           accentColor={palette.chartSecondary}
           backgroundColor={palette.cardTint}
           borderColor={palette.accentBorder}
@@ -154,7 +166,7 @@ export default function StickerSettingsScreen() {
         >
           <View className="flex-row items-start gap-3">
             <View
-              className="h-12 w-12 items-center justify-center rounded-[18px]"
+              className="h-12 w-12 items-center justify-center rounded-tile"
               style={{ backgroundColor: palette.heroSurface }}
             >
               <ShieldCheck size={21} color={palette.accentStrong} />
@@ -175,11 +187,11 @@ export default function StickerSettingsScreen() {
               const isSelected = settings.rewardMode === option.value;
 
               return (
-                <Pressable
+                <PressableScale
                   key={option.value}
                   onPress={() => void updateRewardSettings({ rewardMode: option.value })}
                   className={cn(
-                    "rounded-[22px] border px-4 py-4 active:opacity-90",
+                    "rounded-card border px-4 py-4",
                     isSelected ? "" : "border-border"
                   )}
                   style={{
@@ -187,12 +199,16 @@ export default function StickerSettingsScreen() {
                     borderColor: isSelected ? palette.accent : palette.accentBorder,
                   }}
                   accessibilityRole="button"
+                  accessibilityLabel={option.title}
+                  accessibilityHint={option.description}
                   accessibilityState={{ selected: isSelected }}
                 >
                   <View className="flex-row items-start gap-3">
                     <View
-                      className="h-10 w-10 items-center justify-center rounded-[16px]"
-                      style={{ backgroundColor: isSelected ? "#FFFFFF" : palette.heroSurface }}
+                      className="h-10 w-10 items-center justify-center rounded-tile"
+                      style={{
+                        backgroundColor: isSelected ? semanticColors.card : palette.heroSurface,
+                      }}
                     >
                       <Icon
                         size={19}
@@ -210,18 +226,19 @@ export default function StickerSettingsScreen() {
                     {isSelected ? (
                       <View
                         className="mt-1 rounded-full px-2.5 py-1"
-                        style={{ backgroundColor: "#FFFFFF" }}
+                        style={{ backgroundColor: semanticColors.card }}
                       >
                         <Text
                           className="text-xs font-body-semibold uppercase tracking-[0.6px]"
                           style={{ color: palette.accentText }}
+                          maxFontSizeMultiplier={1.3}
                         >
                           Aktiv
                         </Text>
                       </View>
                     ) : null}
                   </View>
-                </Pressable>
+                </PressableScale>
               );
             })}
           </View>
@@ -237,7 +254,7 @@ export default function StickerSettingsScreen() {
         >
           <View className="flex-row items-start gap-3">
             <View
-              className="h-12 w-12 items-center justify-center rounded-[18px]"
+              className="h-12 w-12 items-center justify-center rounded-tile"
               style={{ backgroundColor: palette.heroSurface }}
             >
               <Sparkles size={21} color={palette.accentStrong} />
@@ -253,10 +270,13 @@ export default function StickerSettingsScreen() {
           </View>
 
           {isLoading ? (
-            <Text className="mt-4 text-sm font-body text-muted-foreground">Laden...</Text>
+            <View className="mt-4 gap-3" accessibilityLabel="Sticker werden geladen">
+              <SkeletonCard lines={2} />
+              <SkeletonCard lines={2} />
+            </View>
           ) : latestEntries.length === 0 ? (
             <View
-              className="mt-4 rounded-[22px] border px-4 py-4"
+              className="mt-4 rounded-card border px-4 py-4"
               style={{
                 borderColor: palette.accentBorder,
                 backgroundColor: "rgba(255,255,255,0.72)",
@@ -277,17 +297,21 @@ export default function StickerSettingsScreen() {
                 return (
                   <View
                     key={entry.id}
-                    className="flex-row items-center gap-3 rounded-[22px] border px-3 py-3"
+                    className="flex-row items-center gap-3 rounded-card border px-3 py-3"
                     style={{
                       borderColor: palette.accentBorder,
                       backgroundColor: "rgba(255,255,255,0.72)",
                     }}
                   >
                     <View
-                      className="h-11 w-11 items-center justify-center rounded-[16px]"
+                      className="h-11 w-11 items-center justify-center rounded-tile"
                       style={{ backgroundColor: `${sticker.accent}18` }}
                     >
-                      <Text className="text-base font-headline" style={{ color: sticker.accent }}>
+                      <Text
+                        className="text-base font-headline"
+                        style={{ color: sticker.accent }}
+                        maxFontSizeMultiplier={1.2}
+                      >
                         {sticker.unlockOrder}
                       </Text>
                     </View>
@@ -295,7 +319,11 @@ export default function StickerSettingsScreen() {
                       <Text className="text-base font-headline text-foreground" numberOfLines={1}>
                         {sticker.title}
                       </Text>
-                      <Text className="mt-1 text-xs font-body text-muted-foreground" numberOfLines={1}>
+                      <Text
+                        className="mt-1 text-xs font-body text-muted-foreground"
+                        numberOfLines={1}
+                        maxFontSizeMultiplier={1.3}
+                      >
                         {entry.routineName ?? "Routine"} am {formatDateLabel(entry.earnedDate)}
                       </Text>
                     </View>
@@ -306,6 +334,7 @@ export default function StickerSettingsScreen() {
                       <Text
                         className="text-xs font-body-semibold"
                         style={{ color: palette.accentText }}
+                        maxFontSizeMultiplier={1.3}
                       >
                         {getStickerRarityLabel(sticker.rarity)}
                       </Text>

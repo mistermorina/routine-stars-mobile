@@ -9,6 +9,13 @@ Umsetzungs-Rezepte (Copy-Paste-Snippets, Haptik-Tabelle, No-Gos) stehen in
 `.claude/skills/routine-stars-polish/SKILL.md`. Dieses Dokument definiert das *Was*,
 die Skill das *Wie*.
 
+**Durchsetzung:** Die harten Regeln unten sind nicht nur dokumentiert, sondern
+werden von `npm run test:ui-quality` geprüft (ADR-009 in `DECISIONS.md`) —
+neue Hex-Literale, `fontSize` < 12, `text-[<14px]`, inline `shadowOpacity` > 0.08,
+`animationType="fade"`, Touch-Targets < 44×44 und horizontale ScrollViews brechen
+den Build. Der eingefrorene Alt-Bestand an Hex-Werten steht als Schuldenposten in
+`scripts/hex-allowlist.json` und darf nur schrumpfen.
+
 ## Grundsatz: Zwei Dialekte, ein System
 - **Kind-Screens** (Routinen, Belohnungen, Profil): warm, verspielt, Glas-Pastell,
   Maskottchen-Illustrationen, sichtbare Belohnung. Modern durch Disziplin: viel Weißraum,
@@ -72,9 +79,10 @@ die Skill das *Wie*.
 | `rounded-full` | — | Avatare, Sternkreise, CTA-Pills |
 
 `rounded-lg` (12) / `rounded-md` (10) / `rounded-sm` (8) bleiben in der Config, damit
-Bestandscode nicht bricht, sind aber **deprecated**: kein neuer Code darf sie verwenden,
-der Phase-4-Sweep ersetzt die Altbestände. Ebenso raus: `rounded-xl`/`rounded-2xl`/
-`rounded-[22px]` — dafür gibt es die drei Token oben.
+Bestandscode nicht bricht, sind aber **deprecated**: kein neuer Code darf sie verwenden.
+Ebenso raus: `rounded-xl`/`rounded-2xl`/`rounded-[22px]` — dafür gibt es die drei Token
+oben. Der Phase-4-Sweep hat die Altbestände ersetzt; verbliebene arbiträre Radien sind
+bewusste Ausnahmen (Hero-Blobs ab 28px), keine Nachlässigkeit.
 
 ## Spacing & Typografie
 - 4-pt-Grid. **Screen-Padding ist `px-4` / `mx-4`** (76× im Code vs. 12× `px-5`) —

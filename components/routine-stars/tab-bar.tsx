@@ -12,12 +12,15 @@ import Animated, {
 
 import { triggerFeedback } from "@/lib/feedback";
 import { springs, timings } from "@/lib/motion";
+import { getThemePalette, semanticColors } from "@/lib/theme";
 
 // Brand colors on purpose (not per-child theme): useChildren keeps local
 // state per consumer, so a themed tab bar would go stale on child switch.
-const ACTIVE_TEXT = "#245A74";
-const INACTIVE_TEXT = "#9AA5B1";
-const ACTIVE_PILL = "#FFF2C8";
+// Sourced from the default palette so the values stay in the token system.
+const brandPalette = getThemePalette();
+const ACTIVE_TEXT = brandPalette.accentText;
+const INACTIVE_TEXT = semanticColors.mutedForeground;
+const ACTIVE_PILL = brandPalette.tabActiveBg;
 
 /** Pill geometry. Kept in JS because the pill is positioned, not laid out. */
 const PILL_WIDTH = 64;
@@ -153,8 +156,8 @@ export function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps)
     <View
       className="border-t"
       style={{
-        backgroundColor: "#FFFFFF",
-        borderTopColor: "#ECF1F6",
+        backgroundColor: semanticColors.card,
+        borderTopColor: semanticColors.border,
         paddingBottom: Math.max(insets.bottom, 10),
         paddingTop: ROW_PADDING_TOP,
       }}

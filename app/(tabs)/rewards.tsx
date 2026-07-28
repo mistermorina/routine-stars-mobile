@@ -425,6 +425,7 @@ export default function RewardsScreen() {
                     >
                       <Text
                         numberOfLines={1}
+                        maxFontSizeMultiplier={1.2}
                         className={
                           isActive ? "text-sm font-body-semibold" : "text-sm font-body"
                         }
@@ -495,7 +496,10 @@ export default function RewardsScreen() {
                       trackStyle={{ backgroundColor: "rgba(255,255,255,0.85)" }}
                     />
                   </View>
-                  <Text className="shrink-0 text-xs font-body-semibold text-muted-foreground">
+                  <Text
+                    className="shrink-0 text-xs font-body-semibold text-muted-foreground"
+                    maxFontSizeMultiplier={1.3}
+                  >
                     {childStars} / {nextReward.cost}
                   </Text>
                 </View>
@@ -517,6 +521,7 @@ export default function RewardsScreen() {
                 className="text-xs font-body-semibold"
                 style={{ color: palette.accentText }}
                 numberOfLines={1}
+                maxFontSizeMultiplier={1.2}
               >
                 {filteredRewards.length} {filteredRewards.length === 1 ? "Wunsch" : "Wünsche"}
               </Text>
@@ -552,7 +557,11 @@ export default function RewardsScreen() {
                     className="min-h-11 items-center justify-center rounded-full px-4 py-2"
                     style={{ backgroundColor: palette.tabActiveBg }}
                   >
-                    <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>
+                    <Text
+                      className="text-sm font-body-semibold"
+                      style={{ color: palette.accentText }}
+                      maxFontSizeMultiplier={1.3}
+                    >
                       Alle anzeigen
                     </Text>
                   </PressableScale>
@@ -566,6 +575,7 @@ export default function RewardsScreen() {
                   childTheme={selectedChild.theme}
                   onRedeem={handleRedeem}
                   recentlyRedeemedRewardId={recentlyRedeemedRewardId}
+                  celebratingRewardId={celebration ? recentlyRedeemedRewardId : null}
                 />
               </Animated.View>
             )}

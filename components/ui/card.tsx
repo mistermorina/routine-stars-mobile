@@ -8,10 +8,25 @@ interface CardProps {
   style?: ViewStyle;
 }
 
+/**
+ * `tailwind-merge` only knows Tailwind's built-in radius scale, so it cannot
+ * resolve `rounded-card` against a caller's `rounded-[30px]` — both classes
+ * would survive the merge and the winner would depend on stylesheet order.
+ * Detecting a caller-supplied radius keeps every existing call site pixel-exact
+ * while un-overridden cards get the design-system radius.
+ */
+const HAS_RADIUS_CLASS = /(?:^|\s)rounded-/;
+
 export function Card({ className, children, style }: CardProps) {
+  const hasRadiusOverride = className ? HAS_RADIUS_CLASS.test(className) : false;
+
   return (
     <View
-      className={cn("rounded-xl border border-border bg-card p-4 shadow-sm", className)}
+      className={cn(
+        "border border-border bg-card p-4 shadow-sm",
+        hasRadiusOverride ? undefined : "rounded-card",
+        className
+      )}
       style={style}
     >
       {children}

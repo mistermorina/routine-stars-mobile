@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PressableScale } from "@/components/ui/pressable-scale";
+import { SkeletonCard } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
@@ -130,7 +131,6 @@ export default function NotificationsSettings() {
   async function handleEnablePermissions() {
     if (isBusy) return;
     setIsBusy(true);
-    void triggerFeedback("theme_preview", { disableSound: true });
 
     const result = await ensurePermissions();
     setPermission(result);
@@ -151,7 +151,6 @@ export default function NotificationsSettings() {
   }
 
   function handleOpenSystemSettings() {
-    void triggerFeedback("theme_preview", { disableSound: true });
     Linking.openSettings().catch(() => {
       toast({
         title: "Einstellungen konnten nicht geöffnet werden",
@@ -199,7 +198,6 @@ export default function NotificationsSettings() {
   async function handleTestNotification() {
     if (isBusy) return;
     setIsBusy(true);
-    void triggerFeedback("theme_preview", { disableSound: true });
 
     const result = await scheduleTestNotification();
     if (result.scheduled) {
@@ -295,7 +293,10 @@ export default function NotificationsSettings() {
               >
                 <View className="flex-row items-center gap-2">
                   <Bell size={18} color={semanticColors.primaryForeground} />
-                  <Text className="text-base font-body-semibold text-primary-foreground">
+                  <Text
+                    className="text-base font-body-semibold text-primary-foreground"
+                    maxFontSizeMultiplier={1.3}
+                  >
                     Erinnerungen aktivieren
                   </Text>
                 </View>
@@ -320,6 +321,7 @@ export default function NotificationsSettings() {
                   <Text
                     className="text-base font-body-semibold"
                     style={{ color: palette.accentText }}
+                    maxFontSizeMultiplier={1.3}
                   >
                     Einstellungen öffnen
                   </Text>
@@ -346,6 +348,7 @@ export default function NotificationsSettings() {
                   <Text
                     className="text-base font-body-semibold"
                     style={{ color: palette.accentText }}
+                    maxFontSizeMultiplier={1.3}
                   >
                     Test-Erinnerung senden
                   </Text>
@@ -421,9 +424,13 @@ export default function NotificationsSettings() {
 
             <View className="mt-3">
               {isLoading ? (
-                <Text className="px-4 pb-4 text-sm font-body text-muted-foreground">
-                  Routinen werden geladen …
-                </Text>
+                <View
+                  className="gap-3 px-4 pb-4"
+                  accessibilityLabel="Routinen werden geladen"
+                >
+                  <SkeletonCard lines={2} />
+                  <SkeletonCard lines={2} />
+                </View>
               ) : reminderRoutines.length === 0 ? (
                 <Text className="px-4 pb-4 text-sm font-body leading-5 text-muted-foreground">
                   Noch keine Routine angelegt. Sobald es eine gibt, kannst du sie hier
@@ -444,6 +451,7 @@ export default function NotificationsSettings() {
                         <Text
                           className="text-base font-body-semibold text-foreground"
                           numberOfLines={1}
+                          maxFontSizeMultiplier={1.3}
                         >
                           {routine.name}
                         </Text>
@@ -517,7 +525,12 @@ export default function NotificationsSettings() {
                         : `${activeCount} Erinnerungen liegen auf dem Gerät bereit.`}
                   </Text>
                 </View>
-                <ScheduleChevron size={18} color={palette.accentText} />
+                <ScheduleChevron
+                  size={18}
+                  color={palette.accentText}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                />
               </PressableScale>
 
               {isScheduleExpanded ? (
@@ -539,6 +552,7 @@ export default function NotificationsSettings() {
                           <Text
                             className="flex-1 text-base font-body-semibold text-foreground"
                             numberOfLines={1}
+                            maxFontSizeMultiplier={1.3}
                           >
                             {reminder.routineName ?? "Routine"}
                           </Text>
@@ -553,6 +567,7 @@ export default function NotificationsSettings() {
                         <Text
                           className="mt-1 text-xs font-body text-muted-foreground"
                           numberOfLines={1}
+                          maxFontSizeMultiplier={1.3}
                         >
                           {reminder.identifier}
                         </Text>

@@ -25,7 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { durations, easings, enterStagger, modalSpring, timings } from "@/lib/motion";
-import { getThemePalette } from "@/lib/theme";
+import { getThemePalette, shadowPresets } from "@/lib/theme";
 import type { ChildTheme } from "@/lib/types";
 import routineCompleteBackground from "@/assets/images/task-success-bg.png";
 import routineCompleteHero from "@/assets/images/reward-star-gift-soft.png";
@@ -36,6 +36,11 @@ interface RoutineCompleteDialogProps {
   childTheme?: ChildTheme;
 }
 
+/**
+ * Purely decorative confetti-ring illustration. These pastels are artwork, not
+ * UI state — they have no semantic token counterpart and are intentionally
+ * exempt from the palette (see docs/ai/DESIGN_DIRECTION.md).
+ */
 const RING_PARTICLES = [
   { type: "star", left: 2, top: 34, size: 17, color: "#F7B633" },
   { type: "sparkle", left: 22, top: 8, size: 15, color: "#8BCDEB" },
@@ -294,14 +299,11 @@ export function RoutineCompleteDialog({
         <DialogContent
           className="items-center overflow-hidden rounded-[30px] border p-0"
           style={{
-            backgroundColor: "#FFF9F0",
+            backgroundColor: palette.heroSurface,
             borderColor: "rgba(255,255,255,0.9)",
             maxHeight: dialogMaxHeight,
             padding: 0,
-            shadowColor: "#2E3A68",
-            shadowOpacity: 0.18,
-            shadowRadius: 28,
-            shadowOffset: { width: 0, height: 14 },
+            ...shadowPresets.shadowFloating,
           }}
         >
           <Image
@@ -309,6 +311,8 @@ export function RoutineCompleteDialog({
             style={StyleSheet.absoluteFillObject}
             contentFit="cover"
             transition={160}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
           />
           <View
             style={[
@@ -340,6 +344,7 @@ export function RoutineCompleteDialog({
                 <Text
                   className="text-xs font-body-bold uppercase tracking-[1px]"
                   style={{ color: palette.accentText }}
+                  maxFontSizeMultiplier={1.2}
                 >
                   Routine komplett
                 </Text>
@@ -357,16 +362,18 @@ export function RoutineCompleteDialog({
                   style={{ width: 132, height: 132 }}
                   contentFit="contain"
                   transition={160}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
                 />
               </Animated.View>
             </Animated.View>
 
             <Animated.View entering={enterStagger(2)}>
               <DialogHeader className="items-center">
-                <DialogTitle className="text-center text-[38px] leading-[44px] text-[#071A49]">
+                <DialogTitle className="text-center text-[38px] leading-[44px] text-foreground">
                   Super!
                 </DialogTitle>
-                <DialogDescription className="mt-2 max-w-[270px] text-center text-[16px] leading-6">
+                <DialogDescription className="mt-2 max-w-[270px] text-center text-base leading-6">
                   Alle Aufgaben geschafft. Die Sterne sind gesichert.
                 </DialogDescription>
               </DialogHeader>
@@ -377,11 +384,14 @@ export function RoutineCompleteDialog({
             <Animated.View entering={enterStagger(3)}>
               <Button
                 onPress={handleViewRewards}
-                className="h-12 w-full rounded-[20px]"
+                className="h-12 w-full rounded-tile"
                 style={{ backgroundColor: palette.button }}
                 textClassName="text-white"
               >
-                <Text className="text-base font-body-semibold text-center text-white">
+                <Text
+                  className="text-base font-body-semibold text-center text-white"
+                  maxFontSizeMultiplier={1.3}
+                >
                   Belohnungen ansehen
                 </Text>
               </Button>
@@ -390,10 +400,14 @@ export function RoutineCompleteDialog({
               <Button
                 variant="outline"
                 onPress={onClose}
-                className="h-12 w-full rounded-[20px]"
+                className="h-12 w-full rounded-tile"
                 style={{ borderColor: palette.accent }}
               >
-                <Text className="text-base font-body-semibold text-center" style={{ color: palette.accent }}>
+                <Text
+                  className="text-base font-body-semibold text-center"
+                  style={{ color: palette.accent }}
+                  maxFontSizeMultiplier={1.3}
+                >
                   Sterne sichern
                 </Text>
               </Button>

@@ -46,14 +46,17 @@ export default function SettingsLayout() {
           <Pressable
             onPress={() => router.replace("/(tabs)")}
             hitSlop={8}
-            className="rounded-full px-3 py-1.5"
+            className="min-h-11 justify-center rounded-full px-3 py-1.5 active:opacity-80"
             style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
+            accessibilityRole="button"
+            accessibilityLabel="Zur App zurückkehren"
           >
             <Text
+              maxFontSizeMultiplier={1.3}
               style={{
                 color: semanticColors.foreground,
                 fontFamily: "Poppins_600SemiBold",
-                fontSize: 13,
+                fontSize: 14,
               }}
             >
               Zur App

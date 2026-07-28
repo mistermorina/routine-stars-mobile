@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet, useWindowDimensions } from "react-n
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
-import Animated, { FadeInDown, LinearTransition, ReduceMotion } from "react-native-reanimated";
+import Animated, { LinearTransition, ReduceMotion } from "react-native-reanimated";
 import { ArrowRight, Flame, Plus, Sparkles, Star, Trophy } from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
 import { useChildProgression } from "@/hooks/use-child-progression";
@@ -37,7 +37,7 @@ import {
   type StarFlightPoint,
 } from "@/contexts/star-flight-target";
 import { triggerFeedback } from "@/lib/feedback";
-import { enterStagger, exitFade, springs } from "@/lib/motion";
+import { enterFade, enterStagger, exitFade, springs } from "@/lib/motion";
 import { getActivityInsights } from "@/lib/activity-insights";
 import { getLocalIsoDate, isRoutineDueOn } from "@/lib/local-date";
 import {
@@ -45,7 +45,7 @@ import {
   createStickerRewardEvent,
   type StickerRewardEvent,
 } from "@/lib/sticker-reward-logic";
-import { getThemePalette } from "@/lib/theme";
+import { getThemePalette, semanticColors, shadowPresets } from "@/lib/theme";
 import type { AnimalSticker } from "@/lib/animal-stickers";
 import type { Routine, Task } from "@/lib/types";
 import emptyRoutinesImage from "@/assets/images/empty-routines.png";
@@ -600,7 +600,7 @@ export default function DashboardScreen() {
             showsVerticalScrollIndicator={false}
           >
             {/* Screen headline */}
-            <Animated.View entering={FadeInDown.duration(320)} className="mx-4 mt-4">
+            <Animated.View entering={enterFade()} className="mx-4 mt-4">
               <Text className="text-[32px] font-headline leading-10 text-foreground">
                 Routinen
               </Text>
@@ -611,7 +611,7 @@ export default function DashboardScreen() {
 
             {/* Category filter chips */}
             {showTimeFilters ? (
-              <Animated.View entering={FadeInDown.delay(40).duration(320)} className="mt-3">
+              <Animated.View entering={enterStagger(1)} className="mt-3">
                 <View className="flex-row flex-wrap gap-2 px-4">
                   {availableFilters.map((filter) => {
                     const isActive = filter.key === routineFilter;
@@ -633,11 +633,7 @@ export default function DashboardScreen() {
                             ? {
                                 backgroundColor: palette.button,
                                 borderColor: palette.button,
-                                shadowColor: "#9DB8D8",
-                                shadowOpacity: 0.2,
-                                shadowRadius: 8,
-                                shadowOffset: { width: 0, height: 3 },
-                                elevation: 2,
+                                ...shadowPresets.shadowSubtle,
                               }
                             : {
                                 backgroundColor: "rgba(255,255,255,0.8)",
@@ -647,11 +643,14 @@ export default function DashboardScreen() {
                       >
                         <Text
                           numberOfLines={1}
+                          maxFontSizeMultiplier={1.2}
                           className={
                             isActive ? "text-sm font-body-semibold" : "text-sm font-body"
                           }
                           style={{
-                            color: isActive ? "#FFFFFF" : "#71808E",
+                            color: isActive
+                              ? semanticColors.accentForeground
+                              : semanticColors.mutedForeground,
                           }}
                         >
                           {filter.label}
@@ -664,16 +663,13 @@ export default function DashboardScreen() {
             ) : null}
 
             {/* Hero: next routine */}
-            <Animated.View entering={FadeInDown.delay(55).duration(320)} className="mx-4 mt-3">
+            <Animated.View entering={enterStagger(2)} className="mx-4 mt-3">
               <Card
                 className="overflow-hidden rounded-card px-5 py-5"
                 style={{
                   backgroundColor: palette.heroSurface,
                   borderColor: palette.accentBorder,
-                  shadowColor: "#9DB8D8",
-                  shadowOpacity: 0.16,
-                  shadowRadius: 18,
-                  shadowOffset: { width: 0, height: 10 },
+                  ...shadowPresets.shadowCard,
                 }}
               >
                 <View
@@ -687,6 +683,7 @@ export default function DashboardScreen() {
                 <Text
                   className="text-xs font-body-semibold uppercase tracking-[0.7px]"
                   style={{ color: palette.accentText }}
+                  maxFontSizeMultiplier={1.2}
                 >
                   {allDone ? "Heute geschafft" : "Nächste Routine"}
                 </Text>
@@ -717,10 +714,13 @@ export default function DashboardScreen() {
                       className="flex-row items-center gap-2 rounded-full px-5 py-3"
                       style={{ backgroundColor: palette.button }}
                     >
-                      <Text className="text-base font-body-semibold leading-[22px] text-white">
+                      <Text
+                        className="text-base font-body-semibold leading-[22px] text-white"
+                        maxFontSizeMultiplier={1.3}
+                      >
                         {allDone ? "Belohnungen" : "Starten"}
                       </Text>
-                      <ArrowRight size={18} color="#FFFFFF" />
+                      <ArrowRight size={18} color={semanticColors.accentForeground} />
                     </PressableScale>
                   </View>
                   <Image
@@ -738,11 +738,14 @@ export default function DashboardScreen() {
                     <Progress
                       value={progressValue}
                       className="h-2.5"
-                      indicatorColor={allDone ? "#4FD17A" : palette.chartPrimary}
+                      indicatorColor={allDone ? semanticColors.success : palette.chartPrimary}
                       trackStyle={{ backgroundColor: "rgba(255,255,255,0.85)" }}
                     />
                   </View>
-                  <Text className="shrink-0 text-xs font-body-semibold text-muted-foreground">
+                  <Text
+                    className="shrink-0 text-xs font-body-semibold text-muted-foreground"
+                    maxFontSizeMultiplier={1.3}
+                  >
                     {completedTasks} / {totalTasks}
                   </Text>
                 </View>
@@ -750,31 +753,39 @@ export default function DashboardScreen() {
             </Animated.View>
 
             <Animated.View
-              entering={FadeInDown.delay(55).duration(320)}
+              entering={enterStagger(2)}
               className={isCompactWidth ? "mx-4 mt-3 gap-3" : "mx-4 mt-3 flex-row gap-3"}
             >
               <Card
-                className={isCompactWidth ? "min-h-[132px] overflow-hidden rounded-[20px] px-4 py-4" : "min-h-[156px] flex-1 overflow-hidden rounded-[20px] px-4 py-4"}
+                className={isCompactWidth ? "min-h-[132px] overflow-hidden rounded-card px-4 py-4" : "min-h-[156px] flex-1 overflow-hidden rounded-card px-4 py-4"}
                 style={{
                   backgroundColor: palette.cardTint,
                   borderColor: palette.accentBorder,
-                  shadowColor: "#9DB8D8",
-                  shadowOpacity: 0.12,
-                  shadowRadius: 16,
-                  shadowOffset: { width: 0, height: 8 },
+                  ...shadowPresets.shadowCard,
                 }}
               >
                 <View className="flex-row items-center gap-2">
-                  <Flame size={17} color="#F97316" />
-                  <Text className="text-xs font-body-semibold text-muted-foreground">
+                  <Flame size={17} color={semanticColors.goldDeep} />
+                  <Text
+                    className="text-xs font-body-semibold text-muted-foreground"
+                    maxFontSizeMultiplier={1.2}
+                  >
                     Serie
                   </Text>
                 </View>
                 <View className="mt-3 flex-row items-end gap-1">
-                  <Text className="text-3xl font-headline text-foreground">
+                  <Text
+                    className="text-3xl font-headline text-foreground"
+                    maxFontSizeMultiplier={1.3}
+                  >
                     {insights.currentStreak}
                   </Text>
-                  <Text className="mb-1 text-xs font-body text-muted-foreground">Tag</Text>
+                  <Text
+                    className="mb-1 text-xs font-body text-muted-foreground"
+                    maxFontSizeMultiplier={1.2}
+                  >
+                    Tag
+                  </Text>
                 </View>
                 <Text className="mt-2 text-base font-body leading-6 text-muted-foreground">
                   Bleib im Rhythmus und sammle weiter Sterne.
@@ -790,23 +801,25 @@ export default function DashboardScreen() {
                     opacity: 0.42,
                   }}
                   contentFit="contain"
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
                 />
               </Card>
 
               <Card
-                className={isCompactWidth ? "min-h-[132px] overflow-hidden rounded-[20px] px-4 py-4" : "min-h-[156px] flex-1 overflow-hidden rounded-[20px] px-4 py-4"}
+                className={isCompactWidth ? "min-h-[132px] overflow-hidden rounded-card px-4 py-4" : "min-h-[156px] flex-1 overflow-hidden rounded-card px-4 py-4"}
                 style={{
                   backgroundColor: palette.cardTint,
                   borderColor: palette.accentBorder,
-                  shadowColor: "#9DB8D8",
-                  shadowOpacity: 0.12,
-                  shadowRadius: 16,
-                  shadowOffset: { width: 0, height: 8 },
+                  ...shadowPresets.shadowCard,
                 }}
               >
                 <View className="flex-row items-center gap-2">
-                  <Trophy size={17} color="#F97316" />
-                  <Text className="text-xs font-body-semibold text-muted-foreground">
+                  <Trophy size={17} color={semanticColors.goldDeep} />
+                  <Text
+                    className="text-xs font-body-semibold text-muted-foreground"
+                    maxFontSizeMultiplier={1.2}
+                  >
                     Nächstes Ziel
                   </Text>
                 </View>
@@ -829,6 +842,8 @@ export default function DashboardScreen() {
                     opacity: 0.44,
                   }}
                   contentFit="contain"
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
                 />
               </Card>
             </Animated.View>
@@ -844,9 +859,9 @@ export default function DashboardScreen() {
             </View>
 
             {hasPendingStickerReward ? (
-              <Animated.View entering={FadeInDown.delay(80).duration(320)} className="mx-4 mt-4">
+              <Animated.View entering={enterStagger(2)} className="mx-4 mt-4">
                 <Card
-                  className="overflow-hidden rounded-[22px] px-4 py-4"
+                  className="overflow-hidden rounded-card px-4 py-4"
                   style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
                 >
                   <View
@@ -855,7 +870,7 @@ export default function DashboardScreen() {
                   />
                   <View className={isCompactWidth ? "gap-3" : "flex-row items-center gap-3"}>
                     <View
-                      className="h-12 w-12 items-center justify-center rounded-[18px]"
+                      className="h-12 w-12 items-center justify-center rounded-tile"
                       style={{ backgroundColor: palette.heroSurface }}
                     >
                       <Sparkles size={21} color={palette.accentStrong} />
@@ -872,10 +887,15 @@ export default function DashboardScreen() {
                     </View>
                     <Button
                       onPress={handleOpenStickerReward}
-                      className="h-12 rounded-[16px] px-4"
+                      accessibilityRole="button"
+                      accessibilityLabel="Sticker aussuchen"
+                      className="h-12 rounded-tile px-4"
                       style={{ backgroundColor: palette.button }}
                     >
-                      <Text className="text-sm font-body-semibold text-white">
+                      <Text
+                        className="text-sm font-body-semibold text-white"
+                        maxFontSizeMultiplier={1.3}
+                      >
                         Aussuchen
                       </Text>
                     </Button>
@@ -885,7 +905,7 @@ export default function DashboardScreen() {
             ) : null}
 
             <Animated.View
-              entering={FadeInDown.delay(90).duration(320)}
+              entering={enterStagger(3)}
               className="mx-4 mt-5 flex-row items-center justify-between gap-3"
             >
               <Text className="text-lg font-headline text-foreground">Deine Routinen</Text>
@@ -897,6 +917,7 @@ export default function DashboardScreen() {
                   className="text-xs font-body-semibold"
                   style={{ color: palette.accentText }}
                   numberOfLines={1}
+                  maxFontSizeMultiplier={1.2}
                 >
                   {remainingTasks === 0 ? "Alles erledigt" : `${remainingTasks} offen`}
                 </Text>
@@ -948,14 +969,18 @@ export default function DashboardScreen() {
                     className="min-h-11 rounded-full px-4 py-2"
                     style={{ backgroundColor: palette.tabActiveBg }}
                   >
-                    <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>
+                    <Text
+                      className="text-sm font-body-semibold"
+                      style={{ color: palette.accentText }}
+                      maxFontSizeMultiplier={1.3}
+                    >
                       Alle anzeigen
                     </Text>
                   </PressableScale>
                 </Card>
               ) : (
                 <Card
-                  className="overflow-hidden rounded-[22px] px-5 py-7"
+                  className="overflow-hidden rounded-card px-5 py-7"
                   style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
                 >
                   <View
@@ -963,7 +988,7 @@ export default function DashboardScreen() {
                     style={{ backgroundColor: palette.motifPrimary, opacity: 0.16 }}
                   />
                   <View
-                    className="mx-auto mb-4 w-full max-w-[220px] overflow-hidden rounded-[22px]"
+                    className="mx-auto mb-4 w-full max-w-[220px] overflow-hidden rounded-card"
                     style={{ backgroundColor: palette.heroSurface }}
                   >
                     <Image
@@ -983,12 +1008,17 @@ export default function DashboardScreen() {
                   <Button
                     onPress={handleCreateRoutine}
                     size="lg"
-                    className="mt-5 rounded-[22px]"
+                    accessibilityRole="button"
+                    accessibilityLabel="Routine anlegen"
+                    className="mt-5 rounded-card"
                     style={{ backgroundColor: palette.button }}
                   >
                     <View className="flex-row items-center gap-2">
-                      <Plus size={18} color="#FFFFFF" />
-                      <Text className="text-base font-body-semibold text-white">
+                      <Plus size={18} color={semanticColors.accentForeground} />
+                      <Text
+                        className="text-base font-body-semibold text-white"
+                        maxFontSizeMultiplier={1.3}
+                      >
                         Routine anlegen
                       </Text>
                     </View>
@@ -999,16 +1029,13 @@ export default function DashboardScreen() {
 
             {/* Day summary */}
             {routines.length > 0 ? (
-              <Animated.View entering={FadeInDown.delay(180).duration(320)} className="mx-4 mt-2">
+              <Animated.View entering={enterStagger(4)} className="mx-4 mt-2">
                 <Card
                   className="rounded-card px-4 py-4"
                   style={{
                     backgroundColor: palette.cardTint,
                     borderColor: palette.accentBorder,
-                    shadowColor: "#9DB8D8",
-                    shadowOpacity: 0.12,
-                    shadowRadius: 16,
-                    shadowOffset: { width: 0, height: 8 },
+                    ...shadowPresets.shadowCard,
                   }}
                 >
                   <View className={isCompactWidth ? "gap-3" : "flex-row items-center gap-3"}>
@@ -1016,21 +1043,38 @@ export default function DashboardScreen() {
                       className="h-12 w-12 shrink-0 items-center justify-center rounded-tile"
                       style={{ backgroundColor: palette.surface }}
                     >
-                      <Star size={24} color="#F7A313" fill="#F7A313" />
+                      <Star
+                        size={24}
+                        color={semanticColors.goldDeep}
+                        fill={semanticColors.goldDeep}
+                      />
                     </View>
                     <View className="min-w-0 flex-1">
-                      <Text className="text-xs font-body-semibold text-muted-foreground">
+                      <Text
+                        className="text-xs font-body-semibold text-muted-foreground"
+                        maxFontSizeMultiplier={1.2}
+                      >
                         Heute geschafft
                       </Text>
-                      <Text className="text-xl font-headline text-foreground">
+                      <Text
+                        className="text-xl font-headline text-foreground"
+                        maxFontSizeMultiplier={1.3}
+                      >
                         {starsToday} {starsToday === 1 ? "Stern" : "Sterne"}
                       </Text>
-                      <Text className="text-sm font-body text-muted-foreground" numberOfLines={1}>
+                      <Text
+                        className="text-sm font-body text-muted-foreground"
+                        numberOfLines={1}
+                        maxFontSizeMultiplier={1.3}
+                      >
                         {allDone ? "Du bist großartig!" : "Weiter so, du schaffst das!"}
                       </Text>
                     </View>
                     <View className={isCompactWidth ? "items-start gap-1.5" : "shrink-0 items-end gap-1.5"}>
-                      <Text className="text-xs font-body-semibold text-muted-foreground">
+                      <Text
+                        className="text-xs font-body-semibold text-muted-foreground"
+                        maxFontSizeMultiplier={1.2}
+                      >
                         {completedRoutines} / {countableRoutines} Routinen
                       </Text>
                       <View className="w-[96px]">
@@ -1041,8 +1085,8 @@ export default function DashboardScreen() {
                               : 0
                           }
                           className="h-2"
-                          indicatorColor={allDone ? "#4FD17A" : palette.chartPrimary}
-                          trackStyle={{ backgroundColor: "#EAF1F7" }}
+                          indicatorColor={allDone ? semanticColors.success : palette.chartPrimary}
+                          trackStyle={{ backgroundColor: semanticColors.muted }}
                         />
                       </View>
                     </View>

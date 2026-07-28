@@ -171,15 +171,20 @@ export function DialogDescription({
 export function DialogClose({
   onClose,
   className,
+  accessibilityLabel = "Dialog schließen",
 }: {
   onClose: () => void;
   className?: string;
+  /** Override when a more specific German label reads better in context. */
+  accessibilityLabel?: string;
 }) {
   return (
     <Pressable
-      className={cn("absolute right-4 top-4 p-1", className)}
+      className={cn("absolute right-4 top-4 p-1 active:opacity-70", className)}
       onPress={onClose}
-      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      hitSlop={12}
     >
       <X size={20} color={semanticColors.mutedForeground} />
     </Pressable>

@@ -123,7 +123,7 @@ export function Header({
         {collapsed ? (
           <Animated.View key="header-collapsed" entering={enterSwap(1)}>
             <View
-              className="flex-row items-center gap-2 overflow-hidden rounded-[18px] border px-3 py-2"
+              className="flex-row items-center gap-2 overflow-hidden rounded-tile border px-3 py-2"
               style={{
                 backgroundColor: palette.cardTint,
                 borderColor: palette.accentBorder,
@@ -136,7 +136,7 @@ export function Header({
                 accessibilityLabel="Header ausklappen"
               >
                 <View
-                  className="h-11 w-11 items-center justify-center rounded-[14px]"
+                  className="h-11 w-11 items-center justify-center rounded-chip"
                   style={{ backgroundColor: palette.heroSurface }}
                 >
                   <AvatarImage
@@ -151,12 +151,14 @@ export function Header({
                   <Text
                     className="text-xs font-body text-muted-foreground"
                     numberOfLines={1}
+                    maxFontSizeMultiplier={1.3}
                   >
                     Hallo {child.name}
                   </Text>
                   <Text
                     className="text-base font-headline leading-5 text-foreground"
                     numberOfLines={1}
+                    maxFontSizeMultiplier={1.3}
                   >
                     Routine Stars
                   </Text>
@@ -188,7 +190,7 @@ export function Header({
                     },
                   ]}
                 >
-                  <Star size={16} fill="#FFD700" color="#FFD700" />
+                  <Star size={16} fill={semanticColors.gold} color={semanticColors.gold} />
                   <AnimatedNumber
                     value={child.stars}
                     textClassName="text-sm font-body-bold leading-5"
@@ -213,7 +215,7 @@ export function Header({
         ) : (
           <Animated.View key="header-expanded" entering={enterSwap(-1)}>
             <View
-              className="overflow-hidden rounded-[22px] border px-4 pb-4 pt-3"
+              className="overflow-hidden rounded-card border px-4 pb-4 pt-3"
               style={{
                 backgroundColor: palette.cardTint,
                 borderColor: palette.accentBorder,
@@ -227,7 +229,7 @@ export function Header({
               <View className="flex-row items-center justify-between gap-3">
                 <View className="flex-1 flex-row items-center gap-3">
                   <View
-                    className="h-[54px] w-[54px] items-center justify-center rounded-[18px]"
+                    className="h-[54px] w-[54px] items-center justify-center rounded-tile"
                     style={{ backgroundColor: palette.heroSurface }}
                   >
                     <AvatarImage
@@ -250,16 +252,18 @@ export function Header({
                         <Text
                           className="text-xs font-body-semibold uppercase tracking-[0.6px]"
                           style={{ color: palette.accentText }}
+                          maxFontSizeMultiplier={1.2}
                         >
                           Storyworld
                         </Text>
                       </View>
                     </View>
                     <View className="mt-1 flex-row items-center gap-2">
-                      <Star size={18} fill="#FFD700" color="#FFD700" />
+                      <Star size={18} fill={semanticColors.gold} color={semanticColors.gold} />
                       <Text
                         className="flex-1 text-[19px] font-headline leading-6 text-foreground"
                         numberOfLines={1}
+                        maxFontSizeMultiplier={1.3}
                       >
                         Routine Stars
                       </Text>
@@ -269,6 +273,7 @@ export function Header({
                       onLayout={starTarget.measure}
                       onPress={handleStarsPress}
                       className="mt-2 self-start"
+                      hitSlop={8}
                       accessibilityRole="button"
                       accessibilityLabel={starsAccessibilityLabel}
                     >
@@ -288,7 +293,7 @@ export function Header({
                           },
                         ]}
                       >
-                        <Star size={17} fill="#FFD700" color="#FFD700" />
+                        <Star size={17} fill={semanticColors.gold} color={semanticColors.gold} />
                         <AnimatedNumber
                           value={child.stars}
                           textClassName="text-base font-body-bold leading-5"
@@ -373,6 +378,7 @@ export function Header({
                             )}
                             style={isActive ? { color: palette.accentText } : undefined}
                             numberOfLines={1}
+                            maxFontSizeMultiplier={1.3}
                           >
                             {c.name}
                           </Text>

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Alert, View, Text, Pressable, ScrollView } from "react-native";
+import { View, Text, Pressable, ScrollView } from "react-native";
 import { Image } from "expo-image";
 import { ImagePlus, Star, PawPrint, Rocket, Trash2 } from "@/lib/icons";
 import { Input } from "@/components/ui/input";
@@ -13,8 +13,9 @@ import {
   DEFAULT_AVATAR_VALUE,
 } from "@/lib/avatars";
 import { pickAvatarPhotoAsync } from "@/lib/avatar-photo-picker";
+import { useToast } from "@/hooks/use-toast";
 import { triggerFeedback } from "@/lib/feedback";
-import { getThemePalette } from "@/lib/theme";
+import { getThemePalette, semanticColors } from "@/lib/theme";
 import type { AgeGroup, AvatarValue, ChildProfile, ChildTheme } from "@/lib/types";
 import onboardingHeroImage from "@/assets/images/onboarding-hero.png";
 
@@ -66,7 +67,11 @@ function ThemePreview({
   const previewPalette = getThemePalette(themeId);
 
   return (
-    <View className="mt-3 flex-row gap-1.5">
+    <View
+      className="mt-3 flex-row gap-1.5"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
       <View
         className="h-8 flex-1 rounded-full"
         style={{ backgroundColor: previewPalette.screenGradient[0] }}
@@ -84,6 +89,7 @@ function ThemePreview({
 }
 
 export function ChildSetup({ onNext, formData }: ChildSetupProps) {
+  const { toast } = useToast();
   const [childProfiles, setChildProfiles] = useState<ChildProfile[]>(
     formData.children || []
   );
@@ -120,10 +126,13 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
     }
 
     if (result.status === "denied") {
-      Alert.alert(
-        "Zugriff auf Fotos benötigt",
-        "Erlaube den Zugriff auf deine Fotomediathek, um ein eigenes Profilbild auszuwählen."
-      );
+      // Same channel and wording as app/settings/children.tsx — never Alert.alert.
+      toast({
+        title: "Fotozugriff benötigt",
+        description:
+          "Erlaube den Zugriff auf deine Fotomediathek, um ein eigenes Profilbild zu wählen.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -178,12 +187,18 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
         <View
           className="absolute right-[-24px] top-[-18px] h-24 w-24 rounded-full"
           style={{ backgroundColor: palette.motifSecondary, opacity: 0.3 }}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
         />
         <View
           className="mb-3 self-start rounded-full px-3 py-1.5"
           style={{ backgroundColor: palette.heroSurface }}
         >
-          <Text className="text-xs font-body-semibold uppercase" style={{ color: palette.accentText }}>
+          <Text
+            className="text-xs font-body-semibold uppercase"
+            style={{ color: palette.accentText }}
+            maxFontSizeMultiplier={1.3}
+          >
             Erster Start
           </Text>
         </View>
@@ -195,7 +210,7 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
           Lernen und eure kleinen Familienmomente.
         </Text>
         <View
-          className="mt-4 overflow-hidden rounded-[22px] border"
+          className="mt-4 overflow-hidden rounded-card border"
           style={{ borderColor: palette.accentBorder, backgroundColor: palette.heroSurface }}
         >
           <Image
@@ -212,13 +227,14 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
               key={moment}
               className="rounded-full border px-3 py-1.5"
               style={{
-                backgroundColor: "#FFFFFF",
+                backgroundColor: semanticColors.card,
                 borderColor: palette.accentBorder,
               }}
             >
               <Text
                 className="text-xs font-body-semibold uppercase"
                 style={{ color: palette.accentText }}
+                maxFontSizeMultiplier={1.2}
               >
                 {moment}
               </Text>
@@ -234,26 +250,32 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
           {childProfiles.map((profile, index) => (
             <View
               key={`${profile.name}-${index}`}
-              className="flex-row items-center rounded-[20px] border p-3 gap-3"
+              className="flex-row items-center rounded-tile border p-3 gap-3"
               style={{ backgroundColor: palette.accentSoft, borderColor: palette.accentBorder }}
             >
-              <AvatarImage avatar={profile.avatar} size={36} borderRadius={14} />
+              <AvatarImage
+                avatar={profile.avatar}
+                size={36}
+                borderRadius={14}
+                fallbackLabel={profile.name}
+                accessibilityLabel={`Avatar von ${profile.name}`}
+              />
               <View className="min-w-0 flex-1">
                 <Text className="text-sm font-headline text-foreground">
                   {profile.name}
                 </Text>
-                <Text className="text-xs font-body text-muted-foreground">
+                <Text className="text-xs font-body text-muted-foreground" maxFontSizeMultiplier={1.4}>
                   {profile.ageGroup} • {profile.theme}
                 </Text>
               </View>
               <Pressable
                 onPress={() => handleRemoveChild(index)}
-                className="h-11 w-11 items-center justify-center rounded-full"
+                className="h-11 w-11 items-center justify-center rounded-full active:opacity-70"
                 accessibilityRole="button"
                 accessibilityLabel={`Kind ${profile.name} entfernen`}
-                hitSlop={4}
+                hitSlop={8}
               >
-                <Trash2 size={16} color="#ef4444" />
+                <Trash2 size={16} color={semanticColors.destructive} />
               </Pressable>
             </View>
           ))}
@@ -282,13 +304,14 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                 placeholder="Zum Beispiel Leo"
                 autoCapitalize="words"
                 returnKeyType="next"
+                accessibilityLabel="Name deines Kindes"
               />
             </View>
 
             {/* Age group selection */}
             <View className="gap-3">
               <Label>Alter</Label>
-              <Text className="text-xs font-body text-muted-foreground">
+              <Text className="text-sm font-body text-muted-foreground">
                 So passen Vorlagen und Texte besser zu deinem Kind.
               </Text>
               <View className="flex-row gap-2">
@@ -299,7 +322,10 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                     <Pressable
                       key={option.id}
                       onPress={() => setSelectedAgeGroup(option.id)}
-                      className="flex-1 rounded-[20px] border px-3 py-3"
+                      className="flex-1 rounded-tile border px-3 py-3 active:opacity-80"
+                      accessibilityRole="button"
+                      accessibilityLabel={`Alter ${option.label}. ${option.hint}`}
+                      accessibilityState={{ selected: isSelected }}
                       style={
                         isSelected
                           ? {
@@ -312,10 +338,16 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                             }
                       }
                     >
-                      <Text className="text-center text-base font-body-bold text-foreground">
+                      <Text
+                        className="text-center text-base font-body-bold text-foreground"
+                        maxFontSizeMultiplier={1.3}
+                      >
                         {option.id}
                       </Text>
-                      <Text className="mt-1 text-center text-xs font-body text-muted-foreground">
+                      <Text
+                        className="mt-1 text-center text-xs font-body text-muted-foreground"
+                        maxFontSizeMultiplier={1.3}
+                      >
                         {option.hint}
                       </Text>
                     </Pressable>
@@ -327,7 +359,7 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
             {/* Theme selection */}
             <View className="gap-3">
               <Label>Look & Feel</Label>
-              <Text className="text-xs font-body text-muted-foreground">
+              <Text className="text-sm font-body text-muted-foreground">
                 Die Welt färbt die App später warm und kindgerecht ein.
               </Text>
               <View className="flex-row gap-2">
@@ -342,7 +374,10 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                         setSelectedTheme(theme.id);
                         void triggerFeedback("theme_preview");
                       }}
-                      className="flex-1 rounded-[22px] border px-3 py-3"
+                      className="flex-1 rounded-card border px-3 py-3 active:opacity-80"
+                      accessibilityRole="button"
+                      accessibilityLabel={`Welt ${theme.name}. ${theme.description}`}
+                      accessibilityState={{ selected: isSelected }}
                       style={
                         isSelected
                           ? {
@@ -362,14 +397,22 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                         >
                           <theme.IconComponent size={20} color={themePalette.accentStrong} />
                         </View>
-                        <Text className="mt-2 text-center text-sm font-body-bold text-foreground">
+                        <Text
+                          className="mt-2 text-center text-sm font-body-bold text-foreground"
+                          maxFontSizeMultiplier={1.3}
+                        >
                           {theme.name}
                         </Text>
                         <View
                           className="mt-1 rounded-full px-2 py-0.5"
                           style={{ backgroundColor: "rgba(255,255,255,0.74)" }}
                         >
-                          <Text className="text-xs font-body-semibold uppercase" style={{ color: themePalette.accentText }} numberOfLines={1}>
+                          <Text
+                            className="text-xs font-body-semibold uppercase"
+                            style={{ color: themePalette.accentText }}
+                            numberOfLines={1}
+                            maxFontSizeMultiplier={1.2}
+                          >
                             {theme.badge}
                           </Text>
                         </View>
@@ -391,10 +434,11 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                     <Pressable
                       key={category}
                       onPress={() => setSelectedAvatarCategory(category)}
-                      className="min-h-11 rounded-full border px-3 py-2.5"
+                      className="min-h-11 rounded-full border px-3 py-2.5 active:opacity-80"
                       accessibilityRole="button"
                       accessibilityLabel={`Avatar-Kategorie ${category}`}
                       accessibilityState={{ selected: isSelected }}
+                      hitSlop={8}
                       style={
                         isSelected
                           ? {
@@ -410,6 +454,7 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                       <Text
                         className="text-xs font-body-semibold"
                         style={isSelected ? { color: palette.accentText } : undefined}
+                        maxFontSizeMultiplier={1.3}
                       >
                         {category}
                       </Text>
@@ -423,7 +468,12 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                   <Pressable
                     key={avatar.id}
                     onPress={() => setSelectedAvatar(avatar.value)}
-                    className="h-14 w-14 items-center justify-center rounded-full border-2"
+                    className="h-14 w-14 items-center justify-center rounded-full border-2 active:opacity-80"
+                    accessibilityRole="button"
+                    accessibilityLabel={`Avatar ${avatar.label} auswählen`}
+                    accessibilityState={{
+                      selected: areAvatarValuesEqual(selectedAvatar, avatar.value),
+                    }}
                     style={
                       areAvatarValuesEqual(selectedAvatar, avatar.value)
                         ? {
@@ -449,7 +499,7 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
 
               <Pressable
                 onPress={handlePickAvatarPhoto}
-                className="mt-1 flex-row items-center justify-center rounded-[18px] border px-4 py-3"
+                className="mt-1 flex-row items-center justify-center rounded-tile border px-4 py-3 active:opacity-80"
                 style={{
                   backgroundColor: "rgba(255,255,255,0.76)",
                   borderColor: palette.accentBorder,
@@ -458,7 +508,11 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                 accessibilityLabel="Eigenes Foto aus der Fotomediathek auswählen"
               >
                 <ImagePlus size={18} color={palette.accentStrong} />
-                <Text className="ml-2 text-sm font-body-semibold" style={{ color: palette.accentText }}>
+                <Text
+                  className="ml-2 text-sm font-body-semibold"
+                  style={{ color: palette.accentText }}
+                  maxFontSizeMultiplier={1.3}
+                >
                   Eigenes Foto auswählen
                 </Text>
               </Pressable>
@@ -466,13 +520,16 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
 
             {/* Live preview */}
             <View
-              className="rounded-[24px] border px-4 py-4"
+              className="rounded-card border px-4 py-4"
               style={{
                 borderColor: palette.accentBorder,
                 backgroundColor: palette.accentSoft,
               }}
             >
-              <Text className="text-xs font-body-semibold uppercase text-muted-foreground">
+              <Text
+                className="text-xs font-body-semibold uppercase text-muted-foreground"
+                maxFontSizeMultiplier={1.3}
+              >
                 Vorschau
               </Text>
               <View className="mt-3 flex-row items-center">
@@ -497,8 +554,8 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
               </View>
             </View>
               <View
-                className="mt-4 rounded-xl px-3 py-3"
-                style={{ backgroundColor: "#FFFFFF" }}
+                className="mt-4 rounded-tile px-3 py-3"
+                style={{ backgroundColor: semanticColors.card }}
               >
                 <Text className="text-sm font-body text-muted-foreground">
                   Im nächsten Schritt schlagen wir passende Starter-Routinen vor.
@@ -509,8 +566,9 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
 
             {!canProceed ? (
               <View
-                className="rounded-[18px] px-4 py-3"
+                className="rounded-tile px-4 py-3"
                 style={{ backgroundColor: "rgba(255,255,255,0.74)" }}
+                accessibilityLiveRegion="polite"
               >
                 <Text className="text-sm font-body" style={{ color: palette.accentText }}>
                   Bitte gib einen Namen ein. Dann kann die erste Routine entstehen.
@@ -524,8 +582,15 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                 onPress={handleAddChild}
                 disabled={!childName.trim()}
                 style={{ borderColor: palette.accent }}
+                accessibilityRole="button"
+                accessibilityLabel="Dieses Kind speichern"
+                accessibilityState={{ disabled: !childName.trim() }}
               >
-                <Text className="text-sm font-body-semibold" style={{ color: palette.accent }}>
+                <Text
+                  className="text-sm font-body-semibold"
+                  style={{ color: palette.accent }}
+                  maxFontSizeMultiplier={1.3}
+                >
                   Dieses Kind speichern
                 </Text>
               </Button>
@@ -538,6 +603,9 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                 disabled={!canProceed}
                 className="min-w-[120px]"
                 style={{ backgroundColor: palette.button }}
+                accessibilityRole="button"
+                accessibilityLabel="Weiter zu den Routinen"
+                accessibilityState={{ disabled: !canProceed }}
               >
                 Weiter: Routinen wählen
               </Button>

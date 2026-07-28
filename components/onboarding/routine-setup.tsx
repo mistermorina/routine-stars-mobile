@@ -19,7 +19,7 @@ import {
 import { TemplateSelector } from "@/components/routine-templates/template-selector";
 import { TemplateCard } from "@/components/routine-templates/template-card";
 import { getRecommendedRoutineTemplates } from "@/lib/routine-templates";
-import { getThemePalette } from "@/lib/theme";
+import { getThemePalette, semanticColors } from "@/lib/theme";
 import type { RoutineTemplate, ChildProfile } from "@/lib/types";
 
 interface TaskItem {
@@ -155,18 +155,19 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
       <ScaleDecorator>
         <View
           className={cn(
-            "flex-row items-center gap-2 rounded-lg bg-secondary p-3 mb-2",
+            "flex-row items-center gap-2 rounded-tile bg-secondary p-3 mb-2",
             isActive && "opacity-80"
           )}
         >
           <Pressable
             onLongPress={drag}
-            className="h-11 w-11 items-center justify-center rounded-full"
+            className="h-11 w-11 items-center justify-center rounded-full active:opacity-70"
             accessibilityRole="button"
-            accessibilityLabel="Aufgabe verschieben"
-            hitSlop={4}
+            accessibilityLabel={`Aufgabe ${item.title} verschieben`}
+            accessibilityHint="Gedrückt halten und ziehen"
+            hitSlop={8}
           >
-            <GripVertical size={20} color="#737373" />
+            <GripVertical size={20} color={semanticColors.mutedForeground} />
           </Pressable>
           <Text
             className="min-w-0 flex-1 text-base font-body text-foreground"
@@ -177,12 +178,12 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
           </Text>
           <Pressable
             onPress={() => handleRemoveTask(item.id)}
-            className="h-11 w-11 items-center justify-center rounded-full"
+            className="h-11 w-11 items-center justify-center rounded-full active:opacity-70"
             accessibilityRole="button"
             accessibilityLabel={`Aufgabe ${item.title} entfernen`}
-            hitSlop={4}
+            hitSlop={8}
           >
-            <Trash2 size={18} color="#ef4444" />
+            <Trash2 size={18} color={semanticColors.destructive} />
           </Pressable>
         </View>
       </ScaleDecorator>
@@ -197,7 +198,7 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
       contentContainerClassName="pb-8"
     >
       <View
-        className="mb-4 rounded-[24px] border px-4 py-4"
+        className="mb-4 rounded-card border px-4 py-4"
         style={{
           borderColor: palette.accentBorder,
           backgroundColor: palette.heroSurface,
@@ -206,7 +207,9 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
         <View className="flex-row items-center gap-3">
           <View
             className="h-11 w-11 items-center justify-center rounded-full"
-            style={{ backgroundColor: "#FFFFFF" }}
+            style={{ backgroundColor: semanticColors.card }}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
           >
             <Star size={20} color={palette.chartPrimary} fill={palette.chartPrimary} />
           </View>
@@ -214,7 +217,7 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
             <Text className="text-base font-body-semibold leading-5 text-foreground">
               Kleine Schritte zählen sofort.
             </Text>
-            <Text className="mt-1 text-xs font-body leading-5 text-muted-foreground">
+            <Text className="mt-1 text-sm font-body leading-5 text-muted-foreground">
               Eine gute Routine hat wenige klare Aufgaben. Dein Kind sammelt Sterne,
               sobald ein Schritt geschafft ist.
             </Text>
@@ -227,11 +230,14 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
         <View className="mb-4 gap-2">
           <Label>Gespeicherte Routinen ({savedRoutines.length})</Label>
           {savedRoutines.map((routine) => (
+            // Same saved-item treatment as the child list in child-setup.tsx:
+            // palette-driven instead of a hardcoded sky blue that ignored the theme.
             <View
               key={routine.id}
-              className="flex-row items-center rounded-lg bg-[#87CEEB]/10 border border-[#87CEEB] p-3 gap-3"
+              className="flex-row items-center rounded-tile border p-3 gap-3"
+              style={{ backgroundColor: palette.accentSoft, borderColor: palette.accentBorder }}
             >
-              <Check size={18} color="#87CEEB" />
+              <Check size={18} color={palette.accentStrong} />
               <View className="min-w-0 flex-1">
                 <Text
                   className="text-sm font-headline text-foreground"
@@ -240,18 +246,18 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                 >
                   {routine.name}
                 </Text>
-                <Text className="text-xs font-body text-muted-foreground">
+                <Text className="text-xs font-body text-muted-foreground" maxFontSizeMultiplier={1.4}>
                   {routine.tasks.length} Aufgaben
                 </Text>
               </View>
               <Pressable
                 onPress={() => handleRemoveRoutine(routine.id)}
-                className="h-11 w-11 items-center justify-center rounded-full"
+                className="h-11 w-11 items-center justify-center rounded-full active:opacity-70"
                 accessibilityRole="button"
                 accessibilityLabel={`Routine ${routine.name} entfernen`}
-                hitSlop={4}
+                hitSlop={8}
               >
-                <Trash2 size={16} color="#ef4444" />
+                <Trash2 size={16} color={semanticColors.destructive} />
               </Pressable>
             </View>
           ))}
@@ -272,7 +278,7 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
         <CardContent>
           <View className="gap-5">
             <View
-              className="rounded-2xl border px-4 py-4"
+              className="rounded-tile border px-4 py-4"
               style={{
                 borderColor: palette.accentBorder,
                 backgroundColor: palette.accentSoft,
@@ -282,6 +288,8 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                 <View
                   className="h-11 w-11 items-center justify-center rounded-full"
                   style={{ backgroundColor: palette.surface }}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
                 >
                   <Sparkles size={20} color={palette.accentStrong} />
                 </View>
@@ -310,19 +318,22 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
 
             <Pressable
               onPress={() => setShowAllTemplates((previous) => !previous)}
-              className="flex-row items-center justify-between rounded-xl border border-border bg-card px-4 py-3"
+              className="min-h-14 flex-row items-center justify-between rounded-tile border border-border bg-card px-4 py-3 active:opacity-80"
+              accessibilityRole="button"
+              accessibilityLabel="Alle Vorlagen ansehen"
+              accessibilityState={{ expanded: showAllTemplates }}
             >
-              <View>
+              <View className="min-w-0 flex-1">
                 <Text className="text-base font-body-semibold text-foreground">
                   Alle Vorlagen ansehen
                 </Text>
-                <Text className="mt-0.5 text-xs font-body text-muted-foreground">
+                <Text className="mt-0.5 text-sm font-body text-muted-foreground">
                   Morgen, Abend, Schule, Haushalt und besondere Momente
                 </Text>
               </View>
               <ChevronDown
                 size={18}
-                color="#737373"
+                color={semanticColors.mutedForeground}
                 style={{
                   transform: [{ rotate: showAllTemplates ? "180deg" : "0deg" }],
                 }}
@@ -342,8 +353,14 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                 variant="outline"
                 onPress={() => setShowCustomizer(true)}
                 style={{ borderColor: palette.accent }}
+                accessibilityRole="button"
+                accessibilityLabel="Eigene Routine erstellen"
               >
-                <Text className="text-sm font-body-semibold" style={{ color: palette.accent }}>
+                <Text
+                  className="text-sm font-body-semibold"
+                  style={{ color: palette.accent }}
+                  maxFontSizeMultiplier={1.3}
+                >
                   Eigene Routine erstellen
                 </Text>
               </Button>
@@ -358,6 +375,7 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                     value={routineName}
                     onChangeText={setRoutineName}
                     placeholder="Zum Beispiel Morgenroutine"
+                    accessibilityLabel="Name der Routine"
                   />
                 </View>
 
@@ -373,7 +391,7 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                       scrollEnabled={false}
                     />
                   ) : (
-                    <View className="rounded-xl bg-secondary/50 py-4 items-center">
+                    <View className="rounded-tile bg-secondary/50 py-4 items-center">
                       <Text className="text-sm font-body text-muted-foreground">
                         Wähle eine Vorlage oder füge den ersten eigenen Schritt hinzu.
                       </Text>
@@ -389,6 +407,7 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                         placeholder="Zum Beispiel Schlafanzug anziehen"
                         returnKeyType="done"
                         onSubmitEditing={handleAddTask}
+                        accessibilityLabel="Neue Aufgabe eingeben"
                       />
                     </View>
                     <Button
@@ -399,8 +418,9 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                       style={{ backgroundColor: palette.button }}
                       accessibilityRole="button"
                       accessibilityLabel="Aufgabe hinzufügen"
+                      accessibilityState={{ disabled: !newTask.trim() }}
                     >
-                      <Plus size={20} color="#FFFFFF" />
+                      <Plus size={20} color={semanticColors.accentForeground} />
                     </Button>
                   </View>
                 </View>
@@ -413,6 +433,13 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                     disabled={tasks.length === 0 || !routineName.trim()}
                     className="min-h-12 px-3"
                     style={{ borderColor: palette.accent }}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      savedRoutines.length > 0 ? "Routine speichern" : "Starter-Routine speichern"
+                    }
+                    accessibilityState={{
+                      disabled: tasks.length === 0 || !routineName.trim(),
+                    }}
                   >
                     <Text
                       className="text-center text-sm font-body-semibold"
@@ -432,8 +459,9 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
 
             {!canProceed ? (
               <View
-                className="rounded-[18px] px-4 py-3"
+                className="rounded-tile px-4 py-3"
                 style={{ backgroundColor: palette.heroSurface }}
+                accessibilityLiveRegion="polite"
               >
                 <Text className="text-sm font-body leading-5" style={{ color: palette.accentText }}>
                   Wähle eine Vorlage oder erstelle eine eigene Routine. Eine Routine reicht für den Start.
@@ -443,7 +471,13 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
 
             {/* Navigation buttons */}
             <View className="flex-row justify-between pt-2">
-              <Button variant="outline" onPress={onBack} className="min-w-[100px]">
+              <Button
+                variant="outline"
+                onPress={onBack}
+                className="min-w-[100px]"
+                accessibilityRole="button"
+                accessibilityLabel="Zurück zum Profil"
+              >
                 Zurück
               </Button>
               <Button
@@ -451,6 +485,9 @@ export function RoutineSetup({ onNext, onBack, formData }: RoutineSetupProps) {
                 disabled={!canProceed}
                 className="min-w-[100px]"
                 style={{ backgroundColor: palette.button }}
+                accessibilityRole="button"
+                accessibilityLabel="Weiter zu den Belohnungen"
+                accessibilityState={{ disabled: !canProceed }}
               >
                 Weiter: Belohnungen
               </Button>

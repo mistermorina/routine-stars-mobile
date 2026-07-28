@@ -156,6 +156,8 @@ export default function StickerAlbumScreen() {
             <View
               className="h-12 w-12 items-center justify-center rounded-full"
               style={{ backgroundColor: palette.heroSurface }}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
             >
               <Award size={20} color={palette.accentStrong} />
             </View>

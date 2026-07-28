@@ -86,17 +86,3 @@ function ToastItem({
     </Animated.View>
   );
 }
-
-interface ToastOverlayProps {
-  toasts: ToastData[];
-  onDismiss: (id: string) => void;
-}
-
-/**
- * @deprecated Toasts render globally through `<ToastHost />` in
- * `app/_layout.tsx`. Kept as a no-op so screens that still render it do not
- * show every toast twice; delete the render and this component with it.
- */
-export function ToastOverlay(_props: ToastOverlayProps) {
-  return null;
-}

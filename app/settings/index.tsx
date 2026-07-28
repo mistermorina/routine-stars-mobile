@@ -107,6 +107,7 @@ function SectionLabel({ children }: { children: string }) {
       <Text
         className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground"
         accessibilityRole="header"
+        maxFontSizeMultiplier={1.3}
       >
         {children}
       </Text>
@@ -149,6 +150,7 @@ function SettingsRow({
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.86}
+          maxFontSizeMultiplier={1.3}
         >
           {item.label}
         </Text>
@@ -159,7 +161,12 @@ function SettingsRow({
           {item.description}
         </Text>
       </View>
-      <ChevronRight size={18} color={semanticColors.mutedForeground} />
+      <ChevronRight
+        size={18}
+        color={semanticColors.mutedForeground}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      />
     </PressableScale>
   );
 }
@@ -243,7 +250,9 @@ export default function SettingsIndex() {
               trackColor={SWITCH_TRACK_COLOR}
               thumbColor={soundOn ? semanticColors.gold : semanticColors.card}
               ios_backgroundColor={semanticColors.border}
+              accessibilityRole="switch"
               accessibilityLabel="Soundeffekte ein- oder ausschalten"
+              accessibilityState={{ checked: soundOn }}
             />
           </View>
           <View className="flex-row items-center py-4">
@@ -262,7 +271,9 @@ export default function SettingsIndex() {
               trackColor={SWITCH_TRACK_COLOR}
               thumbColor={hapticsOn ? semanticColors.gold : semanticColors.card}
               ios_backgroundColor={semanticColors.border}
+              accessibilityRole="switch"
               accessibilityLabel="Vibration ein- oder ausschalten"
+              accessibilityState={{ checked: hapticsOn }}
             />
           </View>
         </View>

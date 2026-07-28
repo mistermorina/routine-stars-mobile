@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Pressable, View, Text, useWindowDimensions } from "react-native";
+import { View, Text, useWindowDimensions } from "react-native";
 import Animated, {
   FadeInDown,
   useAnimatedStyle,
@@ -10,10 +10,11 @@ import { Settings, Star, Flame, Trophy, Sparkles } from "@/lib/icons";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { Card } from "@/components/ui/card";
 import { AvatarImage } from "@/components/ui/avatar-image";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { SoftHeroWash } from "@/components/ui/soft-hero-wash";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { timings } from "@/lib/motion";
-import type { ThemePalette } from "@/lib/theme";
+import { semanticColors, type ThemePalette } from "@/lib/theme";
 import type { Child } from "@/lib/types";
 
 interface ProfileHeroCardProps {
@@ -64,7 +65,7 @@ export function ProfileHeroCard({
   return (
     <Animated.View entering={FadeInDown.duration(320)}>
       <Card
-        className="overflow-hidden rounded-[24px] px-4 pb-4 pt-4"
+        className="overflow-hidden rounded-card px-4 pb-4 pt-4"
         style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
       >
         <SoftHeroWash
@@ -75,10 +76,14 @@ export function ProfileHeroCard({
         <View
           className="absolute right-[-30px] top-[-26px] h-36 w-36 rounded-full"
           style={{ backgroundColor: palette.motifSecondary, opacity: 0.28 }}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
         />
         <View
           className="absolute left-[-18px] bottom-10 h-24 w-24 rounded-full"
           style={{ backgroundColor: palette.motifPrimary, opacity: 0.16 }}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
         />
         <View className="relative">
           <View className="flex-row items-start justify-between gap-3">
@@ -102,7 +107,12 @@ export function ProfileHeroCard({
                     className="rounded-full px-2.5 py-1"
                     style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
                   >
-                    <Text className="text-xs font-body-semibold uppercase tracking-[0.6px]" style={{ color: palette.accentText }} numberOfLines={1}>
+                    <Text
+                      className="text-xs font-body-semibold uppercase tracking-[0.6px]"
+                      style={{ color: palette.accentText }}
+                      numberOfLines={1}
+                      maxFontSizeMultiplier={1.3}
+                    >
                       Storyworld
                     </Text>
                   </View>
@@ -111,7 +121,12 @@ export function ProfileHeroCard({
                     style={{ backgroundColor: palette.tabActiveBg }}
                   >
                     <Sparkles size={12} color={palette.accentStrong} />
-                    <Text className="text-xs font-body-semibold" style={{ color: palette.accentText }} numberOfLines={1}>
+                    <Text
+                      className="text-xs font-body-semibold"
+                      style={{ color: palette.accentText }}
+                      numberOfLines={1}
+                      maxFontSizeMultiplier={1.3}
+                    >
                       Im Flow
                     </Text>
                   </View>
@@ -121,6 +136,7 @@ export function ProfileHeroCard({
                   numberOfLines={1}
                   adjustsFontSizeToFit
                   minimumFontScale={0.82}
+                  maxFontSizeMultiplier={1.3}
                 >
                   {child.name}
                 </Text>
@@ -130,7 +146,7 @@ export function ProfileHeroCard({
               </View>
             </View>
             {onSettingsPress ? (
-              <Pressable
+              <PressableScale
                 onPress={onSettingsPress}
                 className="h-11 w-11 items-center justify-center rounded-full"
                 style={{ backgroundColor: "rgba(255,255,255,0.82)" }}
@@ -139,18 +155,23 @@ export function ProfileHeroCard({
                 accessibilityLabel="Elternbereich öffnen"
               >
                 <Settings size={20} color={palette.accentText} />
-              </Pressable>
+              </PressableScale>
             ) : null}
           </View>
 
           <View className={isCompactWidth ? "mt-5 gap-3" : "mt-5 flex-row gap-3"}>
             <View
-              className={isCompactWidth ? "rounded-[18px] px-4 py-3.5" : "flex-1 rounded-[18px] px-4 py-3.5"}
+              className={isCompactWidth ? "rounded-tile px-4 py-3.5" : "flex-1 rounded-tile px-4 py-3.5"}
               style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
             >
               <View className="flex-row items-center gap-2">
-                <Star size={17} color="#FFD700" fill="#FFD700" />
-                <Text className="text-sm font-body-semibold text-muted-foreground">Sterne</Text>
+                <Star size={17} color={semanticColors.gold} fill={semanticColors.gold} />
+                <Text
+                  className="text-sm font-body-semibold text-muted-foreground"
+                  maxFontSizeMultiplier={1.3}
+                >
+                  Sterne
+                </Text>
               </View>
               <View className="mt-2">
                 <AnimatedNumber
@@ -165,12 +186,17 @@ export function ProfileHeroCard({
             </View>
 
             <View
-              className={isCompactWidth ? "rounded-[18px] px-4 py-3.5" : "flex-1 rounded-[18px] px-4 py-3.5"}
+              className={isCompactWidth ? "rounded-tile px-4 py-3.5" : "flex-1 rounded-tile px-4 py-3.5"}
               style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
             >
               <View className="flex-row items-center gap-2">
                 <Flame size={17} color={palette.chartSecondary} />
-                <Text className="text-sm font-body-semibold text-muted-foreground">Serie</Text>
+                <Text
+                  className="text-sm font-body-semibold text-muted-foreground"
+                  maxFontSizeMultiplier={1.3}
+                >
+                  Serie
+                </Text>
               </View>
               <View className="mt-2">
                 <AnimatedNumber
@@ -186,12 +212,12 @@ export function ProfileHeroCard({
           </View>
 
           <View
-            className="mt-3 rounded-[18px] border px-4 py-3.5"
+            className="mt-3 rounded-tile border px-4 py-3.5"
             style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.76)" }}
           >
             <View className="flex-row items-start gap-3">
               <View
-                className="h-12 w-12 shrink-0 items-center justify-center rounded-[18px]"
+                className="h-12 w-12 shrink-0 items-center justify-center rounded-tile"
                 style={{ backgroundColor: palette.tabActiveBg }}
               >
                 <Trophy size={20} color={palette.accentStrong} />
@@ -199,7 +225,10 @@ export function ProfileHeroCard({
               <View className="min-w-0 flex-1">
                 <View className="flex-row items-start gap-2">
                   <View className="min-w-0 flex-1">
-                    <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+                    <Text
+                      className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground"
+                      maxFontSizeMultiplier={1.3}
+                    >
                       Nächster Moment
                     </Text>
                     <Text
@@ -219,6 +248,7 @@ export function ProfileHeroCard({
                       numberOfLines={1}
                       adjustsFontSizeToFit
                       minimumFontScale={0.85}
+                      maxFontSizeMultiplier={1.3}
                     >
                       {nextReward ? `${nextReward.missingStars} offen` : "Bereit"}
                     </Text>
@@ -258,14 +288,17 @@ export function ProfileHeroCard({
 
           {hasChildSwitcher ? (
             <View className="mt-3">
-              <Text className="mb-2 text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+              <Text
+                className="mb-2 text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground"
+                maxFontSizeMultiplier={1.3}
+              >
                 Kind wechseln
               </Text>
               <View className="flex-row flex-wrap gap-2">
                 {allChildren?.map((entry) => {
                   const isActive = entry.id === child.id;
                   return (
-                    <Pressable
+                    <PressableScale
                       key={entry.id}
                       onPress={() => onSelectChild?.(entry.id)}
                       className="h-12 w-12 items-center justify-center rounded-full border"
@@ -275,6 +308,7 @@ export function ProfileHeroCard({
                       }}
                       accessibilityRole="button"
                       accessibilityLabel={`${entry.name} auswählen`}
+                      accessibilityState={{ selected: isActive }}
                     >
                       <AvatarImage
                         avatar={entry.avatar}
@@ -283,7 +317,7 @@ export function ProfileHeroCard({
                         backgroundColor="transparent"
                         accessibilityLabel={`${entry.name} Avatar`}
                       />
-                    </Pressable>
+                    </PressableScale>
                   );
                 })}
               </View>
