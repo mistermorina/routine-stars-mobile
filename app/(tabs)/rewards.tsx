@@ -1,20 +1,39 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { View, Text, ScrollView } from "react-native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { Image } from "expo-image";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { useChildren } from "@/hooks/use-children";
 import { useToast } from "@/hooks/use-toast";
 import { useRewards } from "@/hooks/use-rewards";
 import { useCollapsibleHeader } from "@/hooks/use-collapsible-header";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { Header } from "@/components/routine-stars/header";
 import { RewardsOverview } from "@/components/routine-stars/rewards-overview";
+import { Confetti } from "@/components/routine-stars/confetti";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { PressableScale } from "@/components/ui/pressable-scale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { triggerFeedback } from "@/lib/feedback";
-import { getThemePalette } from "@/lib/theme";
+import { Check, Star } from "@/lib/icons";
+import {
+  durations,
+  easings,
+  enterFade,
+  enterStagger,
+  exitFade,
+  springs,
+  timings,
+} from "@/lib/motion";
+import { getThemePalette, semanticColors, shadowPresets } from "@/lib/theme";
 import type { Reward } from "@/lib/types";
 import rewardStarGiftImage from "@/assets/images/reward-star-gift-soft.png";
 
@@ -26,6 +45,168 @@ const REWARD_FILTERS: { key: RewardFilter; label: string }[] = [
   { key: "bald", label: "Bald frei" },
 ];
 
+/* ------------------------------------------------------------------ *
+ * Redeem celebration timeline (press → settled card, 1.7s total):
+ *   0ms    haptic + puck pop + ring ripple + confetti burst
+ *   180ms  the spent-stars pill drifts away from the puck
+ *   340ms  toast slides in from the bottom with the reward title
+ *   1000ms puck eases out
+ *   1700ms overlay + confetti unmount
+ *   2600ms card leaves its "Freigeschaltet" state
+ * ------------------------------------------------------------------ */
+const TOAST_DELAY_MS = 340;
+const CELEBRATION_VISIBLE_MS = 1700;
+const CARD_SETTLE_MS = 2600;
+const PUCK_HOLD_MS = 850;
+const COST_PILL_DELAY_MS = 180;
+
+interface RedeemCelebrationState {
+  title: string;
+  cost: number;
+  childName: string;
+  /** Bumped per redeem so a second redeem replays the overlay from the top. */
+  runId: number;
+}
+
+/**
+ * Full-screen, non-interactive payoff for a redeemed reward. Mounted only when
+ * the OS is not asking for reduced motion — the haptic and the toast carry the
+ * moment on their own in that case.
+ */
+function RedeemCelebration({ cost }: { cost: number }) {
+  const puckScale = useSharedValue(0.4);
+  const puckOpacity = useSharedValue(0);
+  const glowScale = useSharedValue(0.7);
+  const glowOpacity = useSharedValue(0);
+  const ringScale = useSharedValue(0.55);
+  const ringOpacity = useSharedValue(0);
+  const costShift = useSharedValue(0);
+  const costOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    // Anticipation-free: the puck is already on screen in the first frame and
+    // overshoots past 1 before settling, so the tap reads as cause → effect.
+    puckOpacity.value = withSequence(
+      withTiming(1, timings.fast),
+      withDelay(PUCK_HOLD_MS, withTiming(0, timings.base))
+    );
+    puckScale.value = withSequence(
+      withSpring(1.04, springs.bouncy),
+      withDelay(PUCK_HOLD_MS, withTiming(0.88, timings.base))
+    );
+
+    glowOpacity.value = withSequence(
+      withTiming(1, timings.fast),
+      withDelay(PUCK_HOLD_MS - durations.fast, withTiming(0, timings.base))
+    );
+    glowScale.value = withTiming(1.24, {
+      duration: durations.celebration,
+      easing: easings.out,
+    });
+
+    ringOpacity.value = withSequence(
+      withTiming(0.55, timings.fast),
+      withTiming(0, {
+        duration: durations.celebration - durations.fast,
+        easing: easings.out,
+      })
+    );
+    ringScale.value = withTiming(1.9, {
+      duration: durations.celebration,
+      easing: easings.out,
+    });
+
+    costOpacity.value = withDelay(
+      COST_PILL_DELAY_MS,
+      withSequence(
+        withTiming(1, timings.fast),
+        withDelay(durations.slow, withTiming(0, timings.base))
+      )
+    );
+    costShift.value = withDelay(
+      COST_PILL_DELAY_MS,
+      withTiming(26, { duration: durations.celebration + 120, easing: easings.out })
+    );
+  }, [
+    costOpacity,
+    costShift,
+    glowOpacity,
+    glowScale,
+    puckOpacity,
+    puckScale,
+    ringOpacity,
+    ringScale,
+  ]);
+
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
+    transform: [{ scale: glowScale.value }],
+  }));
+  const ringStyle = useAnimatedStyle(() => ({
+    opacity: ringOpacity.value,
+    transform: [{ scale: ringScale.value }],
+  }));
+  const puckStyle = useAnimatedStyle(() => ({
+    opacity: puckOpacity.value,
+    transform: [{ scale: puckScale.value }],
+  }));
+  const costStyle = useAnimatedStyle(() => ({
+    opacity: costOpacity.value,
+    transform: [{ translateY: costShift.value }],
+  }));
+
+  return (
+    <View
+      pointerEvents="none"
+      style={[StyleSheet.absoluteFill, { zIndex: 30 }]}
+      className="items-center justify-center"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <View className="h-24 w-24 items-center justify-center">
+        <Animated.View
+          className="absolute h-56 w-56 rounded-full"
+          style={[
+            { left: -64, top: -64, backgroundColor: semanticColors.successSoft },
+            glowStyle,
+          ]}
+        />
+        <Animated.View
+          className="absolute h-32 w-32 rounded-full"
+          style={[
+            { left: -16, top: -16, borderWidth: 3, borderColor: semanticColors.success },
+            ringStyle,
+          ]}
+        />
+        <Animated.View
+          className="h-24 w-24 items-center justify-center rounded-full"
+          style={[
+            { backgroundColor: semanticColors.success },
+            shadowPresets.shadowFloating,
+            puckStyle,
+          ]}
+        >
+          <Check size={46} color={semanticColors.card} strokeWidth={3.2} />
+        </Animated.View>
+      </View>
+
+      <Animated.View
+        className="mt-5 flex-row items-center gap-1 rounded-full px-3 py-1.5"
+        style={[{ backgroundColor: semanticColors.card }, shadowPresets.shadowSubtle, costStyle]}
+      >
+        <Text
+          className="text-sm font-body-bold"
+          style={{ color: semanticColors.goldText }}
+          maxFontSizeMultiplier={1.3}
+        >
+          −{cost}
+        </Text>
+        <Star size={14} color={semanticColors.goldDeep} fill={semanticColors.gold} />
+      </Animated.View>
+    </View>
+  );
+}
+
 export default function RewardsScreen() {
   const {
     children,
@@ -36,9 +217,14 @@ export default function RewardsScreen() {
   } = useChildren();
   const { toast } = useToast();
   const { rewards, isLoading: rewardsLoading } = useRewards();
+  const reduceMotion = useReducedMotion();
   const palette = getThemePalette(selectedChild?.theme);
   const [recentlyRedeemedRewardId, setRecentlyRedeemedRewardId] = useState<string | null>(null);
+  const [celebration, setCelebration] = useState<RedeemCelebrationState | null>(null);
   const [rewardFilter, setRewardFilter] = useState<RewardFilter>("alle");
+  // Guards a double tap landing before React has re-rendered the card as redeemed.
+  const redeemLockRef = useRef<string | null>(null);
+  const runIdRef = useRef(0);
   const {
     handleHeaderScroll,
     isHeaderCollapsed,
@@ -59,37 +245,80 @@ export default function RewardsScreen() {
     ? Math.min((childStars / nextReward.cost) * 100, 100)
     : 100;
   const filteredRewards = useMemo(() => {
-    if (rewardFilter === "verfuegbar") {
-      return sortedRewards.filter((reward) => reward.cost <= childStars);
+    const base =
+      rewardFilter === "verfuegbar"
+        ? sortedRewards.filter((reward) => reward.cost <= childStars)
+        : rewardFilter === "bald"
+          ? sortedRewards.filter((reward) => reward.cost > childStars)
+          : sortedRewards;
+
+    // The stars are gone the instant the child taps, which can push the card
+    // out of the active filter mid-celebration. Hold it in place until it has
+    // settled into its redeemed state.
+    if (!recentlyRedeemedRewardId || base.some((reward) => reward.id === recentlyRedeemedRewardId)) {
+      return base;
     }
-    if (rewardFilter === "bald") {
-      return sortedRewards.filter((reward) => reward.cost > childStars);
-    }
-    return sortedRewards;
-  }, [childStars, rewardFilter, sortedRewards]);
+
+    const redeemed = sortedRewards.find((reward) => reward.id === recentlyRedeemedRewardId);
+    return redeemed
+      ? [...base, redeemed].sort((left, right) => left.cost - right.cost)
+      : base;
+  }, [childStars, recentlyRedeemedRewardId, rewardFilter, sortedRewards]);
 
   const handleRedeem = useCallback(
     async (reward: Reward) => {
       if (!selectedChild) return;
       if (selectedChild.stars < reward.cost) return;
+      if (redeemLockRef.current === reward.id) return;
+
+      redeemLockRef.current = reward.id;
+      runIdRef.current += 1;
+
+      // Everything the child can feel or see fires before the write: the
+      // haptic is synchronous and both state updates flush in the same frame.
+      void triggerFeedback("reward_redeemed");
+      setRecentlyRedeemedRewardId(reward.id);
+      setCelebration({
+        title: reward.title,
+        cost: reward.cost,
+        childName: selectedChild.name,
+        runId: runIdRef.current,
+      });
 
       await deductStars(selectedChild.id, reward.cost);
-      setRecentlyRedeemedRewardId(reward.id);
-      void triggerFeedback("reward_redeemed");
-      toast({
-        title: "Belohnung eingelöst!",
-        description: `${selectedChild.name} genießt jetzt "${reward.title}".`,
-      });
     },
-    [deductStars, selectedChild, toast]
+    [deductStars, selectedChild]
   );
+
+  // The toast lands after the burst has read as a burst, so the child sees the
+  // effect first and the words second.
+  useEffect(() => {
+    if (!celebration) return;
+
+    const toastTimeout = setTimeout(
+      () => {
+        toast({
+          title: "Belohnung eingelöst!",
+          description: `${celebration.childName} genießt jetzt „${celebration.title}“.`,
+        });
+      },
+      reduceMotion ? 0 : TOAST_DELAY_MS
+    );
+    const hideTimeout = setTimeout(() => setCelebration(null), CELEBRATION_VISIBLE_MS);
+
+    return () => {
+      clearTimeout(toastTimeout);
+      clearTimeout(hideTimeout);
+    };
+  }, [celebration, reduceMotion, toast]);
 
   useEffect(() => {
     if (!recentlyRedeemedRewardId) return;
 
     const timeout = setTimeout(() => {
       setRecentlyRedeemedRewardId(null);
-    }, 2400);
+      redeemLockRef.current = null;
+    }, CARD_SETTLE_MS);
 
     return () => clearTimeout(timeout);
   }, [recentlyRedeemedRewardId]);
@@ -153,7 +382,7 @@ export default function RewardsScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Screen headline */}
-          <Animated.View entering={FadeInDown.duration(320)} className="mt-4">
+          <Animated.View entering={enterFade()} className="mt-4">
             <Text className="text-[32px] font-headline leading-10 text-foreground">
               Belohnungen
             </Text>
@@ -164,7 +393,7 @@ export default function RewardsScreen() {
 
           {/* Filter chips */}
           {sortedRewards.length > 1 ? (
-            <Animated.View entering={FadeInDown.delay(40).duration(320)} className="mt-3">
+            <Animated.View entering={enterStagger(1)} className="mt-3">
               <View
                 className="flex-row gap-1 rounded-full border p-1"
                 style={{
@@ -190,14 +419,7 @@ export default function RewardsScreen() {
                       className="min-h-11 items-center justify-center rounded-full py-2.5"
                       style={
                         isActive
-                          ? {
-                              backgroundColor: "#FFFFFF",
-                              shadowColor: "#9DB8D8",
-                              shadowOpacity: 0.18,
-                              shadowRadius: 8,
-                              shadowOffset: { width: 0, height: 3 },
-                              elevation: 2,
-                            }
+                          ? { backgroundColor: semanticColors.card, ...shadowPresets.shadowSubtle }
                           : undefined
                       }
                     >
@@ -206,7 +428,9 @@ export default function RewardsScreen() {
                         className={
                           isActive ? "text-sm font-body-semibold" : "text-sm font-body"
                         }
-                        style={{ color: isActive ? palette.accentText : "#8E99A6" }}
+                        style={{
+                          color: isActive ? palette.accentText : semanticColors.mutedForeground,
+                        }}
                       >
                         {filter.label}
                       </Text>
@@ -218,16 +442,13 @@ export default function RewardsScreen() {
           ) : null}
 
           {/* Hero: next reward */}
-          <Animated.View entering={FadeInDown.delay(55).duration(320)} className="mt-3">
+          <Animated.View entering={enterStagger(2)} className="mt-3">
             <Card
               className="overflow-hidden rounded-card px-5 py-5"
               style={{
                 backgroundColor: palette.heroSurface,
                 borderColor: palette.accentBorder,
-                shadowColor: "#9DB8D8",
-                shadowOpacity: 0.16,
-                shadowRadius: 18,
-                shadowOffset: { width: 0, height: 10 },
+                ...shadowPresets.shadowCard,
               }}
             >
               <View
@@ -284,7 +505,7 @@ export default function RewardsScreen() {
 
           {/* Rewards grid */}
           <Animated.View
-            entering={FadeInDown.delay(90).duration(320)}
+            entering={enterStagger(3)}
             className="mt-5 flex-row items-center justify-between gap-3"
           >
             <Text className="text-lg font-headline text-foreground">Belohnungen für dich</Text>
@@ -304,44 +525,59 @@ export default function RewardsScreen() {
 
           <View className="mt-3">
             {sortedRewards.length > 0 && filteredRewards.length === 0 ? (
-              <Card
-                className="items-center rounded-card px-5 py-6"
-                style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+              <Animated.View
+                key={`empty-${rewardFilter}`}
+                entering={enterStagger(0)}
+                exiting={exitFade()}
               >
-                <Text className="text-center text-base font-headline text-foreground">
-                  {rewardFilter === "verfuegbar"
-                    ? "Noch nichts freigeschaltet"
-                    : "Alles ist schon erreichbar"}
-                </Text>
-                <Text className="mt-1 text-center text-base font-body leading-6 text-muted-foreground">
-                  {rewardFilter === "verfuegbar"
-                    ? "Sammle weiter Sterne, dann öffnet sich hier deine erste Belohnung."
-                    : "Schau unter „Alle“ – du kannst dir alles aussuchen."}
-                </Text>
-                <PressableScale
-                  onPress={() => setRewardFilter("alle")}
-                  accessibilityRole="button"
-                  accessibilityLabel="Alle Belohnungen anzeigen"
-                  containerClassName="mt-3 self-center"
-                  className="min-h-11 rounded-full px-4 py-2"
-                  style={{ backgroundColor: palette.tabActiveBg }}
+                <Card
+                  className="items-center rounded-card px-5 py-6"
+                  style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
                 >
-                  <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>
-                    Alle anzeigen
+                  <Text className="text-center text-base font-headline text-foreground">
+                    {rewardFilter === "verfuegbar"
+                      ? "Noch nichts freigeschaltet"
+                      : "Alles ist schon erreichbar"}
                   </Text>
-                </PressableScale>
-              </Card>
+                  <Text className="mt-1 text-center text-base font-body leading-6 text-muted-foreground">
+                    {rewardFilter === "verfuegbar"
+                      ? "Sammle weiter Sterne, dann öffnet sich hier deine erste Belohnung."
+                      : "Schau unter „Alle“ – du kannst dir alles aussuchen."}
+                  </Text>
+                  <PressableScale
+                    onPress={() => setRewardFilter("alle")}
+                    accessibilityRole="button"
+                    accessibilityLabel="Alle Belohnungen anzeigen"
+                    containerClassName="mt-3 self-center"
+                    className="min-h-11 items-center justify-center rounded-full px-4 py-2"
+                    style={{ backgroundColor: palette.tabActiveBg }}
+                  >
+                    <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>
+                      Alle anzeigen
+                    </Text>
+                  </PressableScale>
+                </Card>
+              </Animated.View>
             ) : (
-              <RewardsOverview
-                rewards={filteredRewards}
-                childStars={childStars}
-                childTheme={selectedChild.theme}
-                onRedeem={handleRedeem}
-                recentlyRedeemedRewardId={recentlyRedeemedRewardId}
-              />
+              <Animated.View entering={enterFade()}>
+                <RewardsOverview
+                  rewards={filteredRewards}
+                  childStars={childStars}
+                  childTheme={selectedChild.theme}
+                  onRedeem={handleRedeem}
+                  recentlyRedeemedRewardId={recentlyRedeemedRewardId}
+                />
+              </Animated.View>
             )}
           </View>
         </ScrollView>
+
+        {celebration && !reduceMotion ? (
+          <React.Fragment key={celebration.runId}>
+            <RedeemCelebration cost={celebration.cost} />
+            <Confetti colors={palette.celebrationColors} />
+          </React.Fragment>
+        ) : null}
       </View>
     </ThemedScreenBackground>
   );

@@ -14,9 +14,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import Animated, {
   ReduceMotion,
+  cancelAnimation,
+  runOnJS,
   useSharedValue,
   useAnimatedStyle,
   useAnimatedProps,
+  withRepeat,
+  withSequence,
   withTiming,
   withSpring,
 } from "react-native-reanimated";
@@ -25,8 +29,9 @@ import { X, Check, Award, ThumbsUp, ThumbsDown, Sparkles, Star, CircleCheckBig }
 import { Button } from "@/components/ui/button";
 import { ParentGateChallenge } from "@/components/parent-gate-challenge";
 import { Confetti } from "./confetti";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { triggerFeedback } from "@/lib/feedback";
-import { durations, easings, sheetSpring, timings } from "@/lib/motion";
+import { durations, easings, modalSpring, springs, timings } from "@/lib/motion";
 import { getThemePalette } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { ChildTheme, Task } from "@/lib/types";
@@ -60,6 +65,33 @@ const MODAL_MUTED = "#606B80";
 const MODAL_BLUE = "#2F6FDC";
 const MODAL_LAVENDER_SOFT = "#F2EFFF";
 const MODAL_GOLD = "#F7B633";
+const MODAL_BACKDROP = "rgba(16, 24, 48, 0.42)";
+
+/** Card entrance scale — small enough to read as "arriving", not as a zoom. */
+const CARD_ENTER_SCALE = 0.86;
+/** Card exit scale — mirrors the entrance so open and close are one gesture. */
+const CARD_EXIT_SCALE = 0.92;
+
+/**
+ * Dismissal timing, composed from motion tokens. Ease-in-out so the card
+ * leaves with intent instead of drifting; ReduceMotion.System makes it resolve
+ * instantly (and still fire its completion callback) when the OS asks for it.
+ */
+const CARD_EXIT_TIMING = {
+  duration: durations.fast,
+  easing: easings.inOut,
+  reduceMotion: ReduceMotion.System,
+} as const;
+
+/** Last stretch of the countdown, where the ring is nearly closed. */
+const FINAL_COUNTDOWN_SECONDS = 10;
+const COUNTDOWN_PULSE_SCALE = 1.05;
+/** ~800ms per beat: urgent enough to notice, calm enough for a kids app. */
+const COUNTDOWN_PULSE_TIMING = {
+  duration: durations.slow,
+  easing: easings.inOut,
+  reduceMotion: ReduceMotion.System,
+} as const;
 
 /**
  * Wall-clock resync cadence. The interval never *counts* — it only re-reads
@@ -148,12 +180,24 @@ export function TaskTimerModal({
   const [isParentGateVisible, setIsParentGateVisible] = useState(false);
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const reduceMotion = useReducedMotion();
 
   const successTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const circleProgress = useSharedValue(0);
-  const contentScale = useSharedValue(0.8);
+  const contentScale = useSharedValue(CARD_ENTER_SCALE);
   const contentOpacity = useSharedValue(0);
+  const backdropOpacity = useSharedValue(0);
+  const countdownPulse = useSharedValue(1);
+
+  // The card outlives `task` by one exit animation so closing is a scale-down
+  // instead of the Modal ripping its children out of the tree mid-frame.
+  const [renderedTask, setRenderedTask] = useState<Task | null>(task);
+  if (task && task.id !== renderedTask?.id) {
+    // Adjusted during render, not in an effect: an effect would leave the modal
+    // blank for one commit before the incoming task reached the tree.
+    setRenderedTask(task);
+  }
 
   const taskId = task?.id ?? null;
   const totalSeconds = Math.max(0, Math.round((task?.timerInMinutes ?? 0) * 60));
@@ -196,9 +240,8 @@ export function TaskTimerModal({
     setIsParentGateVisible(false);
 
     if (!taskId || totalSeconds <= 0) {
+      // Leave the animated values alone — a pending exit animation owns them.
       setEndTimestamp(null);
-      contentScale.value = 0.8;
-      contentOpacity.value = 0;
       return;
     }
 
@@ -207,9 +250,34 @@ export function TaskTimerModal({
     setTimerState("running");
     setShowConfetti(false);
     circleProgress.value = 0;
-    contentScale.value = withSpring(1, sheetSpring);
-    contentOpacity.value = withTiming(1, timings.base);
-  }, [taskId, totalSeconds, circleProgress, contentOpacity, contentScale]);
+
+    // Explicit start values so a re-open right after a dismissal still gets the
+    // full entrance instead of springing from wherever the exit stopped.
+    backdropOpacity.value = 0;
+    contentOpacity.value = 0;
+    contentScale.value = CARD_ENTER_SCALE;
+
+    backdropOpacity.value = withTiming(1, timings.base);
+    contentOpacity.value = withTiming(1, timings.fast);
+    contentScale.value = withSpring(1, modalSpring);
+  }, [taskId, totalSeconds, backdropOpacity, circleProgress, contentOpacity, contentScale]);
+
+  // Dismissal: mirror the entrance, then drop the card from the tree. A re-open
+  // mid-exit cancels these animations, so the callback lands with
+  // `finished === false` and never unmounts a card that is coming back.
+  useEffect(() => {
+    if (task || !renderedTask) {
+      return;
+    }
+
+    backdropOpacity.value = withTiming(0, timings.fast);
+    contentOpacity.value = withTiming(0, timings.fast);
+    contentScale.value = withTiming(CARD_EXIT_SCALE, CARD_EXIT_TIMING, (finished) => {
+      if (finished) {
+        runOnJS(setRenderedTask)(null);
+      }
+    });
+  }, [backdropOpacity, contentOpacity, contentScale, renderedTask, task]);
 
   // The only source of truth is `endTimestamp - Date.now()`; the interval and
   // the foreground listener merely resync. Returning from background past zero
@@ -251,6 +319,35 @@ export function TaskTimerModal({
     };
   }, [circleProgress, endTimestamp, timerState, totalSeconds]);
 
+  // Decorative heartbeat for the closing seconds. Infinite loop, so it needs
+  // the explicit reduced-motion gate on top of the token's ReduceMotion.System.
+  const isFinalCountdown =
+    timerState === "running" &&
+    endTimestamp !== null &&
+    timeLeft > 0 &&
+    timeLeft <= FINAL_COUNTDOWN_SECONDS;
+
+  useEffect(() => {
+    if (!isFinalCountdown || reduceMotion) {
+      cancelAnimation(countdownPulse);
+      countdownPulse.value = withTiming(1, timings.fast);
+      return;
+    }
+
+    countdownPulse.value = withRepeat(
+      withSequence(
+        withTiming(COUNTDOWN_PULSE_SCALE, COUNTDOWN_PULSE_TIMING),
+        withTiming(1, COUNTDOWN_PULSE_TIMING)
+      ),
+      -1,
+      false
+    );
+
+    return () => {
+      cancelAnimation(countdownPulse);
+    };
+  }, [countdownPulse, isFinalCountdown, reduceMotion]);
+
   useEffect(
     () => () => {
       if (successTimeoutRef.current) {
@@ -270,6 +367,14 @@ export function TaskTimerModal({
     opacity: contentOpacity.value,
   }));
 
+  const backdropAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: backdropOpacity.value,
+  }));
+
+  const countdownAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: countdownPulse.value }],
+  }));
+
   const handleChildFinished = () => {
     setTimerState("confirming");
   };
@@ -284,7 +389,11 @@ export function TaskTimerModal({
       setTimerState("success");
       setShowConfetti(true);
       void triggerFeedback("stars_added");
-      contentScale.value = withSpring(1, sheetSpring);
+      // Small "yes!" pop as the card swaps to the success face.
+      contentScale.value = withSequence(
+        withSpring(1.03, springs.playful),
+        withSpring(1, springs.gentle)
+      );
 
       if (successTimeoutRef.current) {
         clearTimeout(successTimeoutRef.current);
@@ -319,12 +428,12 @@ export function TaskTimerModal({
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  if (!task) {
+  if (!renderedTask) {
     return null;
   }
 
-  const visibleBonusStars = Math.max(task.bonusStars ?? 0, 0);
-  const timerArtImage = getTimerArt(task);
+  const visibleBonusStars = Math.max(renderedTask.bonusStars ?? 0, 0);
+  const timerArtImage = getTimerArt(renderedTask);
   const cardBackgroundImage =
     timerState === "running"
       ? timerChallengeBackground
@@ -342,24 +451,33 @@ export function TaskTimerModal({
 
   return (
     <Modal
-      visible={!!task}
+      visible={!!renderedTask}
       transparent
-      animationType="fade"
+      animationType="none"
       onRequestClose={() => onClose(false)}
     >
       <View
         className="flex-1 px-4"
         style={{
-          backgroundColor: "rgba(16, 24, 48, 0.42)",
           paddingTop: modalPaddingTop,
           paddingBottom: modalPaddingBottom,
         }}
       >
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFillObject,
+            { backgroundColor: MODAL_BACKDROP },
+            backdropAnimatedStyle,
+          ]}
+        />
+
         {showConfetti && <Confetti colors={palette.celebrationColors} />}
 
         <View className="flex-1 items-center justify-center">
           <Animated.View
             className="w-full items-center self-center"
+            pointerEvents={task ? "auto" : "none"}
             style={[
               contentAnimatedStyle,
               {
@@ -424,7 +542,7 @@ export function TaskTimerModal({
                         minimumFontScale={0.68}
                         style={{ color: MODAL_NAVY }}
                       >
-                        {task.title}
+                        {renderedTask.title}
                       </Text>
                       <Text
                         className={cn(
@@ -495,21 +613,23 @@ export function TaskTimerModal({
                             transition={160}
                           />
                         </View>
-                        <Text
-                          className="font-body-bold"
-                          numberOfLines={1}
-                          adjustsFontSizeToFit
-                          minimumFontScale={0.72}
-                          maxFontSizeMultiplier={timerTextMaxFontMultiplier}
-                          style={{
-                            fontSize: timerTextFontSize,
-                            lineHeight: timerTextLineHeight,
-                            color: MODAL_NAVY,
-                            marginTop: -2,
-                          }}
-                        >
-                          {formatTime(timeLeft)}
-                        </Text>
+                        <Animated.View style={countdownAnimatedStyle}>
+                          <Text
+                            className="font-body-bold"
+                            numberOfLines={1}
+                            adjustsFontSizeToFit
+                            minimumFontScale={0.72}
+                            maxFontSizeMultiplier={timerTextMaxFontMultiplier}
+                            style={{
+                              fontSize: timerTextFontSize,
+                              lineHeight: timerTextLineHeight,
+                              color: MODAL_NAVY,
+                              marginTop: -2,
+                            }}
+                          >
+                            {formatTime(timeLeft)}
+                          </Text>
+                        </Animated.View>
                       </View>
                     </View>
 

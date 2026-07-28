@@ -1,10 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Pressable, View, Text, useWindowDimensions } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, {
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { Settings, Star, Flame, Trophy, Sparkles } from "@/lib/icons";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 import { Card } from "@/components/ui/card";
 import { AvatarImage } from "@/components/ui/avatar-image";
 import { SoftHeroWash } from "@/components/ui/soft-hero-wash";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { timings } from "@/lib/motion";
 import type { ThemePalette } from "@/lib/theme";
 import type { Child } from "@/lib/types";
 
@@ -30,8 +38,28 @@ export function ProfileHeroCard({
   onSettingsPress,
 }: ProfileHeroCardProps) {
   const { width } = useWindowDimensions();
+  const reduceMotion = useReducedMotion();
   const isCompactWidth = width < 380;
   const hasChildSwitcher = Boolean(allChildren && allChildren.length > 1 && onSelectChild);
+
+  // Honest XP: how far this child is toward the next reward.
+  const rewardCost = nextReward ? stars + nextReward.missingStars : 0;
+  const rewardProgress = nextReward
+    ? Math.min(1, Math.max(0, rewardCost > 0 ? stars / rewardCost : 0))
+    : 1;
+  const rewardPercent = Math.round(rewardProgress * 100);
+  const fill = useSharedValue(0);
+
+  useEffect(() => {
+    fill.value = reduceMotion ? rewardProgress : withTiming(rewardProgress, timings.slow);
+  }, [fill, reduceMotion, rewardProgress]);
+
+  // scaleX only — the fill is twice the track's width and hangs one track to the
+  // left, so its center sits exactly on the track's left edge and center-origin
+  // scaling reads as a left-anchored fill. No width/layout animation.
+  const fillStyle = useAnimatedStyle(() => ({
+    transform: [{ scaleX: fill.value }],
+  }));
 
   return (
     <Animated.View entering={FadeInDown.duration(320)}>
@@ -124,9 +152,13 @@ export function ProfileHeroCard({
                 <Star size={17} color="#FFD700" fill="#FFD700" />
                 <Text className="text-sm font-body-semibold text-muted-foreground">Sterne</Text>
               </View>
-              <Text className="mt-2 text-[34px] font-headline leading-[39px] text-foreground">
-                {stars}
-              </Text>
+              <View className="mt-2">
+                <AnimatedNumber
+                  value={stars}
+                  textClassName="text-[34px] font-headline leading-[39px] text-foreground"
+                  maxFontSizeMultiplier={1.3}
+                />
+              </View>
               <Text className="mt-1 text-base font-body leading-6 text-muted-foreground">
                 Verfügbar für Wünsche.
               </Text>
@@ -140,9 +172,13 @@ export function ProfileHeroCard({
                 <Flame size={17} color={palette.chartSecondary} />
                 <Text className="text-sm font-body-semibold text-muted-foreground">Serie</Text>
               </View>
-              <Text className="mt-2 text-[34px] font-headline leading-[39px] text-foreground">
-                {streak}
-              </Text>
+              <View className="mt-2">
+                <AnimatedNumber
+                  value={streak}
+                  textClassName="text-[34px] font-headline leading-[39px] text-foreground"
+                  maxFontSizeMultiplier={1.3}
+                />
+              </View>
               <Text className="mt-1 text-base font-body leading-6 text-muted-foreground">
                 Tage im Rhythmus.
               </Text>
@@ -193,6 +229,29 @@ export function ProfileHeroCard({
                     ? `${nextReward.missingStars} Sterne fehlen noch bis zur nächsten Belohnung.`
                     : "Gerade ist alles freigeschaltet und bereit."}
                 </Text>
+                <View
+                  className="mt-3 h-2.5 w-full overflow-hidden rounded-full"
+                  style={{ backgroundColor: palette.accentSoft }}
+                  accessible
+                  accessibilityRole="progressbar"
+                  accessibilityValue={{
+                    min: 0,
+                    max: 100,
+                    now: rewardPercent,
+                    text: nextReward
+                      ? `${rewardPercent} Prozent bis zur nächsten Belohnung`
+                      : "Alles freigeschaltet",
+                  }}
+                >
+                  <Animated.View
+                    pointerEvents="none"
+                    className="absolute bottom-0 top-0 rounded-full"
+                    style={[
+                      fillStyle,
+                      { left: "-100%", width: "200%", backgroundColor: palette.chartPrimary },
+                    ]}
+                  />
+                </View>
               </View>
             </View>
           </View>

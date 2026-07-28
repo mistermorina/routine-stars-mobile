@@ -6,11 +6,13 @@ import { Image } from "expo-image";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
+  cancelAnimation,
   withRepeat,
   withSequence,
   withTiming,
   withSpring,
-  Easing,
+  ReduceMotion,
+  type SharedValue,
 } from "react-native-reanimated";
 import { Sparkles, Star } from "@/lib/icons";
 import {
@@ -21,6 +23,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { durations, easings, enterStagger, modalSpring, timings } from "@/lib/motion";
 import { getThemePalette } from "@/lib/theme";
 import type { ChildTheme } from "@/lib/types";
 import routineCompleteBackground from "@/assets/images/task-success-bg.png";
@@ -43,7 +47,131 @@ const RING_PARTICLES = [
   { type: "pill", left: 0, top: 116, width: 18, rotate: "-26deg", color: "#A793F4" },
 ] as const;
 
-function CelebrationRing() {
+type RingParticleSpec = (typeof RING_PARTICLES)[number];
+
+/** One full orbit of the shared particle clock. Decorative loop — gated below. */
+const ORBIT_PERIOD_MS = 4200;
+/** Orbit radii: barely a nudge, just enough to make the ring feel alive. */
+const ORBIT_RADIUS_X = 4;
+const ORBIT_RADIUS_Y = 6;
+/** Sway added on top of each particle's resting rotation (degrees). */
+const ORBIT_WOBBLE_DEG = 7;
+
+/** Hero star: half-period of the pulse and the legs of the wobble. */
+const HERO_PULSE_MS = durations.slow;
+const HERO_WOBBLE_MS = durations.base;
+const HERO_WOBBLE_ACROSS_MS = durations.base * 2;
+
+function RingParticle({
+  particle,
+  index,
+  clock,
+  animate,
+}: {
+  particle: RingParticleSpec;
+  index: number;
+  clock: SharedValue<number>;
+  animate: boolean;
+}) {
+  // Every particle rides the same clock, offset by its own phase — one
+  // animation driving eight elements instead of eight competing timers.
+  const phase = index / RING_PARTICLES.length;
+  const baseRotateDeg = particle.type === "pill" ? parseFloat(particle.rotate) : 0;
+
+  const animatedStyle = useAnimatedStyle(() => {
+    if (!animate) {
+      return {
+        opacity: 1,
+        transform: [
+          { translateX: 0 },
+          { translateY: 0 },
+          { rotate: `${baseRotateDeg}deg` },
+          { scale: 1 },
+        ],
+      };
+    }
+
+    const angle = (clock.value + phase) * 2 * Math.PI;
+    const pulse = 0.5 + 0.5 * Math.sin(angle * 2);
+
+    return {
+      opacity: 0.72 + 0.28 * (0.5 + 0.5 * Math.sin(angle)),
+      transform: [
+        { translateX: Math.cos(angle) * ORBIT_RADIUS_X },
+        { translateY: Math.sin(angle) * ORBIT_RADIUS_Y },
+        { rotate: `${baseRotateDeg + Math.sin(angle) * ORBIT_WOBBLE_DEG}deg` },
+        { scale: 0.9 + 0.18 * pulse },
+      ],
+    };
+  });
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        { position: "absolute", left: particle.left, top: particle.top },
+        animatedStyle,
+      ]}
+    >
+      {particle.type === "star" ? (
+        <Star size={particle.size} color={particle.color} fill={particle.color} />
+      ) : particle.type === "sparkle" ? (
+        <Sparkles size={particle.size} color={particle.color} />
+      ) : particle.type === "dot" ? (
+        <View
+          style={{
+            width: particle.size,
+            height: particle.size,
+            borderRadius: particle.size / 2,
+            backgroundColor: particle.color,
+          }}
+        />
+      ) : (
+        <View
+          style={{
+            width: particle.width,
+            height: 7,
+            borderRadius: 999,
+            backgroundColor: particle.color,
+          }}
+        />
+      )}
+    </Animated.View>
+  );
+}
+
+/**
+ * Confetti ring around the hero. Purely decorative, so the orbit is dropped
+ * entirely under reduced motion and the particles render at their resting pose.
+ */
+function CelebrationRing({ active }: { active: boolean }) {
+  const reduceMotion = useReducedMotion();
+  const clock = useSharedValue(0);
+  const animate = active && !reduceMotion;
+
+  useEffect(() => {
+    if (!animate) {
+      cancelAnimation(clock);
+      clock.value = 0;
+      return;
+    }
+
+    clock.value = 0;
+    clock.value = withRepeat(
+      withTiming(1, {
+        duration: ORBIT_PERIOD_MS,
+        easing: easings.linear,
+        reduceMotion: ReduceMotion.System,
+      }),
+      -1,
+      false
+    );
+
+    return () => {
+      cancelAnimation(clock);
+    };
+  }, [animate, clock]);
+
   return (
     <View
       pointerEvents="none"
@@ -56,63 +184,15 @@ function CelebrationRing() {
         top: 0,
       }}
     >
-      {RING_PARTICLES.map((particle, index) => {
-        if (particle.type === "star") {
-          return (
-            <Star
-              key={index}
-              size={particle.size}
-              color={particle.color}
-              fill={particle.color}
-              style={{ position: "absolute", left: particle.left, top: particle.top }}
-            />
-          );
-        }
-
-        if (particle.type === "sparkle") {
-          return (
-            <Sparkles
-              key={index}
-              size={particle.size}
-              color={particle.color}
-              style={{ position: "absolute", left: particle.left, top: particle.top }}
-            />
-          );
-        }
-
-        if (particle.type === "dot") {
-          return (
-            <View
-              key={index}
-              style={{
-                position: "absolute",
-                left: particle.left,
-                top: particle.top,
-                width: particle.size,
-                height: particle.size,
-                borderRadius: particle.size / 2,
-                backgroundColor: particle.color,
-              }}
-            />
-          );
-        }
-
-        return (
-          <View
-            key={index}
-            style={{
-              position: "absolute",
-              left: particle.left,
-              top: particle.top,
-              width: particle.width,
-              height: 7,
-              borderRadius: 999,
-              backgroundColor: particle.color,
-              transform: [{ rotate: particle.rotate }],
-            }}
-          />
-        );
-      })}
+      {RING_PARTICLES.map((particle, index) => (
+        <RingParticle
+          key={index}
+          particle={particle}
+          index={index}
+          clock={clock}
+          animate={animate}
+        />
+      ))}
     </View>
   );
 }
@@ -124,6 +204,7 @@ export function RoutineCompleteDialog({
 }: RoutineCompleteDialogProps) {
   const router = useRouter();
   const palette = getThemePalette(childTheme);
+  const reduceMotion = useReducedMotion();
   const { height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const availableDialogHeight = Math.max(1, screenHeight - insets.top - insets.bottom - 32);
@@ -137,33 +218,58 @@ export function RoutineCompleteDialog({
   const cardOpacity = useSharedValue(0);
 
   useEffect(() => {
-    if (isOpen) {
-      cardLift.value = withSpring(0, { damping: 14, stiffness: 180 });
-      cardOpacity.value = withTiming(1, { duration: 220 });
-      starScale.value = withRepeat(
-        withSequence(
-          withTiming(1.3, { duration: 400, easing: Easing.out(Easing.quad) }),
-          withTiming(1, { duration: 400, easing: Easing.in(Easing.quad) })
-        ),
-        -1,
-        true
-      );
-      starRotate.value = withRepeat(
-        withSequence(
-          withTiming(15, { duration: 300 }),
-          withTiming(-15, { duration: 600 }),
-          withTiming(0, { duration: 300 })
-        ),
-        -1,
-        false
-      );
-    } else {
+    if (!isOpen) {
+      cancelAnimation(starScale);
+      cancelAnimation(starRotate);
       starScale.value = 1;
       starRotate.value = 0;
       cardLift.value = 12;
       cardOpacity.value = 0;
+      return;
     }
-  }, [cardLift, cardOpacity, isOpen, starRotate, starScale]);
+
+    cardLift.value = withSpring(0, modalSpring);
+    cardOpacity.value = withTiming(1, timings.base);
+
+    // The hero pulse is an infinite decorative loop — never start it when the
+    // system asks for reduced motion.
+    if (reduceMotion) {
+      starScale.value = 1;
+      starRotate.value = 0;
+      return;
+    }
+
+    starScale.value = withRepeat(
+      withSequence(
+        withTiming(1.3, {
+          duration: HERO_PULSE_MS,
+          easing: easings.out,
+          reduceMotion: ReduceMotion.System,
+        }),
+        withTiming(1, {
+          duration: HERO_PULSE_MS,
+          easing: easings.inOut,
+          reduceMotion: ReduceMotion.System,
+        })
+      ),
+      -1,
+      true
+    );
+    starRotate.value = withRepeat(
+      withSequence(
+        withTiming(15, { duration: HERO_WOBBLE_MS, reduceMotion: ReduceMotion.System }),
+        withTiming(-15, { duration: HERO_WOBBLE_ACROSS_MS, reduceMotion: ReduceMotion.System }),
+        withTiming(0, { duration: HERO_WOBBLE_MS, reduceMotion: ReduceMotion.System })
+      ),
+      -1,
+      false
+    );
+
+    return () => {
+      cancelAnimation(starScale);
+      cancelAnimation(starRotate);
+    };
+  }, [cardLift, cardOpacity, isOpen, reduceMotion, starRotate, starScale]);
 
   const starAnimatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -224,20 +330,27 @@ export function RoutineCompleteDialog({
               paddingBottom: 12,
             }}
           >
-            <View
-              className="mb-3 rounded-full px-3.5 py-2"
-              style={{ backgroundColor: "rgba(255,255,255,0.74)" }}
-            >
-              <Text
-                className="text-xs font-body-bold uppercase tracking-[1px]"
-                style={{ color: palette.accentText }}
+            {/* The dialog is a Modal, so it remounts on every open — the
+                staggered entrance replays each time the routine is finished. */}
+            <Animated.View entering={enterStagger(0)}>
+              <View
+                className="mb-3 rounded-full px-3.5 py-2"
+                style={{ backgroundColor: "rgba(255,255,255,0.74)" }}
               >
-                Routine komplett
-              </Text>
-            </View>
+                <Text
+                  className="text-xs font-body-bold uppercase tracking-[1px]"
+                  style={{ color: palette.accentText }}
+                >
+                  Routine komplett
+                </Text>
+              </View>
+            </Animated.View>
 
-            <View className="mb-2 h-[130px] w-full items-center justify-center">
-              <CelebrationRing />
+            <Animated.View
+              entering={enterStagger(1)}
+              className="mb-2 h-[130px] w-full items-center justify-center"
+            >
+              <CelebrationRing active={isOpen} />
               <Animated.View style={starAnimatedStyle}>
                 <Image
                   source={routineCompleteHero}
@@ -246,40 +359,45 @@ export function RoutineCompleteDialog({
                   transition={160}
                 />
               </Animated.View>
-            </View>
+            </Animated.View>
 
-            <DialogHeader className="items-center">
-              <DialogTitle className="text-center text-[38px] leading-[44px] text-[#071A49]">
-                Super!
-              </DialogTitle>
-              <DialogDescription className="mt-2 max-w-[270px] text-center text-[16px] leading-6">
-                Alle Aufgaben geschafft. Die Sterne sind gesichert.
-              </DialogDescription>
-            </DialogHeader>
-
+            <Animated.View entering={enterStagger(2)}>
+              <DialogHeader className="items-center">
+                <DialogTitle className="text-center text-[38px] leading-[44px] text-[#071A49]">
+                  Super!
+                </DialogTitle>
+                <DialogDescription className="mt-2 max-w-[270px] text-center text-[16px] leading-6">
+                  Alle Aufgaben geschafft. Die Sterne sind gesichert.
+                </DialogDescription>
+              </DialogHeader>
+            </Animated.View>
           </ScrollView>
 
           <View className="w-full gap-3 px-5 pb-5 pt-2">
-            <Button
-              onPress={handleViewRewards}
-              className="h-12 w-full rounded-[20px]"
-              style={{ backgroundColor: palette.button }}
-              textClassName="text-white"
-            >
-              <Text className="text-base font-body-semibold text-center text-white">
-                Belohnungen ansehen
-              </Text>
-            </Button>
-            <Button
-              variant="outline"
-              onPress={onClose}
-              className="h-12 w-full rounded-[20px]"
-              style={{ borderColor: palette.accent }}
-            >
-              <Text className="text-base font-body-semibold text-center" style={{ color: palette.accent }}>
-                Sterne sichern
-              </Text>
-            </Button>
+            <Animated.View entering={enterStagger(3)}>
+              <Button
+                onPress={handleViewRewards}
+                className="h-12 w-full rounded-[20px]"
+                style={{ backgroundColor: palette.button }}
+                textClassName="text-white"
+              >
+                <Text className="text-base font-body-semibold text-center text-white">
+                  Belohnungen ansehen
+                </Text>
+              </Button>
+            </Animated.View>
+            <Animated.View entering={enterStagger(4)}>
+              <Button
+                variant="outline"
+                onPress={onClose}
+                className="h-12 w-full rounded-[20px]"
+                style={{ borderColor: palette.accent }}
+              >
+                <Text className="text-base font-body-semibold text-center" style={{ color: palette.accent }}>
+                  Sterne sichern
+                </Text>
+              </Button>
+            </Animated.View>
           </View>
         </DialogContent>
       </Animated.View>

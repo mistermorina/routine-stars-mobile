@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Sparkles } from "@/lib/icons";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 import { useChildren } from "@/hooks/use-children";
 import { useRewards } from "@/hooks/use-rewards";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
@@ -196,9 +197,20 @@ export default function ProfileScreen() {
                       trackStyle={{ backgroundColor: "#EAF1F7" }}
                     />
                   </View>
-                  <Text className="shrink-0 text-xs font-body-semibold text-muted-foreground">
-                    {nextSticker.current} / {nextSticker.target}
-                  </Text>
+                  <View
+                    className="shrink-0 flex-row items-center gap-1"
+                    accessible
+                    accessibilityLabel={`${nextSticker.current} von ${nextSticker.target}`}
+                  >
+                    <AnimatedNumber
+                      value={nextSticker.current}
+                      textClassName="text-xs font-body-semibold text-muted-foreground"
+                      maxFontSizeMultiplier={1.3}
+                    />
+                    <Text className="text-xs font-body-semibold text-muted-foreground">
+                      / {nextSticker.target}
+                    </Text>
+                  </View>
                 </View>
               </Card>
             </Animated.View>
@@ -211,6 +223,7 @@ export default function ProfileScreen() {
               streak={insights.currentStreak}
               stickerCount={collectedEntries.length}
               palette={palette}
+              childId={selectedChildId}
             />
           </Animated.View>
 

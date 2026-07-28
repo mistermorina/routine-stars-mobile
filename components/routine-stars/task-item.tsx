@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, Text, Pressable } from "react-native";
 import Animated, {
   useSharedValue,
@@ -8,15 +8,29 @@ import Animated, {
   withSequence,
   withRepeat,
   runOnJS,
+  ReduceMotion,
   Easing,
 } from "react-native-reanimated";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { Star, Check, Play, getIcon } from "@/lib/icons";
-import { getThemePalette } from "@/lib/theme";
+import { getThemePalette, semanticColors } from "@/lib/theme";
+import { durations, easings, springs, timings } from "@/lib/motion";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { useStarFlightLauncher, type StarFlightLauncher } from "./star-flight";
 import type { ChildTheme, Task } from "@/lib/types";
 
 const SWIPE_THRESHOLD = -80;
+
+/** Travel of the local fallback star when no header target is available. */
+const LOCAL_STAR_LIFT = -80;
+const LOCAL_STAR_POP_MS = 200;
+const LOCAL_STAR_FADE_MS = durations.celebration - LOCAL_STAR_POP_MS;
+/**
+ * Releases the row if neither the overlay flight nor the local star ever
+ * reports back (detached view, cancelled animation) — a task must never stay
+ * permanently un-tappable.
+ */
+const SETTLE_WATCHDOG_MS = durations.celebration + 200;
 
 interface TaskItemProps {
   task: Task;
@@ -25,6 +39,15 @@ interface TaskItemProps {
   isSuggested?: boolean;
   onComplete: (bonusStars?: number) => void;
   onStartTimer: (task: Task) => void;
+  /**
+   * Hands the row's star to a screen-level overlay so it can fly into the
+   * header counter. Receives the window-space centre of this row's star badge
+   * and must return `true` when it took the flight; `false` (or no handler at
+   * all) makes the row play its own local star instead.
+   *
+   * Takes precedence over the `StarFlightLauncherProvider` context.
+   */
+  onStarFlight?: StarFlightLauncher;
 }
 
 export function TaskItem({
@@ -34,13 +57,22 @@ export function TaskItem({
   isSuggested = false,
   onComplete,
   onStartTimer,
+  onStarFlight,
 }: TaskItemProps) {
   const [isCompleted, setIsCompleted] = useState(task.completed);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [showLocalStar, setShowLocalStar] = useState(false);
   const reduceMotion = useReducedMotion();
   const palette = getThemePalette(childTheme);
+  const contextLauncher = useStarFlightLauncher();
+  const launchStarFlight = onStarFlight ?? contextLauncher;
 
-  // Star flight animation values
+  /** Measured at press time so the overlay knows where the star comes from. */
+  const starAnchorRef = useRef<View | null>(null);
+  const isMountedRef = useRef(true);
+  const watchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Local fallback star
   const starTranslateY = useSharedValue(0);
   const starOpacity = useSharedValue(0);
   const starScale = useSharedValue(1);
@@ -53,10 +85,21 @@ export function TaskItem({
   const translateX = useSharedValue(0);
 
   useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (watchdogRef.current) {
+        clearTimeout(watchdogRef.current);
+        watchdogRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     setIsCompleted(task.completed);
     if (task.completed) {
       setIsAnimating(false);
-      translateX.value = withTiming(0, { duration: 300 });
+      translateX.value = withTiming(0, timings.base);
     }
   }, [task.completed, translateX]);
 
@@ -77,8 +120,93 @@ export function TaskItem({
   }, [attentionScale, isAnimating, isCompleted, isSuggested, reduceMotion]);
 
   const finishAnimation = () => {
+    if (watchdogRef.current) {
+      clearTimeout(watchdogRef.current);
+      watchdogRef.current = null;
+    }
+    if (!isMountedRef.current) return;
     setIsCompleted(true);
     setIsAnimating(false);
+    setShowLocalStar(false);
+  };
+
+  /** No header pill to aim at: the star pops out of the row and fades. */
+  const runLocalStarFlight = () => {
+    if (!isMountedRef.current) return;
+
+    if (reduceMotion) {
+      finishAnimation();
+      return;
+    }
+
+    setShowLocalStar(true);
+    starOpacity.value = 1;
+    starScale.value = 1.4;
+    starTranslateY.value = 0;
+
+    starTranslateY.value = withTiming(LOCAL_STAR_LIFT, {
+      duration: durations.celebration,
+      easing: easings.out,
+      reduceMotion: ReduceMotion.System,
+    });
+
+    starScale.value = withSequence(
+      withTiming(1.6, { duration: LOCAL_STAR_POP_MS, reduceMotion: ReduceMotion.System }),
+      withSpring(0.5, springs.playful)
+    );
+
+    starOpacity.value = withSequence(
+      withTiming(1, { duration: LOCAL_STAR_POP_MS, reduceMotion: ReduceMotion.System }),
+      withTiming(
+        0,
+        {
+          duration: LOCAL_STAR_FADE_MS,
+          easing: easings.out,
+          reduceMotion: ReduceMotion.System,
+        },
+        () => {
+          runOnJS(finishAnimation)();
+        }
+      )
+    );
+  };
+
+  /**
+   * Measures this row's star badge and asks the screen overlay to fly it into
+   * the header counter. Falls back to the local star when the badge cannot be
+   * measured or the overlay has no target yet.
+   */
+  const startStarFlight = () => {
+    const anchor = starAnchorRef.current;
+
+    if (reduceMotion || !launchStarFlight || typeof anchor?.measureInWindow !== "function") {
+      runLocalStarFlight();
+      return;
+    }
+
+    anchor.measureInWindow((x, y, width, height) => {
+      const isMeasured =
+        [x, y, width, height].every((value) => Number.isFinite(value)) &&
+        width > 0 &&
+        height > 0;
+
+      const launched =
+        isMeasured &&
+        launchStarFlight({
+          x: x + width / 2,
+          y: y + height / 2,
+          color: routineColor,
+        });
+
+      if (launched) {
+        // The star now lives in the overlay — the row can flip to "done" at
+        // once, so the badge visibly leaves the row behind.
+        finishAnimation();
+        return;
+      }
+
+      runLocalStarFlight();
+    });
   };
 
   const handlePress = () => {
@@ -96,40 +224,23 @@ export function TaskItem({
       return;
     }
 
-    // Start star flight animation
     setIsAnimating(true);
-    starOpacity.value = 1;
-    starScale.value = 1.4;
-    starTranslateY.value = 0;
-
-    starTranslateY.value = withTiming(-80, {
-      duration: 700,
-      easing: Easing.out(Easing.cubic),
-    });
-
-    starScale.value = withSequence(
-      withTiming(1.6, { duration: 200 }),
-      withTiming(0.5, { duration: 500 })
-    );
-
-    starOpacity.value = withSequence(
-      withTiming(1, { duration: 200 }),
-      withTiming(0, { duration: 500 }, () => {
-        runOnJS(finishAnimation)();
-      })
-    );
-
+    // Before any measuring or animation work: the dashboard fires the haptic
+    // on the very first line of its handler, so the tap answers instantly.
     onComplete();
+
+    watchdogRef.current = setTimeout(finishAnimation, SETTLE_WATCHDOG_MS);
+    startStarFlight();
   };
 
   const handlePressIn = () => {
     if (!isCompleted && !isAnimating) {
-      rowScale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+      rowScale.value = withSpring(0.97, springs.press);
     }
   };
 
   const handlePressOut = () => {
-    rowScale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    rowScale.value = withSpring(1, springs.press);
   };
 
   // Swipe-left gesture
@@ -143,10 +254,11 @@ export function TaskItem({
     })
     .onEnd((event) => {
       if (event.translationX < SWIPE_THRESHOLD) {
+        // Same completion path as a tap, so the swipe launches the same flight.
         runOnJS(handlePress)();
-        translateX.value = withTiming(0, { duration: 180 });
+        translateX.value = withTiming(0, timings.fast);
       } else {
-        translateX.value = withSpring(0, { damping: 15, stiffness: 200 });
+        translateX.value = withSpring(0, springs.gentle);
       }
     })
     .enabled(!isCompleted && !isAnimating);
@@ -190,9 +302,12 @@ export function TaskItem({
 
   return (
     <View className="relative">
-      {/* Flying star animation */}
-      {isAnimating && !hasTimer && (
+      {/* Local fallback star (used when the header counter is not measurable) */}
+      {showLocalStar && !hasTimer && (
         <Animated.View
+          pointerEvents="none"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
           style={[
             {
               position: "absolute",
@@ -205,9 +320,9 @@ export function TaskItem({
         >
           <View
             className="rounded-full p-1.5"
-            style={{ backgroundColor: routineColor || "#FFD700" }}
+            style={{ backgroundColor: routineColor || semanticColors.gold }}
           >
-            <Star size={16} fill="#FFFFFF" color="#FFFFFF" />
+            <Star size={16} fill={semanticColors.card} color={semanticColors.card} />
           </View>
         </Animated.View>
       )}
@@ -302,7 +417,10 @@ export function TaskItem({
                   </Text>
                   <View className="mt-1 flex-row items-center gap-1.5">
                     <View className="flex-row items-center gap-1">
-                      <Star size={12} color="#F7A313" fill="#F7A313" />
+                      {/* Launch point of the star flight — measured on press. */}
+                      <View ref={starAnchorRef} collapsable={false}>
+                        <Star size={12} color="#F7A313" fill="#F7A313" />
+                      </View>
                       <Text className="text-sm font-body-semibold" style={{ color: "#B97E0B" }}>
                         +{task.stars}
                       </Text>

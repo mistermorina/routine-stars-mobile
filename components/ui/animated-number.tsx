@@ -1,5 +1,11 @@
 import React, { useEffect, useRef } from "react";
-import { TextInput, View, type TextInputProps } from "react-native";
+import {
+  TextInput,
+  View,
+  type StyleProp,
+  type TextInputProps,
+  type TextStyle,
+} from "react-native";
 import { cssInterop } from "nativewind";
 import Animated, {
   ReduceMotion,
@@ -33,6 +39,8 @@ export interface AnimatedNumberProps {
   maxFontSizeMultiplier?: number;
   /** Count duration; defaults to durations.slow (400ms). */
   durationMs?: number;
+  /** Escape hatch for dynamic colors (theme palettes) that no static class covers. */
+  textStyle?: StyleProp<TextStyle>;
 }
 
 /**
@@ -54,6 +62,7 @@ export function AnimatedNumber({
   textClassName,
   maxFontSizeMultiplier = 1.4,
   durationMs = durations.slow,
+  textStyle,
 }: AnimatedNumberProps) {
   const reduceMotion = useReducedMotion();
   const target = Math.round(value);
@@ -100,7 +109,7 @@ export function AnimatedNumber({
         maxFontSizeMultiplier={maxFontSizeMultiplier}
         importantForAccessibility="no-hide-descendants"
         className={cn("font-body-bold text-base text-foreground", textClassName)}
-        style={{ padding: 0, margin: 0, includeFontPadding: false }}
+        style={[{ padding: 0, margin: 0, includeFontPadding: false }, textStyle]}
       />
     </View>
   );
