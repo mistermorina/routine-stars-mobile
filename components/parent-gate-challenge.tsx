@@ -13,7 +13,9 @@ import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { triggerFeedback } from "@/lib/feedback";
 import { Lock } from "@/lib/icons";
 import { modalSpring, springs } from "@/lib/motion";
-import { semanticColors, shadowPresets } from "@/lib/theme";
+import { useDesignMode } from "@/contexts/design-mode-context";
+import { getAccentTokens } from "@/lib/design-mode";
+import { getThemePalette, semanticColors, shadowPresets } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 const MAX_ATTEMPTS = 3;
@@ -129,6 +131,8 @@ export function ParentGateChallenge({
   title = "Nur für Erwachsene",
 }: ParentGateChallengeProps) {
   const reduceMotion = useReducedMotion();
+  const { designMode } = useDesignMode();
+  const accents = getAccentTokens(designMode, getThemePalette(null));
   const inputRef = useRef<TextInput>(null);
 
   const [challenge, setChallenge] = useState<Challenge>(() => createChallenge());
@@ -235,11 +239,12 @@ export function ParentGateChallenge({
         <DialogContent className="rounded-card p-6" style={shadowPresets.shadowFloating}>
           <View className="items-center">
             <View
-              className="mb-4 h-14 w-14 items-center justify-center rounded-full bg-primary/40"
+              className="mb-4 h-14 w-14 items-center justify-center rounded-full"
+              style={{ backgroundColor: accents.pillFill }}
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants"
             >
-              <Lock size={24} color={semanticColors.foreground} />
+              <Lock size={24} color={accents.iconColor} />
             </View>
 
             <View accessible accessibilityRole="header" accessibilityLabel={title}>

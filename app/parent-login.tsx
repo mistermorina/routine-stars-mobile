@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
+import { useDesignMode } from "@/contexts/design-mode-context";
+import { getAccentTokens } from "@/lib/design-mode";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Animated, {
   useAnimatedStyle,
@@ -26,7 +29,7 @@ import {
   verifyParentPin,
   type ParentPinLockState,
 } from "@/lib/parent-access";
-import { semanticColors } from "@/lib/theme";
+import { getThemePalette, semanticColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 /**
@@ -74,6 +77,8 @@ function attemptsHint(attemptsRemaining: number): string {
 }
 
 export default function ParentLoginScreen() {
+  const { designMode } = useDesignMode();
+  const accents = getAccentTokens(designMode, getThemePalette(null));
   const router = useRouter();
   const auth = useAuth();
   const { toast } = useToast();
@@ -354,14 +359,16 @@ export default function ParentLoginScreen() {
   const isSubmitDisabled = pin.length !== PARENT_PIN_LENGTH || !isInputEnabled;
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <ThemedScreenBackground>
+      <SafeAreaView className="flex-1">
       <View className="flex-1 items-center justify-center p-6">
         <View
-          className="mb-6 h-20 w-20 items-center justify-center rounded-full bg-primary/30"
+          className="mb-6 h-20 w-20 items-center justify-center rounded-full"
+          style={{ backgroundColor: accents.pillFill }}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
         >
-          <Lock size={36} color={semanticColors.foreground} />
+          <Lock size={36} color={accents.iconColor} />
         </View>
 
         <View accessible accessibilityRole="header">
@@ -396,7 +403,7 @@ export default function ParentLoginScreen() {
                 errorMessage ? "border-destructive" : "border-input",
                 !isInputEnabled && "opacity-60"
               )}
-              selectionColor={semanticColors.gold}
+              selectionColor={accents.accent}
               placeholderTextColor={semanticColors.mutedForeground}
               placeholder="----"
             />
@@ -410,10 +417,8 @@ export default function ParentLoginScreen() {
             {PIN_SLOTS.map((slot) => (
               <View
                 key={slot}
-                className={cn(
-                  "h-3 w-3 rounded-full",
-                  slot < pin.length ? "bg-primary" : "bg-border"
-                )}
+                className={cn("h-3 w-3 rounded-full", slot < pin.length ? "" : "bg-border")}
+                style={slot < pin.length ? { backgroundColor: accents.accent } : undefined}
               />
             ))}
           </View>
@@ -475,6 +480,7 @@ export default function ParentLoginScreen() {
         onSuccess={handleGateSuccess}
         onCancel={dismiss}
       />
-    </SafeAreaView>
+      </SafeAreaView>
+    </ThemedScreenBackground>
   );
 }

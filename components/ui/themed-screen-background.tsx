@@ -16,6 +16,7 @@ import { getBackgroundSkinOption } from "@/lib/background-skins";
 import { getThemePalette } from "@/lib/theme";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useDesignMode } from "@/contexts/design-mode-context";
+import { getScreenGradient } from "@/lib/design-mode";
 import type { BackgroundSkinId, ChildTheme } from "@/lib/types";
 
 interface FloatingShapeProps {
@@ -95,6 +96,7 @@ export function ThemedScreenBackground({
   const palette = getThemePalette(theme);
   const { designMode } = useDesignMode();
   const isGlass = designMode === "glass";
+  const screenGradient = getScreenGradient(designMode, palette);
   const skin = getBackgroundSkinOption(backgroundSkin);
   const hasSkin = skin.id !== "none" && Boolean(skin.image);
 
@@ -191,7 +193,7 @@ export function ThemedScreenBackground({
         // Frosted panes need something to refract; a flat fill gives them
         // nothing, so glass mode replaces the tinted blobs with a real ramp.
         <LinearGradient
-          colors={palette.screenGradient}
+          colors={screenGradient.colors}
           start={{ x: 0.1, y: 0 }}
           end={{ x: 0.9, y: 1 }}
           pointerEvents="none"
@@ -238,7 +240,7 @@ export function ThemedScreenBackground({
             ]}
           />
         </>
-      ) : (
+      ) : isGlass ? null : (
         renderMotif()
       )}
       <View className="flex-1">{children}</View>

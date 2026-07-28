@@ -58,8 +58,8 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       {/* Outside the boundary so the fallback screen keeps dark status bar icons. */}
       <StatusBar style="dark" />
-      <ErrorBoundary>
-        <DesignModeProvider>
+      <DesignModeProvider>
+        <ErrorBoundary>
           <AuthProvider>
             <ChildrenProvider>
               <StarFlightTargetProvider>
@@ -87,8 +87,8 @@ export default function RootLayout() {
               </StarFlightTargetProvider>
             </ChildrenProvider>
           </AuthProvider>
-        </DesignModeProvider>
-      </ErrorBoundary>
+        </ErrorBoundary>
+      </DesignModeProvider>
     </GestureHandlerRootView>
   );
 }

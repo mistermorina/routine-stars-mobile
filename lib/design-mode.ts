@@ -202,8 +202,17 @@ export function getScreenGradient(
   mode: DesignMode,
   palette: ThemePalette
 ): { colors: [string, string, string]; enabled: boolean } {
+  // The shipped ramp ends warm (cream), which reads as a stain under cool
+  // frosted panels. Glass keeps the theme's own opening colours and closes on
+  // a cool tint instead, so each theme stays recognisable.
   return {
-    colors: palette.screenGradient,
+    colors:
+      mode === "glass"
+        ? [palette.screenGradient[0], palette.screenGradient[1], GLASS_GRADIENT_END]
+        : palette.screenGradient,
     enabled: mode === "glass",
   };
 }
+
+/** Pale azure — the same family as the accent, at backdrop strength. */
+const GLASS_GRADIENT_END = "#DCEBF7";

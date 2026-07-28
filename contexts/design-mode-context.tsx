@@ -47,12 +47,20 @@ export function DesignModeProvider({ children }: { children: React.ReactNode }) 
   return <DesignModeContext.Provider value={value}>{children}</DesignModeContext.Provider>;
 }
 
+/** Used when no provider is mounted — see useDesignMode. */
+const FALLBACK: DesignModeContextValue = {
+  designMode: DEFAULT_DESIGN_MODE,
+  setDesignMode: async () => {},
+  isLoading: false,
+};
+
+/**
+ * Falls back to the shipped look instead of throwing when no provider is
+ * above it. This hook reaches into shared primitives (Button, Card), which
+ * also render in places that sit outside the tree — the error boundary's own
+ * fallback, most importantly. A purely cosmetic setting must never be the
+ * reason a screen cannot render.
+ */
 export function useDesignMode(): DesignModeContextValue {
-  const context = useContext(DesignModeContext);
-
-  if (!context) {
-    throw new Error("useDesignMode must be used within a DesignModeProvider");
-  }
-
-  return context;
+  return useContext(DesignModeContext) ?? FALLBACK;
 }
