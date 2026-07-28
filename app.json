@@ -34,7 +34,9 @@
           "photosPermission": "Routine Stars benötigt Zugriff auf deine Fotomediathek, damit du ein eigenes Profilbild auswählen kannst."
         }
       ],
-      "expo-audio"
+      "expo-audio",
+      "expo-secure-store",
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true

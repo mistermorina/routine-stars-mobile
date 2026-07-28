@@ -11,8 +11,7 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { Star, Check, Play } from "lucide-react-native";
-import { getIcon } from "@/lib/icons";
+import { Star, Check, Play, getIcon } from "@/lib/icons";
 import { getThemePalette } from "@/lib/theme";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import type { ChildTheme, Task } from "@/lib/types";

@@ -16,7 +16,7 @@ import {
   Sparkles,
   Vibrate,
   Volume2,
-} from "lucide-react-native";
+} from "@/lib/icons";
 import { storage } from "@/lib/storage";
 import { isHapticsGloballyEnabled } from "@/lib/feedback";
 import {

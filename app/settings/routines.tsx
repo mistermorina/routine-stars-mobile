@@ -1,14 +1,5 @@
 import React, { useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
-import {
-  Check,
-  ChevronDown,
-  GripVertical,
-  Minus,
-  Plus,
-  Sparkles,
-  Trash2,
-} from "lucide-react-native";
 import DraggableFlatList, {
   RenderItemParams,
   ScaleDecorator,
@@ -24,7 +15,16 @@ import { useChildren } from "@/hooks/use-children";
 import { useToast } from "@/hooks/use-toast";
 import { useRoutines } from "@/hooks/use-routines";
 import { getDefaultRoutineColor } from "@/lib/default-values";
-import { getIcon } from "@/lib/icons";
+import {
+  Check,
+  ChevronDown,
+  GripVertical,
+  Minus,
+  Plus,
+  Sparkles,
+  Trash2,
+  getIcon,
+} from "@/lib/icons";
 import { getThemePalette } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { Routine, RoutineTemplate, Task } from "@/lib/types";

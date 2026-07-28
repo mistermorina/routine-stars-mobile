@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ArrowLeft, Award } from "lucide-react-native";
+import { ArrowLeft, Award } from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
 import { useStickerWall } from "@/hooks/use-sticker-wall";
 import { StickerWall } from "@/components/stickers/sticker-wall";

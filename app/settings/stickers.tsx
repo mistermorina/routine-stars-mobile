@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { CalendarDays, CheckCircle2, ShieldCheck, Sparkles } from "lucide-react-native";
+import { CalendarDays, CheckCircle2, ShieldCheck, Sparkles } from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
 import { useStickerWall } from "@/hooks/use-sticker-wall";
 import { Card } from "@/components/ui/card";

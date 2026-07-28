@@ -1,6 +1,6 @@
 import React from "react";
 import { Text, useWindowDimensions, View } from "react-native";
-import { Flame, Lock, Sparkles, Star } from "lucide-react-native";
+import { Flame, Lock, Sparkles, Star } from "@/lib/icons";
 
 import type { ThemePalette } from "@/lib/theme";
 

@@ -1,7 +1,7 @@
 import React from "react";
 import { Pressable, View, Text, useWindowDimensions } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { Settings, Star, Flame, Trophy, Sparkles } from "lucide-react-native";
+import { Settings, Star, Flame, Trophy, Sparkles } from "@/lib/icons";
 import { Card } from "@/components/ui/card";
 import { AvatarImage } from "@/components/ui/avatar-image";
 import { SoftHeroWash } from "@/components/ui/soft-hero-wash";

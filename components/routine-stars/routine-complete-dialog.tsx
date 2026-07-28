@@ -12,7 +12,7 @@ import Animated, {
   withSpring,
   Easing,
 } from "react-native-reanimated";
-import { Sparkles, Star } from "lucide-react-native";
+import { Sparkles, Star } from "@/lib/icons";
 import {
   Dialog,
   DialogContent,

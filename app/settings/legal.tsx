@@ -8,7 +8,7 @@ import {
   MessageCircle,
   Scale,
   Shield,
-} from "lucide-react-native";
+} from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

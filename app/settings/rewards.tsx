@@ -1,12 +1,5 @@
 import React, { useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
-import {
-  Gift,
-  Minus,
-  Plus,
-  Sparkles,
-  Trash2,
-} from "lucide-react-native";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { IconPicker } from "@/components/ui/icon-picker";
@@ -16,7 +9,7 @@ import { ToastOverlay } from "@/components/ui/toast";
 import { RewardBrowser } from "@/components/rewards/reward-browser";
 import { useToast } from "@/hooks/use-toast";
 import { useRewards } from "@/hooks/use-rewards";
-import { getIcon } from "@/lib/icons";
+import { Gift, Minus, Plus, Sparkles, Trash2, getIcon } from "@/lib/icons";
 import { rewardSuggestions } from "@/lib/reward-suggestions";
 import { getThemePalette } from "@/lib/theme";
 import type { Reward, RewardSuggestion } from "@/lib/types";

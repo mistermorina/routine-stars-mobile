@@ -7,7 +7,7 @@ import Animated, {
   withDelay,
   Easing,
 } from "react-native-reanimated";
-import { Star } from "lucide-react-native";
+import { Star } from "@/lib/icons";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 const NUM_STARS = 40;

@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
-import { GripVertical, Plus, Trash2, Check, ChevronDown, Sparkles, Star } from "lucide-react-native";
+import { GripVertical, Plus, Trash2, Check, ChevronDown, Sparkles, Star } from "@/lib/icons";
 import DraggableFlatList, {
   ScaleDecorator,
   RenderItemParams,

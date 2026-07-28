@@ -1,3 +1,5 @@
+import type { ViewStyle } from "react-native";
+
 import type { ChildTheme } from "@/lib/types";
 
 export interface ThemePalette {
@@ -108,3 +110,89 @@ export function normalizeChildTheme(theme?: string | null): ChildTheme {
 export function getThemePalette(theme?: string | null): ThemePalette {
   return themePalettes[normalizeChildTheme(theme)];
 }
+
+/* ------------------------------------------------------------------ *
+ * Semantic colors — theme-independent brand + status tokens.
+ * Mirrors tailwind.config.ts. Use these whenever a raw color value is
+ * unavoidable (SVG props, icon `color`, animated styles). Child-specific
+ * colors still come from getThemePalette().
+ * Contrast (WCAG, measured):
+ *   successForeground #1F8A4C  → 4.38:1 on white, 4.15:1 on successSoft
+ *     ⇒ only for ≥18px or ≥14px-bold text; small text uses successStrong.
+ *   successStrong     #18773F  → 5.60:1 on white, 5.32:1 on successSoft.
+ *   warningForeground #92400E  → 7.09:1 on white, 6.37:1 on warningSoft.
+ *   destructiveStrong #8A1F1F  → for destructive text on light surfaces.
+ * `success`/`warning`/`gold` DEFAULTs are fills/indicators, never text.
+ * ------------------------------------------------------------------ */
+export const semanticColors = {
+  background: "#F8E9D7",
+  foreground: "#1a1a2e",
+  card: "#FFFFFF",
+  cardForeground: "#1a1a2e",
+  muted: "#F5F5F5",
+  mutedForeground: "#737373",
+  border: "#E5E5E5",
+  primary: "#F3E5AB",
+  primaryForeground: "#1a1a2e",
+  accent: "#245A74",
+  accentForeground: "#FFFFFF",
+  gold: "#FFD700",
+  goldDeep: "#F7A313",
+  goldText: "#B97E0B",
+  success: "#4FD17A",
+  successSoft: "#ECFDF5",
+  successForeground: "#1F8A4C",
+  successStrong: "#18773F",
+  warning: "#F7A313",
+  warningSoft: "#FEF3C7",
+  warningForeground: "#92400E",
+  destructive: "#EF4444",
+  destructiveSoft: "#FDECEC",
+  destructiveForeground: "#FFFFFF",
+  destructiveStrong: "#8A1F1F",
+} as const;
+
+export type SemanticColorToken = keyof typeof semanticColors;
+
+/**
+ * Brand shadow colors. `ambient` is the soft blue haze used by every card,
+ * `deep` is the navy used by floating surfaces (dialogs/sheets).
+ */
+export const shadowColors = {
+  ambient: "#9DB8D8",
+  deep: "#2E3A68",
+} as const;
+
+/**
+ * The ONLY sanctioned elevation recipes. Soft, wide, low opacity (≤ 0.08)
+ * per docs/ai/DESIGN_DIRECTION.md — no `shadow-lg`/`shadow-md` utilities,
+ * no ad-hoc shadow objects. Spread into a `style` prop.
+ *   shadowSubtle   → chips, pills, segmented controls, inline tiles
+ *   shadowCard     → list rows, hero cards, reward cards, summary cards
+ *   shadowFloating → modals, bottom sheets, toasts, FAB-like overlays
+ */
+export const shadowPresets = {
+  shadowSubtle: {
+    shadowColor: shadowColors.ambient,
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 1,
+  },
+  shadowCard: {
+    shadowColor: shadowColors.ambient,
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3,
+  },
+  shadowFloating: {
+    shadowColor: shadowColors.deep,
+    shadowOpacity: 0.08,
+    shadowRadius: 28,
+    shadowOffset: { width: 0, height: 14 },
+    elevation: 10,
+  },
+} satisfies Record<string, ViewStyle>;
+
+export type ShadowPresetName = keyof typeof shadowPresets;

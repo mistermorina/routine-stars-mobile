@@ -1,7 +1,7 @@
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
-import { Check, Palette, Sparkles } from "lucide-react-native";
+import { Check, Palette, Sparkles } from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
 import { AvatarImage } from "@/components/ui/avatar-image";
 import { Card } from "@/components/ui/card";

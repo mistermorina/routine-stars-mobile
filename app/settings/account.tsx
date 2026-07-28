@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
-import { Lock, Shield, Smartphone, Sparkles } from "lucide-react-native";
+import { Lock, Shield, Smartphone, Sparkles } from "@/lib/icons";
 import { useAuth } from "@/hooks/use-auth";
 import { useChildren } from "@/hooks/use-children";
 import { useToast } from "@/hooks/use-toast";

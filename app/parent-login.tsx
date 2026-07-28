@@ -7,7 +7,7 @@ import {
   withSequence,
   withSpring,
 } from "react-native-reanimated";
-import { Lock } from "lucide-react-native";
+import { Lock } from "@/lib/icons";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";

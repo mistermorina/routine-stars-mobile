@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView } from "react-native";
-import { Bell, BellOff, Clock, Gift } from "lucide-react-native";
+import { Bell, BellOff, Clock, Gift } from "@/lib/icons";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";

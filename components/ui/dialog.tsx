@@ -10,7 +10,7 @@ import {
   type ViewStyle,
 } from "react-native";
 import { cn } from "@/lib/utils";
-import { X } from "lucide-react-native";
+import { X } from "@/lib/icons";
 
 interface DialogProps {
   visible: boolean;

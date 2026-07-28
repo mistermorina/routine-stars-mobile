@@ -1,6 +1,6 @@
 import React from "react";
 import { Tabs } from "expo-router";
-import { Home, Trophy, Star } from "lucide-react-native";
+import { Home, Trophy, Star } from "@/lib/icons";
 import { AppTabBar } from "@/components/routine-stars/tab-bar";
 
 export default function TabsLayout() {

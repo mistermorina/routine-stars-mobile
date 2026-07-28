@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
-import { Gift, Star, X } from "lucide-react-native";
-import { getIcon } from "@/lib/icons";
+import { Gift, Star, X, getIcon } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import {
   Card,

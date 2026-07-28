@@ -3,7 +3,7 @@ import { View, Text, ScrollView, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { Sparkles } from "lucide-react-native";
+import { Sparkles } from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
 import { useRewards } from "@/hooks/use-rewards";
 import { useActivityLogs } from "@/hooks/use-activity-logs";

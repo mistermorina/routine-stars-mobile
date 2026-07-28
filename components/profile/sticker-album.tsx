@@ -12,7 +12,7 @@ import {
   Star,
   Target,
   Trophy,
-} from "lucide-react-native";
+} from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";

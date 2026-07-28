@@ -7,8 +7,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { ChevronRight, Plus, Check, Star } from "lucide-react-native";
-import { getIcon } from "@/lib/icons";
+import { ChevronRight, Plus, Check, Star, getIcon } from "@/lib/icons";
 import { getThemePalette } from "@/lib/theme";
 import type { ChildTheme, RewardSuggestion, RewardCategoryInfo } from "@/lib/types";
 import { cn } from "@/lib/utils";

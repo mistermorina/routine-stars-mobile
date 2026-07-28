@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { CheckCircle2, Sparkles, Star, Trophy } from "lucide-react-native";
+import { CheckCircle2, Sparkles, Star, Trophy } from "@/lib/icons";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { MissionProgress } from "@/lib/child-progression";

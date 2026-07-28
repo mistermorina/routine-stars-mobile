@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Alert, View, Text, Pressable, ScrollView } from "react-native";
 import { Image } from "expo-image";
-import { ImagePlus, Star, PawPrint, Rocket, Trash2 } from "lucide-react-native";
+import { ImagePlus, Star, PawPrint, Rocket, Trash2 } from "@/lib/icons";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";

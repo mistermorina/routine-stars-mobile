@@ -2,7 +2,7 @@ import React from "react";
 import { Pressable, Text, useWindowDimensions, View } from "react-native";
 import { Image } from "expo-image";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { ChevronRight, Sparkles } from "lucide-react-native";
+import { ChevronRight, Sparkles } from "@/lib/icons";
 import { Card } from "@/components/ui/card";
 import {
   STICKER_CATALOG,

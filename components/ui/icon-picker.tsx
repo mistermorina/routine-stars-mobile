@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { View, Text, Pressable, Modal, ScrollView, TextInput, useWindowDimensions } from "react-native";
-import { X } from "lucide-react-native";
-import { getIcon } from "@/lib/icons";
+import { X, getIcon } from "@/lib/icons";
 import { iconEntries, iconCategories } from "@/lib/icon-registry";
 import type { IconCategory } from "@/lib/types";
 import { cn } from "@/lib/utils";

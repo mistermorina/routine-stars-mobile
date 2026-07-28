@@ -7,7 +7,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from "react-native-reanimated";
-import { ChevronDown, ChevronUp, Star, Settings } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Star, Settings } from "@/lib/icons";
 import { AvatarImage } from "@/components/ui/avatar-image";
 import { cn } from "@/lib/utils";
 import { getThemePalette } from "@/lib/theme";

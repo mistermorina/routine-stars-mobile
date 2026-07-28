@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, ScrollView } from "react-native";
-import { Check, Crown, Star, Sparkles } from "lucide-react-native";
+import { Check, Crown, Star, Sparkles } from "@/lib/icons";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";

@@ -9,7 +9,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
-import { PawPrint, Sparkles, Star } from "lucide-react-native";
+import { PawPrint, Sparkles, Star } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { getBackgroundSkinOption } from "@/lib/background-skins";
 import { getThemePalette } from "@/lib/theme";

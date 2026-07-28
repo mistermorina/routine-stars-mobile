@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text } from "react-native";
 import { Image } from "expo-image";
-import { Star } from "lucide-react-native";
+import { Star } from "@/lib/icons";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { TaskItem } from "./task-item";

@@ -13,7 +13,7 @@ import {
   Shield,
   Sparkles,
   Star,
-} from "lucide-react-native";
+} from "@/lib/icons";
 import Animated, {
   FadeIn,
   FadeInDown,

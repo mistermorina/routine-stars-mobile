@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
-import { CalendarDays, ChevronLeft, ChevronRight, Sparkles } from "lucide-react-native";
+import { CalendarDays, ChevronLeft, ChevronRight, Sparkles } from "@/lib/icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useChildren } from "@/hooks/use-children";
 import { useActivityLogs } from "@/hooks/use-activity-logs";

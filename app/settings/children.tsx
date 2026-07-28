@@ -15,17 +15,6 @@ import Animated, {
   FadeOutUp,
   Layout,
 } from "react-native-reanimated";
-import {
-  ChevronRight,
-  Plus,
-  Trash2,
-  Check,
-  X,
-  Sparkles,
-  Star,
-  Palette,
-  ImagePlus,
-} from "lucide-react-native";
 import { useChildren } from "@/hooks/use-children";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
@@ -43,7 +32,18 @@ import {
 import { pickAvatarPhotoAsync } from "@/lib/avatar-photo-picker";
 import { useRoutines } from "@/hooks/use-routines";
 import { useRewards } from "@/hooks/use-rewards";
-import { getIcon } from "@/lib/icons";
+import {
+  ChevronRight,
+  Plus,
+  Trash2,
+  Check,
+  X,
+  Sparkles,
+  Star,
+  Palette,
+  ImagePlus,
+  getIcon,
+} from "@/lib/icons";
 import { getThemePalette } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { AgeGroup, AvatarValue, Child, ChildTheme } from "@/lib/types";

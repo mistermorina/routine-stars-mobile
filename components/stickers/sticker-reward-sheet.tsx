@@ -2,7 +2,7 @@ import React from "react";
 import { Modal, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
-import { X } from "lucide-react-native";
+import { X } from "@/lib/icons";
 import { PressableScale } from "@/components/ui/pressable-scale";
 import {
   getStickerRarityLabel,

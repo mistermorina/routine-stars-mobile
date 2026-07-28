@@ -20,16 +20,7 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
-import {
-  X,
-  Check,
-  Award,
-  ThumbsUp,
-  ThumbsDown,
-  Sparkles,
-  Star,
-  CircleCheckBig,
-} from "lucide-react-native";
+import { X, Check, Award, ThumbsUp, ThumbsDown, Sparkles, Star, CircleCheckBig } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Confetti } from "./confetti";
 import { triggerFeedback } from "@/lib/feedback";

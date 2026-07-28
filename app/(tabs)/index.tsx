@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { ArrowRight, Flame, Plus, Sparkles, Star, Trophy } from "lucide-react-native";
+import { ArrowRight, Flame, Plus, Sparkles, Star, Trophy } from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
 import { useChildProgression } from "@/hooks/use-child-progression";
 import { useActivityLogs } from "@/hooks/use-activity-logs";

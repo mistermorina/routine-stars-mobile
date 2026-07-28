@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
-import { BarChart3, Sparkles, Star } from "lucide-react-native";
+import { BarChart3, Sparkles, Star } from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
 import { Card } from "@/components/ui/card";

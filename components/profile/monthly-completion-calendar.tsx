@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { Star } from "lucide-react-native";
+import { Star } from "@/lib/icons";
 import { Card } from "@/components/ui/card";
 import type { CalendarCell, WeeklyActivityItem } from "@/lib/activity-insights";
 import type { ThemePalette } from "@/lib/theme";
