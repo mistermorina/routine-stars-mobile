@@ -20,6 +20,7 @@ import { X } from "@/lib/icons";
 import { durations, timings } from "@/lib/motion";
 import { semanticColors, shadowPresets } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { ModalSurface, useModalBackdropColor } from "@/components/ui/modal-surface";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -72,6 +73,8 @@ export function Dialog({
     opacity: overlay.value,
   }));
 
+  const backdropColor = useModalBackdropColor();
+
   return (
     <Modal
       visible={mounted}
@@ -84,9 +87,9 @@ export function Dialog({
         className="flex-1"
       >
         <AnimatedPressable
-          className="flex-1 items-center justify-center bg-black/50"
+          className="flex-1 items-center justify-center"
           onPress={onClose}
-          style={overlayStyle}
+          style={[{ backgroundColor: backdropColor }, overlayStyle]}
         >
           <Pressable onPress={(e) => e.stopPropagation()}>
             {children}
@@ -107,15 +110,12 @@ export function DialogContent({
   style?: StyleProp<ViewStyle>;
 }) {
   return (
-    <View
-      className={cn(
-        "mx-6 w-[340px] max-w-[90%] rounded-card bg-card p-6",
-        className
-      )}
+    <ModalSurface
+      className={cn("mx-6 w-[340px] max-w-[90%] p-6", className)}
       style={[shadowPresets.shadowFloating, style]}
     >
       {children}
-    </View>
+    </ModalSurface>
   );
 }
 

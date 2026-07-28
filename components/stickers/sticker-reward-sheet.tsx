@@ -29,6 +29,9 @@ import {
 } from "@/lib/animal-stickers";
 import type { StickerRewardEvent } from "@/lib/sticker-reward-logic";
 import { shadowPresets, type ThemePalette } from "@/lib/theme";
+import { BlurView } from "expo-blur";
+import { useDesignMode } from "@/contexts/design-mode-context";
+import { getModalTokens } from "@/lib/design-mode";
 
 const BACKDROP_COLOR = "rgba(246,250,255,0.86)";
 
@@ -72,6 +75,9 @@ export function StickerRewardSheet({
   const { height: screenHeight, width: screenWidth } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
+  const { designMode } = useDesignMode();
+  const modalTokens = getModalTokens(designMode);
+  const isGlassSheet = modalTokens.blurIntensity > 0;
   const sheetTopPadding = Math.max(insets.top + 12, 20);
   const sheetBottomPadding = Math.max(insets.bottom + 12, 20);
   const availableSheetHeight = Math.max(1, screenHeight - sheetTopPadding - sheetBottomPadding);
@@ -159,18 +165,36 @@ export function StickerRewardSheet({
             style={[
               shadowPresets.shadowFloating,
               {
-                backgroundColor: palette.cardTint,
-                borderColor: palette.accentBorder,
+                backgroundColor: isGlassSheet ? "transparent" : palette.cardTint,
+                borderColor: isGlassSheet ? modalTokens.borderColor : palette.accentBorder,
                 maxHeight: sheetMaxHeight,
               },
             ]}
           >
-            <View
-              className="absolute inset-x-0 top-0 h-36 rounded-[30px]"
-              style={{ backgroundColor: palette.heroSurface }}
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-            />
+            {isGlassSheet ? (
+              <>
+                <BlurView
+                  intensity={modalTokens.blurIntensity}
+                  tint="light"
+                  pointerEvents="none"
+                  style={StyleSheet.absoluteFillObject}
+                />
+                <View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    { backgroundColor: modalTokens.backgroundColor },
+                  ]}
+                />
+              </>
+            ) : (
+              <View
+                className="absolute inset-x-0 top-0 h-36 rounded-[30px]"
+                style={{ backgroundColor: palette.heroSurface }}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              />
+            )}
             <View
               className="absolute right-[-24px] top-[-24px] h-32 w-32 rounded-full"
               style={{ backgroundColor: palette.motifSecondary, opacity: 0.28 }}

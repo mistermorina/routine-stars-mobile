@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PressableScale } from "@/components/ui/pressable-scale";
+import { GlassBackdrop } from "@/components/ui/glass-backdrop";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
 import { getThemePalette, semanticColors, shadowPresets } from "@/lib/theme";
@@ -179,9 +180,10 @@ export default function AccountSettings() {
         </Text>
 
         <View
-          className="rounded-card border border-destructive-soft bg-card px-4 py-4"
+          className="overflow-hidden rounded-card border border-destructive-soft px-4 py-4"
           style={shadowPresets.shadowCard}
         >
+          <GlassBackdrop />
           <View className="flex-row items-start">
             <View className="mt-0.5 h-11 w-11 items-center justify-center rounded-tile bg-destructive-soft">
               <Trash2 size={20} color={semanticColors.destructiveStrong} />

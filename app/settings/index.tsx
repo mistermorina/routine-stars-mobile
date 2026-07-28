@@ -25,6 +25,8 @@ import {
   setSoundEnabled,
 } from "@/lib/sound-adapter";
 import { PressableScale } from "@/components/ui/pressable-scale";
+import { GlassBackdrop } from "@/components/ui/glass-backdrop";
+import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
 import { semanticColors, shadowPresets } from "@/lib/theme";
 
@@ -130,12 +132,13 @@ function SettingsRow({
   return (
     <PressableScale
       onPress={onPress}
-      className="flex-row items-center rounded-card bg-card px-4 py-4"
+      className="flex-row items-center overflow-hidden rounded-card px-4 py-4"
       style={shadowPresets.shadowCard}
       accessibilityRole="button"
       accessibilityLabel={item.label}
       accessibilityHint={item.description}
     >
+      <GlassBackdrop />
       <View
         className={
           featured
@@ -207,8 +210,9 @@ export default function SettingsIndex() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-background">
-      <View className="gap-3 p-4">
+    <ThemedScreenBackground>
+      <ScrollView className="flex-1">
+        <View className="gap-3 p-4">
         <SettingsHeroCard
           label="Elternbereich"
           title="Alles bleibt auf diesem Gerät"
@@ -235,7 +239,8 @@ export default function SettingsIndex() {
 
         <SectionLabel>Ton & Vibration</SectionLabel>
 
-        <View className="rounded-card bg-card px-4" style={shadowPresets.shadowCard}>
+        <View className="overflow-hidden rounded-card px-4" style={shadowPresets.shadowCard}>
+          <GlassBackdrop />
           <View className="flex-row items-center border-b border-border/60 py-4">
             <View className="h-11 w-11 items-center justify-center rounded-tile bg-secondary/80">
               <Volume2 size={20} color={semanticColors.foreground} />
@@ -284,7 +289,8 @@ export default function SettingsIndex() {
             look is decided either way. */}
         <SectionLabel>Design (Test)</SectionLabel>
 
-        <View className="rounded-card bg-card px-4" style={shadowPresets.shadowCard}>
+        <View className="overflow-hidden rounded-card px-4" style={shadowPresets.shadowCard}>
+          <GlassBackdrop />
           <View className="flex-row items-center py-4">
             <View className="h-11 w-11 items-center justify-center rounded-tile bg-secondary/80">
               <Sparkles size={20} color={semanticColors.foreground} />
@@ -314,11 +320,12 @@ export default function SettingsIndex() {
           onPress={() => {
             void handleRestartOnboarding();
           }}
-          className="mt-2 flex-row items-center rounded-card border border-border bg-card px-4 py-4"
+          className="mt-2 flex-row items-center overflow-hidden rounded-card border border-border px-4 py-4"
           accessibilityRole="button"
           accessibilityLabel="Onboarding erneut starten"
           accessibilityHint="Öffnet den Einrichtungsassistenten. Bestehende Daten bleiben erhalten."
         >
+          <GlassBackdrop />
           <View className="h-12 w-12 items-center justify-center rounded-tile bg-secondary/80">
             <Rocket size={22} color={semanticColors.foreground} />
           </View>
@@ -332,6 +339,7 @@ export default function SettingsIndex() {
           </View>
         </PressableScale>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </ThemedScreenBackground>
   );
 }

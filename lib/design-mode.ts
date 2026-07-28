@@ -142,6 +142,36 @@ export function getAccentTokens(mode: DesignMode, palette: ThemePalette): Accent
 }
 
 /**
+ * Modals and sheets. They sit on a dimmed backdrop, so the card recipe would
+ * frost something dark and drag the text down with it. The fill is therefore
+ * much more opaque than a card's — enough to stay a bright panel, still
+ * translucent enough to read as the same material.
+ */
+export function getModalTokens(mode: DesignMode) {
+  if (mode === "glass") {
+    return {
+      backgroundColor: "rgba(255,255,255,0.82)",
+      borderColor: "rgba(255,255,255,0.9)",
+      blurIntensity: 60,
+      highlightColor: "rgba(255,255,255,0.95)",
+      /** Lighter scrim than soft mode: the blur already separates the layers. */
+      backdropColor: "rgba(18,40,60,0.32)",
+    };
+  }
+
+  return {
+    backgroundColor: semanticColorsCard,
+    borderColor: "transparent",
+    blurIntensity: 0,
+    highlightColor: null,
+    backdropColor: "rgba(0,0,0,0.4)",
+  };
+}
+
+/** Kept local to avoid a circular import with lib/theme. */
+const semanticColorsCard = "#FFFFFF";
+
+/**
  * Chrome — header and tab bar. These float above content, so they blur harder
  * than a card and keep a visible edge to stay separated from what scrolls under.
  */
