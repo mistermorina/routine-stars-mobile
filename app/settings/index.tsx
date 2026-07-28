@@ -16,6 +16,7 @@ import {
   Volume2,
 } from "@/lib/icons";
 import { useDesignMode } from "@/contexts/design-mode-context";
+import { getAccentTokens } from "@/lib/design-mode";
 import { storage } from "@/lib/storage";
 import { isHapticsGloballyEnabled } from "@/lib/feedback";
 import {
@@ -26,9 +27,10 @@ import {
 } from "@/lib/sound-adapter";
 import { PressableScale } from "@/components/ui/pressable-scale";
 import { GlassBackdrop } from "@/components/ui/glass-backdrop";
+import { GlassTile } from "@/components/ui/glass-tile";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
-import { semanticColors, shadowPresets } from "@/lib/theme";
+import { getThemePalette, semanticColors, shadowPresets } from "@/lib/theme";
 
 const SWITCH_TRACK_COLOR = {
   false: semanticColors.border,
@@ -128,6 +130,8 @@ function SettingsRow({
   featured?: boolean;
 }) {
   const Icon = item.icon;
+  const { designMode } = useDesignMode();
+  const iconColor = getAccentTokens(designMode, getThemePalette(null)).iconColor;
 
   return (
     <PressableScale
@@ -139,15 +143,13 @@ function SettingsRow({
       accessibilityHint={item.description}
     >
       <GlassBackdrop />
-      <View
-        className={
-          featured
-            ? "h-12 w-12 items-center justify-center rounded-tile bg-secondary"
-            : "h-11 w-11 items-center justify-center rounded-tile bg-secondary/80"
-        }
+      <GlassTile
+        radius={14}
+        className={featured ? "h-12 w-12" : "h-11 w-11"}
+        softFill={semanticColors.muted}
       >
-        <Icon size={featured ? 22 : 20} color={semanticColors.foreground} />
-      </View>
+        <Icon size={featured ? 22 : 20} color={iconColor} />
+      </GlassTile>
       <View className="ml-3 min-w-0 flex-1 pr-3">
         <Text
           className="text-base font-body-semibold text-foreground"
@@ -242,9 +244,9 @@ export default function SettingsIndex() {
         <View className="overflow-hidden rounded-card px-4" style={shadowPresets.shadowCard}>
           <GlassBackdrop />
           <View className="flex-row items-center border-b border-border/60 py-4">
-            <View className="h-11 w-11 items-center justify-center rounded-tile bg-secondary/80">
+            <GlassTile radius={14} className="h-11 w-11" softFill={semanticColors.muted}>
               <Volume2 size={20} color={semanticColors.foreground} />
-            </View>
+            </GlassTile>
             <View className="ml-3 min-w-0 flex-1 pr-3">
               <Text className="text-base font-body-semibold text-foreground">Soundeffekte</Text>
               <Text className="mt-1 text-sm font-body leading-5 text-muted-foreground">
@@ -263,9 +265,9 @@ export default function SettingsIndex() {
             />
           </View>
           <View className="flex-row items-center py-4">
-            <View className="h-11 w-11 items-center justify-center rounded-tile bg-secondary/80">
+            <GlassTile radius={14} className="h-11 w-11" softFill={semanticColors.muted}>
               <Vibrate size={20} color={semanticColors.foreground} />
-            </View>
+            </GlassTile>
             <View className="ml-3 min-w-0 flex-1 pr-3">
               <Text className="text-base font-body-semibold text-foreground">Vibration</Text>
               <Text className="mt-1 text-sm font-body leading-5 text-muted-foreground">
@@ -292,9 +294,9 @@ export default function SettingsIndex() {
         <View className="overflow-hidden rounded-card px-4" style={shadowPresets.shadowCard}>
           <GlassBackdrop />
           <View className="flex-row items-center py-4">
-            <View className="h-11 w-11 items-center justify-center rounded-tile bg-secondary/80">
+            <GlassTile radius={14} className="h-11 w-11" softFill={semanticColors.muted}>
               <Sparkles size={20} color={semanticColors.foreground} />
-            </View>
+            </GlassTile>
             <View className="ml-3 min-w-0 flex-1 pr-3">
               <Text className="text-base font-body-semibold text-foreground">Glas-Optik</Text>
               <Text className="mt-1 text-sm font-body leading-5 text-muted-foreground">
@@ -326,9 +328,9 @@ export default function SettingsIndex() {
           accessibilityHint="Öffnet den Einrichtungsassistenten. Bestehende Daten bleiben erhalten."
         >
           <GlassBackdrop />
-          <View className="h-12 w-12 items-center justify-center rounded-tile bg-secondary/80">
+          <GlassTile radius={14} className="h-12 w-12" softFill={semanticColors.muted}>
             <Rocket size={22} color={semanticColors.foreground} />
-          </View>
+          </GlassTile>
           <View className="ml-3 min-w-0 flex-1">
             <Text className="text-base font-body-semibold text-foreground">
               Onboarding erneut starten

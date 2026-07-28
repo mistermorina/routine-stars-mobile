@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, useWindowDimensions } from "react-native";
 import { Card } from "@/components/ui/card";
 import { SoftHeroWash } from "@/components/ui/soft-hero-wash";
+import { useDesignMode } from "@/contexts/design-mode-context";
 import { getThemePalette, type ThemePalette } from "@/lib/theme";
 
 type HeroBadge = {
@@ -28,6 +29,8 @@ export function SettingsHeroCard({
   const isCompactWidth = width < 380;
   // No child selected yet → the default ("sterne") palette carries exactly the
   // same values the literal fallbacks used to hardcode.
+  const { designMode } = useDesignMode();
+  const isGlass = designMode === "glass";
   const resolvedPalette = palette ?? getThemePalette();
   const cardBackground = resolvedPalette.cardTint;
   const borderColor = resolvedPalette.accentBorder;
@@ -40,17 +43,22 @@ export function SettingsHeroCard({
       className="mb-4 overflow-hidden rounded-[28px] px-4 py-4"
       style={{ backgroundColor: cardBackground, borderColor }}
     >
-      <SoftHeroWash
-        surfaceColor={heroSurface}
-        baseColor={cardBackground}
-        holdOffset="64%"
-      />
-      <View
-        className="absolute right-[-18px] top-[-16px] h-24 w-24 rounded-full"
-        style={{ backgroundColor: motifColor, opacity: 0.2 }}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      />
+      {isGlass ? null : (
+        <>
+          {/* Opaque tint + motif: they would sit on top of the frosted pane. */}
+          <SoftHeroWash
+            surfaceColor={heroSurface}
+            baseColor={cardBackground}
+            holdOffset="64%"
+          />
+          <View
+            className="absolute right-[-18px] top-[-16px] h-24 w-24 rounded-full"
+            style={{ backgroundColor: motifColor, opacity: 0.2 }}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          />
+        </>
+      )}
 
       <View className={isCompactWidth ? "gap-3" : "flex-row items-start justify-between gap-3"}>
         <View

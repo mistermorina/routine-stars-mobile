@@ -5,6 +5,7 @@ import DraggableFlatList, {
   ScaleDecorator,
 } from "react-native-draggable-flatlist";
 import { Button } from "@/components/ui/button";
+import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { IconPicker } from "@/components/ui/icon-picker";
@@ -434,7 +435,7 @@ export default function RoutinesSettingsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-background">
+    <ThemedScreenBackground>
       <ScrollView className="flex-1" contentContainerClassName="p-4 pb-10">
         <Card className="overflow-hidden rounded-[30px] border p-0">
           <View className="rounded-[30px] bg-secondary/70 px-4 py-5">
@@ -860,6 +861,6 @@ export default function RoutinesSettingsScreen() {
         }}
         onClose={() => setShowIconPickerForTaskId(null)}
       />
-    </View>
+    </ThemedScreenBackground>
   );
 }

@@ -2,13 +2,22 @@ import React, { useEffect } from "react";
 import { Stack, useRootNavigationState, useRouter, useSegments } from "expo-router";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { useAuth } from "@/hooks/use-auth";
-import { semanticColors } from "@/lib/theme";
+import { getThemePalette, semanticColors } from "@/lib/theme";
+import { useDesignMode } from "@/contexts/design-mode-context";
+import { getScreenGradient } from "@/lib/design-mode";
 
 export default function SettingsLayout() {
   const router = useRouter();
   const rootNavigationState = useRootNavigationState();
   const segments = useSegments();
   const { isParentAuthorized } = useAuth();
+  const { designMode } = useDesignMode();
+  // Chrome and scene share the gradient's opening colour, so the header reads
+  // as part of the backdrop rather than a bar pasted on top of it.
+  const screenGradient = getScreenGradient(designMode, getThemePalette(null));
+  const chromeFill = screenGradient.enabled
+    ? screenGradient.colors[0]
+    : semanticColors.background;
 
   // Only bounce to the PIN screen while settings is actually the visible route.
   // "Eltern-Bereich sperren" and the data reset navigate away *and* drop the
@@ -33,14 +42,14 @@ export default function SettingsLayout() {
     <Stack
       screenOptions={{
         headerShown: true,
-        headerStyle: { backgroundColor: semanticColors.background },
+        headerStyle: { backgroundColor: chromeFill },
         headerTintColor: semanticColors.foreground,
         headerTitleStyle: {
           fontFamily: "Poppins_600SemiBold",
           fontSize: 17,
         },
         headerShadowVisible: false,
-        contentStyle: { backgroundColor: semanticColors.background },
+        contentStyle: { backgroundColor: chromeFill },
         animation: "slide_from_right",
         headerRight: () => (
           <Pressable

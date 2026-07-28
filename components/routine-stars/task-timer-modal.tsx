@@ -33,6 +33,9 @@ import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { triggerFeedback } from "@/lib/feedback";
 import { durations, easings, modalSpring, springs, timings } from "@/lib/motion";
 import { getThemePalette, semanticColors, shadowPresets } from "@/lib/theme";
+import { BlurView } from "expo-blur";
+import { useDesignMode } from "@/contexts/design-mode-context";
+import { getModalTokens } from "@/lib/design-mode";
 import { cn } from "@/lib/utils";
 import type { ChildTheme, Task } from "@/lib/types";
 import timerChallengeBackground from "@/assets/images/timer-challenge-bg.png";
@@ -197,6 +200,9 @@ export function TaskTimerModal({
   const contentScale = useSharedValue(CARD_ENTER_SCALE);
   const contentOpacity = useSharedValue(0);
   const backdropOpacity = useSharedValue(0);
+  const { designMode } = useDesignMode();
+  const timerModalTokens = getModalTokens(designMode);
+  const isGlassTimer = timerModalTokens.blurIntensity > 0;
   const countdownPulse = useSharedValue(1);
 
   // The card outlives `task` by one exit animation so closing is a scale-down
@@ -499,26 +505,50 @@ export function TaskTimerModal({
             <View
               className="w-full overflow-hidden rounded-[32px] border"
               style={{
-                backgroundColor: semanticColors.card,
-                borderColor: "rgba(255,255,255,0.88)",
+                backgroundColor: isGlassTimer ? "transparent" : semanticColors.card,
+                borderColor: isGlassTimer
+                  ? timerModalTokens.borderColor
+                  : "rgba(255,255,255,0.88)",
                 maxHeight: modalMaxHeight,
                 ...shadowPresets.shadowCard,
               }}
             >
-              <Image
-                source={cardBackgroundImage}
-                style={StyleSheet.absoluteFillObject}
-                contentFit="cover"
-                transition={160}
-                accessibilityElementsHidden
-                importantForAccessibility="no-hide-descendants"
-              />
-              <View
-                style={[
-                  StyleSheet.absoluteFillObject,
-                  { backgroundColor: "rgba(255,255,255,0.12)" },
-                ]}
-              />
+              {isGlassTimer ? (
+                // The painted card art belongs to the pastel look; frosting it
+                // would just smear it, so glass swaps the whole backing.
+                <>
+                  <BlurView
+                    intensity={timerModalTokens.blurIntensity}
+                    tint="light"
+                    pointerEvents="none"
+                    style={StyleSheet.absoluteFillObject}
+                  />
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      StyleSheet.absoluteFillObject,
+                      { backgroundColor: timerModalTokens.backgroundColor },
+                    ]}
+                  />
+                </>
+              ) : (
+                <>
+                  <Image
+                    source={cardBackgroundImage}
+                    style={StyleSheet.absoluteFillObject}
+                    contentFit="cover"
+                    transition={160}
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
+                  />
+                  <View
+                    style={[
+                      StyleSheet.absoluteFillObject,
+                      { backgroundColor: "rgba(255,255,255,0.12)" },
+                    ]}
+                  />
+                </>
+              )}
               <ScrollView
                 bounces={false}
                 keyboardShouldPersistTaps="handled"

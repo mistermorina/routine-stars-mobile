@@ -18,6 +18,8 @@ import { useActivityLogs } from "@/hooks/use-activity-logs";
 import { useChildren } from "@/hooks/use-children";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
+import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
+import { useDesignMode } from "@/contexts/design-mode-context";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
@@ -99,6 +101,8 @@ function clampStarDraft(value: number, currentStars: number) {
 }
 
 export default function ChildrenSettings() {
+  const { designMode } = useDesignMode();
+  const isGlassChildren = designMode === "glass";
   const router = useRouter();
   const params = useLocalSearchParams<{ preview?: string | string[] }>();
   const { children, addChild, updateChild, removeChild, addStars, deductStars } = useChildren();
@@ -344,7 +348,7 @@ export default function ChildrenSettings() {
   }
 
   return (
-    <View className="flex-1 bg-background">
+    <ThemedScreenBackground>
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -399,12 +403,14 @@ export default function ChildrenSettings() {
               className="overflow-hidden rounded-[28px] border p-0"
               style={{ borderColor: childPalette.accentBorder, backgroundColor: childPalette.cardTint }}
             >
-              <View
-                className="absolute inset-x-0 top-0 h-24"
-                style={{ backgroundColor: childPalette.heroSurface }}
-                accessibilityElementsHidden
-                importantForAccessibility="no-hide-descendants"
-              />
+              {isGlassChildren ? null : (
+                <View
+                  className="absolute inset-x-0 top-0 h-24"
+                  style={{ backgroundColor: childPalette.heroSurface }}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                />
+              )}
               <View
                 className="absolute right-[-18px] top-[-10px] h-24 w-24 rounded-full"
                 style={{ backgroundColor: childPalette.motifSecondary, opacity: 0.28 }}
@@ -1545,6 +1551,6 @@ export default function ChildrenSettings() {
         }}
         onCancel={() => setStarConfirmChildId(null)}
       />
-    </View>
+    </ThemedScreenBackground>
   );
 }
