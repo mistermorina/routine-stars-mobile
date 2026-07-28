@@ -1,22 +1,30 @@
 import React, { useEffect } from "react";
-import { Stack, useRootNavigationState, useRouter } from "expo-router";
+import { Stack, useRootNavigationState, useRouter, useSegments } from "expo-router";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { useAuth } from "@/hooks/use-auth";
+import { semanticColors } from "@/lib/theme";
 
 export default function SettingsLayout() {
   const router = useRouter();
   const rootNavigationState = useRootNavigationState();
+  const segments = useSegments();
   const { isParentAuthorized } = useAuth();
 
+  // Only bounce to the PIN screen while settings is actually the visible route.
+  // "Eltern-Bereich sperren" and the data reset navigate away *and* drop the
+  // authorization — without this check the pending redirect would win the race
+  // and drop the parent back on the PIN pad instead of the app.
+  const isSettingsRoute = segments[0] === "settings";
+
   useEffect(() => {
-    if (!rootNavigationState?.key || isParentAuthorized) return;
+    if (!rootNavigationState?.key || isParentAuthorized || !isSettingsRoute) return;
     router.replace("/parent-login");
-  }, [isParentAuthorized, rootNavigationState?.key, router]);
+  }, [isParentAuthorized, isSettingsRoute, rootNavigationState?.key, router]);
 
   if (!isParentAuthorized) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator size="large" color="#FFD700" />
+        <ActivityIndicator size="large" color={semanticColors.gold} />
       </View>
     );
   }
@@ -25,27 +33,30 @@ export default function SettingsLayout() {
     <Stack
       screenOptions={{
         headerShown: true,
-        headerStyle: { backgroundColor: "#F8E9D7" },
-        headerTintColor: "#1a1a2e",
+        headerStyle: { backgroundColor: semanticColors.background },
+        headerTintColor: semanticColors.foreground,
         headerTitleStyle: {
           fontFamily: "Poppins_600SemiBold",
           fontSize: 17,
         },
         headerShadowVisible: false,
-        contentStyle: { backgroundColor: "#F8E9D7" },
+        contentStyle: { backgroundColor: semanticColors.background },
         animation: "slide_from_right",
         headerRight: () => (
           <Pressable
             onPress={() => router.replace("/(tabs)")}
             hitSlop={8}
-            className="rounded-full px-3 py-1.5"
+            className="min-h-11 justify-center rounded-full px-3 py-1.5 active:opacity-80"
             style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
+            accessibilityRole="button"
+            accessibilityLabel="Zur App zurückkehren"
           >
             <Text
+              maxFontSizeMultiplier={1.3}
               style={{
-                color: "#1a1a2e",
+                color: semanticColors.foreground,
                 fontFamily: "Poppins_600SemiBold",
-                fontSize: 13,
+                fontSize: 14,
               }}
             >
               Zur App
@@ -88,15 +99,11 @@ export default function SettingsLayout() {
       />
       <Stack.Screen
         name="account"
-        options={{ title: "Konto" }}
+        options={{ title: "Eltern-Bereich" }}
       />
       <Stack.Screen
         name="notifications"
         options={{ title: "Benachrichtigungen" }}
-      />
-      <Stack.Screen
-        name="billing"
-        options={{ title: "Abonnement" }}
       />
       <Stack.Screen
         name="legal"

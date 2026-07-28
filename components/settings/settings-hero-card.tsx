@@ -1,8 +1,8 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, useWindowDimensions } from "react-native";
 import { Card } from "@/components/ui/card";
 import { SoftHeroWash } from "@/components/ui/soft-hero-wash";
-import type { ThemePalette } from "@/lib/theme";
+import { getThemePalette, type ThemePalette } from "@/lib/theme";
 
 type HeroBadge = {
   label: string;
@@ -24,11 +24,16 @@ export function SettingsHeroCard({
   badges = [],
   palette,
 }: SettingsHeroCardProps) {
-  const cardBackground = palette?.cardTint ?? "#FFFFFF";
-  const borderColor = palette?.accentBorder ?? "#DCEAF7";
-  const heroSurface = palette?.heroSurface ?? "#FFF7E8";
-  const motifColor = palette?.motifSecondary ?? "#DDEEFF";
-  const accentText = palette?.accentText ?? "#245A74";
+  const { width } = useWindowDimensions();
+  const isCompactWidth = width < 380;
+  // No child selected yet → the default ("sterne") palette carries exactly the
+  // same values the literal fallbacks used to hardcode.
+  const resolvedPalette = palette ?? getThemePalette();
+  const cardBackground = resolvedPalette.cardTint;
+  const borderColor = resolvedPalette.accentBorder;
+  const heroSurface = resolvedPalette.heroSurface;
+  const motifColor = resolvedPalette.motifSecondary;
+  const accentText = resolvedPalette.accentText;
 
   return (
     <Card
@@ -43,11 +48,13 @@ export function SettingsHeroCard({
       <View
         className="absolute right-[-18px] top-[-16px] h-24 w-24 rounded-full"
         style={{ backgroundColor: motifColor, opacity: 0.2 }}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
       />
 
-      <View className="flex-row items-start justify-between gap-3">
+      <View className={isCompactWidth ? "gap-3" : "flex-row items-start justify-between gap-3"}>
         <View
-          className="min-w-0 max-w-[58%] rounded-full px-3 py-1.5"
+          className="min-h-11 self-start rounded-full px-3 py-2"
           style={{ backgroundColor: "rgba(255,255,255,0.8)" }}
         >
           <Text
@@ -55,24 +62,26 @@ export function SettingsHeroCard({
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.8}
+            maxFontSizeMultiplier={1.3}
           >
             {label}
           </Text>
         </View>
 
         {badges.length > 0 ? (
-          <View className="max-w-[48%] flex-row flex-wrap justify-end gap-2">
+          <View className={isCompactWidth ? "flex-row flex-wrap gap-2" : "flex-row flex-wrap justify-end gap-2"}>
             {badges.map((badge) => (
               <View
                 key={`${badge.label}-${badge.value ?? ""}`}
-                className="rounded-full px-3 py-1.5"
+                className="min-h-11 justify-center rounded-full px-3 py-2"
                 style={{ backgroundColor: "rgba(255,255,255,0.84)" }}
               >
                 <Text
-                  className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-foreground"
+                  className="text-xs font-body-semibold uppercase tracking-[0.7px] text-foreground"
                   numberOfLines={1}
                   adjustsFontSizeToFit
                   minimumFontScale={0.78}
+                  maxFontSizeMultiplier={1.3}
                 >
                   {badge.value !== undefined ? `${badge.value} ${badge.label}` : badge.label}
                 </Text>
@@ -83,14 +92,14 @@ export function SettingsHeroCard({
       </View>
 
       <Text
-        className="mt-5 text-[30px] font-headline leading-[36px] text-foreground"
-        numberOfLines={2}
+        className="mt-5 text-3xl font-headline leading-[36px] text-foreground"
+        numberOfLines={3}
         adjustsFontSizeToFit
-        minimumFontScale={0.7}
+        minimumFontScale={0.78}
       >
         {title}
       </Text>
-      <Text className="mt-3 text-[18px] font-body leading-7" style={{ color: accentText }}>
+      <Text className="mt-3 text-lg font-body leading-7" style={{ color: accentText }}>
         {description}
       </Text>
     </Card>

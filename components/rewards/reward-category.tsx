@@ -1,17 +1,16 @@
-import React, { useState } from "react";
-import { View, Text, Pressable } from "react-native";
+import React, { useCallback, useState } from "react";
+import { View, Text } from "react-native";
 import Animated, {
-  FadeInDown,
-  FadeOutUp,
   useAnimatedStyle,
   useSharedValue,
-  withTiming,
+  withSpring,
 } from "react-native-reanimated";
-import { ChevronRight, Plus, Check } from "lucide-react-native";
-import { getIcon } from "@/lib/icons";
-import { getThemePalette } from "@/lib/theme";
+import { PressableScale } from "@/components/ui/pressable-scale";
+import { triggerFeedback } from "@/lib/feedback";
+import { ChevronRight, Plus, Check, Star, getIcon } from "@/lib/icons";
+import { enterFade, enterStagger, exitFade, springs } from "@/lib/motion";
+import { getThemePalette, semanticColors } from "@/lib/theme";
 import type { ChildTheme, RewardSuggestion, RewardCategoryInfo } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 interface RewardCategorySectionProps {
   category: RewardCategoryInfo;
@@ -33,81 +32,112 @@ export function RewardCategorySection({
   const palette = getThemePalette(theme);
 
   const addedCount = rewards.filter((r) => addedIds.has(r.id)).length;
+  const CategoryIcon = getIcon(category.iconName);
   const chevronStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${chevronRotation.value}deg` }],
   }));
 
-  const handleToggle = () => {
+  const handleToggle = useCallback(() => {
     const next = !expanded;
     setExpanded(next);
-    chevronRotation.value = withTiming(next ? 90 : 0, { duration: 180 });
-  };
+    // Springs the last few degrees instead of stopping dead on 90.
+    chevronRotation.value = withSpring(next ? 90 : 0, springs.gentle);
+    // Parent-facing surface: tick without sound.
+    void triggerFeedback("theme_preview", { disableSound: true });
+  }, [chevronRotation, expanded]);
+
+  const handleAdd = useCallback(
+    (reward: RewardSuggestion) => {
+      void triggerFeedback("theme_preview", { disableSound: true });
+      onAdd(reward);
+    },
+    [onAdd]
+  );
 
   return (
     <View className="mb-3">
-      <Pressable
+      <PressableScale
         onPress={handleToggle}
-        className="flex-row items-center justify-between rounded-[24px] border p-4"
+        accessibilityRole="button"
+        accessibilityLabel={`${category.label}, ${rewards.length} Vorschläge`}
+        accessibilityState={{ expanded }}
+        className="min-h-14 flex-row items-center justify-between rounded-card border p-4"
         style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
       >
-        <View className="flex-row items-center gap-2">
-          <Text className="text-lg">{category.emoji}</Text>
+        <View className="min-w-0 flex-1 flex-row items-center gap-3">
+          <View
+            className="h-11 w-11 items-center justify-center rounded-tile"
+            style={{ backgroundColor: palette.heroSurface }}
+          >
+            <CategoryIcon size={20} color={palette.accentStrong} />
+          </View>
           <Text className="text-base font-headline text-foreground">{category.label}</Text>
           {addedCount > 0 && (
             <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: palette.button }}>
-              <Text className="text-xs font-body-semibold text-white">{addedCount}</Text>
+              <Text className="text-xs font-body-semibold text-white" maxFontSizeMultiplier={1.3}>
+                {addedCount}
+              </Text>
             </View>
           )}
         </View>
         <Animated.View style={chevronStyle}>
           <ChevronRight size={18} color={palette.accentStrong} />
         </Animated.View>
-      </Pressable>
+      </PressableScale>
 
       {expanded && (
-        <Animated.View
-          entering={FadeInDown.duration(200)}
-          exiting={FadeOutUp.duration(150)}
-          className="mt-1"
-        >
-          {rewards.map((reward) => {
+        <Animated.View entering={enterFade()} exiting={exitFade()} className="mt-1">
+          {rewards.map((reward, index) => {
             const Icon = getIcon(reward.iconName);
             const isAdded = addedIds.has(reward.id);
             return (
-              <Pressable
-                key={reward.id}
-                onPress={() => !isAdded && onAdd(reward)}
-                className={cn(
-                  "ml-2 mt-1 flex-row items-center rounded-[18px] px-3 py-3",
-                  isAdded ? "" : ""
-                )}
-                style={{
-                  backgroundColor: isAdded ? palette.accentSoft : "rgba(255,255,255,0.74)",
-                  borderColor: isAdded ? palette.accentBorder : "rgba(255,255,255,0.2)",
-                  borderWidth: 1,
-                }}
-              >
-                <View
-                  className="h-10 w-10 items-center justify-center rounded-[14px]"
-                  style={{ backgroundColor: isAdded ? "#FFFFFF" : palette.heroSurface }}
+              <Animated.View key={reward.id} entering={enterStagger(index)}>
+                <PressableScale
+                  onPress={() => handleAdd(reward)}
+                  disabled={isAdded}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${reward.title}, ${reward.cost} Sterne`}
+                  accessibilityHint={
+                    isAdded ? undefined : "Fügt die Belohnung zur Auswahl hinzu."
+                  }
+                  accessibilityState={{ disabled: isAdded, selected: isAdded }}
+                  containerClassName="ml-2 mt-1"
+                  className="flex-row items-center rounded-tile border px-3 py-3"
+                  style={{
+                    backgroundColor: isAdded ? palette.accentSoft : "rgba(255,255,255,0.74)",
+                    borderColor: isAdded ? palette.accentBorder : "rgba(255,255,255,0.2)",
+                  }}
                 >
-                  <Icon size={18} color={isAdded ? palette.accentStrong : "#737373"} />
-                </View>
-                <Text
-                  className={cn("ml-2.5 flex-1 text-sm font-body", isAdded ? "" : "text-foreground")}
-                  style={isAdded ? { color: palette.accentText } : undefined}
-                >
-                  {reward.title}
-                </Text>
-                <Text className="text-xs font-body text-muted-foreground mr-2">
-                  {reward.cost} ⭐
-                </Text>
-                {isAdded ? (
-                  <Check size={16} color={palette.accentStrong} />
-                ) : (
-                  <Plus size={16} color="#737373" />
-                )}
-              </Pressable>
+                  <View
+                    className="h-10 w-10 items-center justify-center rounded-chip"
+                    style={{
+                      backgroundColor: isAdded ? semanticColors.card : palette.heroSurface,
+                    }}
+                  >
+                    <Icon
+                      size={18}
+                      color={isAdded ? palette.accentStrong : semanticColors.mutedForeground}
+                    />
+                  </View>
+                  <Text
+                    className="ml-2.5 flex-1 text-base font-body leading-6 text-foreground"
+                    style={isAdded ? { color: palette.accentText } : undefined}
+                  >
+                    {reward.title}
+                  </Text>
+                  <View className="mr-2 flex-row items-center gap-1">
+                    <Star size={13} color={semanticColors.goldText} fill={semanticColors.goldText} />
+                    <Text className="text-sm font-body-semibold text-muted-foreground">
+                      {reward.cost}
+                    </Text>
+                  </View>
+                  {isAdded ? (
+                    <Check size={16} color={palette.accentStrong} />
+                  ) : (
+                    <Plus size={16} color={semanticColors.mutedForeground} />
+                  )}
+                </PressableScale>
+              </Animated.View>
             );
           })}
         </Animated.View>

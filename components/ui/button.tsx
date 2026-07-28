@@ -1,6 +1,33 @@
 import React from "react";
-import { Pressable, Text, type PressableProps } from "react-native";
+import {
+  Pressable,
+  Text,
+  type GestureResponderEvent,
+  type PressableProps,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
+
+import { triggerFeedback } from "@/lib/feedback";
+import { springs } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+
+/**
+ * The Pressable itself is animated instead of being wrapped in an extra view:
+ * every caller's layout class (`flex-1`, `w-full`, `mt-4`, `self-start`) stays
+ * on the node the parent lays out, so nothing about sizing changes. Reanimated
+ * resolves the animated style before the props reach the inner RN Pressable,
+ * which means NativeWind still applies `className` and the `active:` variants.
+ */
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+/** Touch-down shrink. A button is a large surface, so it travels less than a chip. */
+const PRESS_SCALE = 0.97;
 
 const buttonVariants = {
   default: "bg-primary active:bg-primary/80",
@@ -13,9 +40,9 @@ const buttonVariants = {
 
 const buttonSizes = {
   default: "h-12 px-5 py-0",
-  sm: "h-9 px-3 py-0",
+  sm: "h-11 px-4 py-0",
   lg: "h-14 px-6 py-0",
-  icon: "h-10 w-10",
+  icon: "h-11 w-11",
 } as const;
 
 const textVariants = {
@@ -31,16 +58,23 @@ const textVariants = {
 // (tight line boxes make the ascender-heavy font sit visibly high).
 const textSizes = {
   default: "text-base leading-[22px]",
-  sm: "text-sm leading-[19px]",
+  sm: "text-base leading-[22px]",
   lg: "text-base leading-[22px]",
   icon: "text-base leading-[22px]",
 } as const;
 
-export interface ButtonProps extends PressableProps {
+export interface ButtonProps extends Omit<PressableProps, "style"> {
   variant?: keyof typeof buttonVariants;
   size?: keyof typeof buttonSizes;
   className?: string;
   textClassName?: string;
+  style?: StyleProp<ViewStyle>;
+  /**
+   * Built-in touch-down tick. Set `false` when the press handler already fires
+   * its own semantic event (`reward_redeemed`, `mission_complete`, …) so the
+   * user does not feel two haptics for one tap.
+   */
+  haptic?: boolean;
   children: React.ReactNode;
 }
 
@@ -49,12 +83,43 @@ export function Button({
   size = "default",
   className,
   textClassName,
+  style,
+  haptic = true,
   children,
   disabled,
+  onPressIn,
+  onPressOut,
   ...props
 }: ButtonProps) {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = (event: GestureResponderEvent) => {
+    if (!disabled) {
+      scale.value = withSpring(PRESS_SCALE, springs.press);
+
+      if (haptic) {
+        // lib/feedback has no dedicated "button_press" event; `theme_preview`
+        // is the generic selection tick (Haptics.selectionAsync) and carries no
+        // sound, so it is the correct primitive-level acknowledgement.
+        void triggerFeedback("theme_preview", { disableSound: true });
+      }
+    }
+
+    onPressIn?.(event);
+  };
+
+  const handlePressOut = (event: GestureResponderEvent) => {
+    scale.value = withSpring(1, springs.press);
+    onPressOut?.(event);
+  };
+
   return (
-    <Pressable
+    <AnimatedPressable
+      {...props}
       className={cn(
         "flex-row items-center justify-center rounded-lg",
         buttonVariants[variant],
@@ -62,7 +127,9 @@ export function Button({
         className
       )}
       disabled={disabled}
-      {...props}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[style, animatedStyle]}
     >
       {typeof children === "string" ? (
         <Text
@@ -71,6 +138,9 @@ export function Button({
             textSizes[size],
             textClassName
           )}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.88}
           style={{ includeFontPadding: false }}
         >
           {children}
@@ -78,6 +148,6 @@ export function Button({
       ) : (
         children
       )}
-    </Pressable>
+    </AnimatedPressable>
   );
 }

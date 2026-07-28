@@ -13,7 +13,7 @@ import {
   Shield,
   Sparkles,
   Star,
-} from "lucide-react-native";
+} from "@/lib/icons";
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -26,8 +26,9 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { triggerFeedback } from "@/lib/feedback";
-import { getThemePalette } from "@/lib/theme";
+import { getThemePalette, semanticColors } from "@/lib/theme";
 import { KEYS, storage } from "@/lib/storage";
+import { cn } from "@/lib/utils";
 import {
   onboardingJourney,
   onboardingPrinciples,
@@ -86,25 +87,35 @@ function JourneyVisual({
       <View className="px-4 pb-4 pt-3">
         <View className="flex-row items-center justify-between gap-3">
           <View className="min-w-0 flex-1">
-            <Text className="text-xs font-body-semibold uppercase text-muted-foreground">
+            <Text
+              className="text-xs font-body-semibold uppercase text-muted-foreground"
+              maxFontSizeMultiplier={1.3}
+            >
               Sternenmoment
             </Text>
             <Text
-              className="mt-1 text-sm font-body-semibold leading-5 text-foreground"
-              numberOfLines={2}
+              className="mt-1 text-base font-body-semibold leading-6 text-foreground"
+              numberOfLines={3}
+              maxFontSizeMultiplier={1.4}
             >
               {screen.childLine}
             </Text>
           </View>
           <View
             className="h-12 w-12 items-center justify-center rounded-full"
-            style={{ backgroundColor: "#FFFFFF" }}
+            style={{ backgroundColor: semanticColors.card }}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
           >
             <Star size={22} color={palette.chartPrimary} fill={palette.chartPrimary} />
           </View>
         </View>
 
-        <View className="mt-4 flex-row items-center gap-2">
+        <View
+          className="mt-4 flex-row items-center gap-2"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
           {[0, 1, 2].map((item) => (
             <View
               key={item}
@@ -133,8 +144,10 @@ function HighlightRow({
 
   return (
     <View
-      className="flex-row items-start rounded-[20px] border px-3.5 py-3.5"
-      style={{ backgroundColor: "#FFFFFF", borderColor: palette.accentBorder }}
+      className="flex-row items-start rounded-tile border px-3.5 py-3.5"
+      style={{ backgroundColor: semanticColors.card, borderColor: palette.accentBorder }}
+      accessible
+      accessibilityLabel={`${highlight.title}. ${highlight.description}`}
     >
       <View
         className="h-10 w-10 items-center justify-center rounded-full"
@@ -146,7 +159,7 @@ function HighlightRow({
         <Text className="text-sm font-body-semibold leading-5 text-foreground">
           {highlight.title}
         </Text>
-        <Text className="mt-1 text-xs font-body leading-5 text-muted-foreground">
+        <Text className="mt-1 text-sm font-body leading-5 text-muted-foreground">
           {highlight.description}
         </Text>
       </View>
@@ -189,7 +202,7 @@ export default function WelcomeScreen() {
   const startSetup = async () => {
     await markWelcomeSeen();
     void triggerFeedback("stars_added");
-    router.replace("/(auth)/login");
+    router.replace("/(auth)/onboarding");
   };
 
   const goNext = () => {
@@ -239,16 +252,24 @@ export default function WelcomeScreen() {
             <Pressable
               onPress={goBack}
               disabled={isFirstScreen}
-              className="h-11 min-w-[92px] flex-row items-center rounded-full px-3"
+              className={cn(
+                "h-11 min-w-[92px] flex-row items-center rounded-full px-3",
+                isFirstScreen ? "opacity-0" : "active:opacity-70"
+              )}
               style={{
                 backgroundColor: isFirstScreen ? "transparent" : palette.headerGlass,
-                opacity: isFirstScreen ? 0 : 1,
               }}
+              hitSlop={8}
               accessibilityRole="button"
-              accessibilityLabel="Zurück"
+              accessibilityLabel="Zurück zum vorherigen Schritt"
+              accessibilityState={{ disabled: isFirstScreen }}
             >
               <ChevronLeft size={17} color={palette.accentStrong} />
-              <Text className="ml-1 text-sm font-body-semibold" style={{ color: palette.accentStrong }}>
+              <Text
+                className="ml-1 text-sm font-body-semibold"
+                style={{ color: palette.accentStrong }}
+                maxFontSizeMultiplier={1.3}
+              >
                 Zurück
               </Text>
             </Pressable>
@@ -257,7 +278,11 @@ export default function WelcomeScreen() {
               className="rounded-full px-3 py-1.5"
               style={{ backgroundColor: palette.headerGlass }}
             >
-              <Text className="text-xs font-body-semibold uppercase" style={{ color: palette.accentText }}>
+              <Text
+                className="text-xs font-body-semibold uppercase"
+                style={{ color: palette.accentText }}
+                maxFontSizeMultiplier={1.3}
+              >
                 {screen.stepLabel}
               </Text>
             </View>
@@ -266,11 +291,16 @@ export default function WelcomeScreen() {
               onPress={() => {
                 void startSetup();
               }}
-              className="h-11 min-w-[92px] items-end justify-center rounded-full px-3"
+              className="h-11 min-w-[92px] items-end justify-center rounded-full px-3 active:opacity-70"
+              hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Intro überspringen und Setup starten"
             >
-              <Text className="text-sm font-body-semibold" style={{ color: palette.accentStrong }}>
+              <Text
+                className="text-sm font-body-semibold"
+                style={{ color: palette.accentStrong }}
+                maxFontSizeMultiplier={1.3}
+              >
                 Setup
               </Text>
             </Pressable>
@@ -278,25 +308,35 @@ export default function WelcomeScreen() {
 
           <Animated.View entering={FadeInDown.duration(280)} className="mt-4">
             <View
-              className="rounded-[24px] border px-4 py-4"
+              className="rounded-card border px-4 py-4"
               style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
             >
               <View className="flex-row items-center gap-3">
                 <View
                   className="h-12 w-12 items-center justify-center rounded-full"
                   style={{ backgroundColor: palette.tabActiveBg }}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
                 >
                   <Check size={20} color={palette.accentStrong} strokeWidth={3} />
                 </View>
                 <View className="min-w-0 flex-1">
-                  <Text className="text-xs font-body-semibold uppercase text-muted-foreground">
+                  <Text
+                    className="text-xs font-body-semibold uppercase text-muted-foreground"
+                    maxFontSizeMultiplier={1.3}
+                  >
                     Neue Familienreise
                   </Text>
                   <Text className="text-lg font-headline leading-6 text-foreground">
                     Routine Stars
                   </Text>
                 </View>
-                <Text className="text-sm font-body-semibold" style={{ color: palette.accentStrong }}>
+                <Text
+                  className="text-sm font-body-semibold"
+                  style={{ color: palette.accentStrong }}
+                  accessibilityLabel={`Schritt ${screenIndex + 1} von ${onboardingJourney.length}`}
+                  maxFontSizeMultiplier={1.3}
+                >
                   {screenIndex + 1}/{onboardingJourney.length}
                 </Text>
               </View>
@@ -304,8 +344,9 @@ export default function WelcomeScreen() {
               <Progress
                 value={progressValue}
                 className="mt-4 h-3 w-full"
-                indicatorClassName="bg-[#FFD700]"
+                indicatorClassName="bg-gold"
                 indicatorColor={palette.progress}
+                accessibilityLabel={`Intro, Schritt ${screenIndex + 1} von ${onboardingJourney.length}`}
               />
 
               <View className="mt-4 flex-row flex-wrap gap-2">
@@ -316,9 +357,10 @@ export default function WelcomeScreen() {
                     style={{ backgroundColor: palette.heroSurface, borderColor: palette.accentBorder }}
                   >
                     <Text
-                      className="text-[11px] font-body-semibold leading-4"
+                      className="text-xs font-body-semibold leading-4"
                       style={{ color: palette.accentText }}
                       numberOfLines={1}
+                      maxFontSizeMultiplier={1.2}
                     >
                       {principle}
                     </Text>
@@ -338,7 +380,10 @@ export default function WelcomeScreen() {
               className="rounded-[34px] border px-5 pb-5 pt-5"
               style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
             >
-              <Text className="text-xs font-body-semibold uppercase text-muted-foreground">
+              <Text
+                className="text-xs font-body-semibold uppercase text-muted-foreground"
+                maxFontSizeMultiplier={1.3}
+              >
                 {screen.eyebrow}
               </Text>
               <Text
@@ -347,7 +392,7 @@ export default function WelcomeScreen() {
               >
                 {screen.title}
               </Text>
-              <Text className="mt-3 text-[15px] font-body leading-6 text-muted-foreground">
+              <Text className="mt-3 text-base font-body leading-6 text-muted-foreground">
                 {screen.description}
               </Text>
 
@@ -361,7 +406,11 @@ export default function WelcomeScreen() {
                 ))}
               </View>
 
-              <View className="mt-6 flex-row items-center justify-center gap-2">
+              <View
+                className="mt-6 flex-row items-center justify-center gap-2"
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              >
                 {onboardingJourney.map((item, index) => (
                   <View
                     key={item.id}
@@ -380,17 +429,28 @@ export default function WelcomeScreen() {
                 <Button
                   onPress={goNext}
                   size="lg"
-                  className="h-14 w-full rounded-[22px]"
+                  className="h-14 w-full rounded-card"
                   style={{ backgroundColor: palette.button }}
+                  accessibilityRole="button"
+                  accessibilityLabel={screen.primaryCta}
                 >
                   <View className="flex-row items-center gap-2">
                     {isLastScreen ? (
-                      <Star size={18} color="#FFFFFF" fill="#FFFFFF" />
+                      <Star
+                        size={18}
+                        color={semanticColors.accentForeground}
+                        fill={semanticColors.accentForeground}
+                      />
                     ) : null}
-                    <Text className="text-base font-body-semibold leading-5 text-white">
+                    <Text
+                      className="text-base font-body-semibold leading-5 text-white"
+                      maxFontSizeMultiplier={1.2}
+                    >
                       {screen.primaryCta}
                     </Text>
-                    {!isLastScreen ? <ArrowRight size={18} color="#FFFFFF" /> : null}
+                    {!isLastScreen ? (
+                      <ArrowRight size={18} color={semanticColors.accentForeground} />
+                    ) : null}
                   </View>
                 </Button>
 
@@ -398,8 +458,13 @@ export default function WelcomeScreen() {
                   variant="outline"
                   onPress={handleSecondary}
                   size="lg"
-                  className="h-14 w-full rounded-[22px]"
-                  style={{ backgroundColor: "#FFFFFF", borderColor: palette.accentBorder }}
+                  className="h-14 w-full rounded-card"
+                  style={{
+                    backgroundColor: semanticColors.card,
+                    borderColor: palette.accentBorder,
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={screen.secondaryCta}
                 >
                   <View className="flex-row items-center gap-2">
                     {isLastScreen ? (
@@ -407,7 +472,11 @@ export default function WelcomeScreen() {
                     ) : (
                       <ArrowRight size={18} color={palette.accentStrong} />
                     )}
-                    <Text className="text-base font-body-semibold leading-5" style={{ color: palette.accentStrong }}>
+                    <Text
+                      className="text-base font-body-semibold leading-5"
+                      style={{ color: palette.accentStrong }}
+                      maxFontSizeMultiplier={1.2}
+                    >
                       {screen.secondaryCta}
                     </Text>
                   </View>
@@ -417,7 +486,7 @@ export default function WelcomeScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeIn.duration(360)} className="mt-4 px-4">
-            <Text className="text-center text-xs font-body leading-5 text-muted-foreground">
+            <Text className="text-center text-sm font-body leading-5 text-muted-foreground">
               Der erste Start ist lokal. Du kannst Profile, Routinen und Belohnungen später im Elternbereich anpassen.
             </Text>
           </Animated.View>

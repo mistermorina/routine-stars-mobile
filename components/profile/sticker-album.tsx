@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, useWindowDimensions, View, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import {
   Award,
   CalendarDays,
@@ -12,13 +12,15 @@ import {
   Star,
   Target,
   Trophy,
-} from "lucide-react-native";
+} from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { Progress } from "@/components/ui/progress";
+import { enterStagger } from "@/lib/motion";
 import type { NextStickerGoal, StickerAlbumEntry } from "@/lib/child-progression";
 import type { ChildTheme, StickerId } from "@/lib/types";
-import type { ThemePalette } from "@/lib/theme";
+import { semanticColors, type ThemePalette } from "@/lib/theme";
 import stickerAlbumCoverImage from "@/assets/images/sticker-album-cover.png";
 
 interface StickerAlbumProps {
@@ -107,14 +109,18 @@ function StickerDetailSheet({
       >
         <Pressable
           onPress={(event) => event.stopPropagation()}
-          className="rounded-t-[32px] px-5 pt-5"
+          className="rounded-t-card px-5 pt-5"
           style={{
             backgroundColor: palette.cardTint,
             maxHeight: sheetMaxHeight,
             paddingBottom: sheetBottomPadding,
           }}
         >
-          <View className="mb-4 self-center h-1.5 w-16 rounded-full bg-black/10" />
+          <View
+            className="mb-4 self-center h-1.5 w-16 rounded-full bg-black/10"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          />
 
           <ScrollView
             bounces={false}
@@ -126,7 +132,7 @@ function StickerDetailSheet({
             <View className="flex-row items-start justify-between gap-3">
               <View className="min-w-0 flex-1 flex-row items-center gap-3">
                 <View
-                  className="h-14 w-14 shrink-0 items-center justify-center rounded-[20px]"
+                  className="h-14 w-14 shrink-0 items-center justify-center rounded-tile"
                   style={{ backgroundColor: palette.heroSurface }}
                 >
                   <StickerIcon
@@ -155,6 +161,7 @@ function StickerDetailSheet({
                   numberOfLines={1}
                   adjustsFontSizeToFit
                   minimumFontScale={0.86}
+                  maxFontSizeMultiplier={1.3}
                 >
                   {entry.unlocked ? "Freigeschaltet" : "In Arbeit"}
                 </Text>
@@ -162,7 +169,7 @@ function StickerDetailSheet({
             </View>
 
             <View
-              className="mt-5 rounded-[24px] border px-4 py-4"
+              className="mt-5 rounded-card border px-4 py-4"
               style={{
                 borderColor: palette.accentBorder,
                 backgroundColor: "rgba(255,255,255,0.76)",
@@ -207,7 +214,7 @@ function StickerDetailSheet({
                   onClose();
                   onOpenAlbum();
                 }}
-                className="h-12 rounded-[18px]"
+                className="h-12 rounded-tile"
                 style={{ backgroundColor: palette.button }}
                 textClassName="text-white"
               >
@@ -217,7 +224,7 @@ function StickerDetailSheet({
             <Button
               variant="outline"
               onPress={onClose}
-              className="h-12 rounded-[18px]"
+              className="h-12 rounded-tile"
               style={{ borderColor: palette.accentBorder }}
             >
               Schließen
@@ -242,29 +249,33 @@ function StickerCard({
 }) {
   const StickerIcon = getStickerIcon(entry.sticker.id);
 
+  const lockedText = semanticColors.mutedForeground;
+
   return (
-    <Animated.View
-      entering={FadeInDown.delay(170 + index * 35).duration(260)}
-      style={{ width: "48.3%", marginBottom: 12 }}
-    >
-      <Pressable
+    <Animated.View entering={enterStagger(index)} style={{ width: "48.3%", marginBottom: 12 }}>
+      <PressableScale
         onPress={() => onPress(entry)}
-        className="min-h-[194px] rounded-[24px] border px-3.5 py-3.5 active:opacity-90"
+        containerClassName="w-full"
+        className="min-h-[194px] rounded-card border px-3.5 py-3.5"
         style={{
           borderColor: entry.unlocked ? palette.accentBorder : "rgba(148,163,184,0.18)",
           backgroundColor: entry.unlocked ? "rgba(255,255,255,0.84)" : "rgba(255,255,255,0.54)",
         }}
+        accessibilityRole="button"
+        accessibilityLabel={`${entry.sticker.title}, ${
+          entry.unlocked ? "freigeschaltet" : `${entry.current} von ${entry.target}`
+        }`}
       >
         <View className="flex-row items-start justify-between gap-2">
           <View
-            className="h-12 w-12 items-center justify-center rounded-[18px]"
+            className="h-12 w-12 items-center justify-center rounded-tile"
             style={{
               backgroundColor: entry.unlocked ? palette.tabActiveBg : "rgba(255,255,255,0.8)",
             }}
           >
             <StickerIcon
               size={20}
-              color={entry.unlocked ? palette.accentStrong : "#8791A8"}
+              color={entry.unlocked ? palette.accentStrong : lockedText}
               fill={StickerIcon === Star && entry.unlocked ? palette.chartPrimary : "none"}
             />
           </View>
@@ -275,8 +286,9 @@ function StickerCard({
             }}
           >
             <Text
-              className="text-[10px] font-body-semibold"
-              style={{ color: entry.unlocked ? palette.accentText : "#8791A8" }}
+              className="text-xs font-body-semibold"
+              style={{ color: entry.unlocked ? palette.accentText : lockedText }}
+              maxFontSizeMultiplier={1.3}
             >
               {entry.unlocked ? "Frei" : `${entry.current}/${entry.target}`}
             </Text>
@@ -289,19 +301,23 @@ function StickerCard({
         <Text
           className="mt-1 text-xs font-body leading-5"
           numberOfLines={3}
-          style={{ color: entry.unlocked ? palette.accentText : "#7B8198" }}
+          style={{ color: entry.unlocked ? palette.accentText : lockedText }}
         >
           {entry.hint}
         </Text>
 
         <View className="mt-auto pt-4">
           <View className="mb-2 flex-row items-center justify-between">
-            <Text className="text-[11px] font-body-semibold text-muted-foreground">
+            <Text
+              className="text-xs font-body-semibold text-muted-foreground"
+              maxFontSizeMultiplier={1.3}
+            >
               {entry.unlocked ? "Freigeschaltet" : "Fortschritt"}
             </Text>
             <Text
-              className="text-[11px] font-body-semibold"
-              style={{ color: entry.unlocked ? palette.accentText : "#8791A8" }}
+              className="text-xs font-body-semibold"
+              style={{ color: entry.unlocked ? palette.accentText : lockedText }}
+              maxFontSizeMultiplier={1.3}
             >
               {entry.unlocked ? "100%" : `${entry.progressPercent}%`}
             </Text>
@@ -313,7 +329,7 @@ function StickerCard({
             trackStyle={{ backgroundColor: "rgba(255,255,255,0.88)" }}
           />
         </View>
-      </Pressable>
+      </PressableScale>
     </Animated.View>
   );
 }
@@ -338,21 +354,28 @@ export function StickerAlbum({
   }));
 
   return (
-    <Animated.View entering={FadeInDown.delay(150).duration(320)} className="mt-4">
+    <Animated.View entering={enterStagger(4)} className="mt-4">
       <Card
-        className="overflow-hidden rounded-[22px] px-4 py-4"
+        className="overflow-hidden rounded-card px-4 py-4"
         style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
       >
         <View
           className="absolute right-[-14px] top-[-10px] h-24 w-24 rounded-full"
           style={{ backgroundColor: palette.motifSecondary, opacity: 0.22 }}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
         />
 
-        <Pressable disabled={!onOpenAlbum} onPress={onOpenAlbum} className="active:opacity-95">
+        <PressableScale
+          disabled={!onOpenAlbum}
+          onPress={onOpenAlbum}
+          accessibilityRole={onOpenAlbum ? "button" : undefined}
+          accessibilityLabel={onOpenAlbum ? "Sticker-Album öffnen" : undefined}
+        >
           <View className="flex-row items-start justify-between gap-3">
             <View className="flex-1 flex-row items-center gap-3">
               <View
-                className="h-12 w-12 items-center justify-center rounded-[18px]"
+                className="h-12 w-12 items-center justify-center rounded-tile"
                 style={{ backgroundColor: palette.heroSurface }}
               >
                 <Award size={22} color={palette.accentStrong} />
@@ -366,13 +389,20 @@ export function StickerAlbum({
             </View>
             <View className="flex-row items-center gap-2">
               <View
-                className="rounded-[18px] px-3 py-2"
+                className="rounded-tile px-3 py-2"
                 style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
               >
-                <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+                <Text
+                  className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground"
+                  maxFontSizeMultiplier={1.3}
+                >
                   {THEME_BADGES[childTheme]}
                 </Text>
-                <Text className="mt-1 text-sm font-headline" style={{ color: palette.accentText }}>
+                <Text
+                  className="mt-1 text-sm font-headline"
+                  style={{ color: palette.accentText }}
+                  maxFontSizeMultiplier={1.3}
+                >
                   {unlockedCount}/9
                 </Text>
               </View>
@@ -386,13 +416,16 @@ export function StickerAlbum({
               ) : null}
             </View>
           </View>
-        </Pressable>
+        </PressableScale>
 
-        <Pressable
+        <PressableScale
           disabled={!onOpenAlbum}
           onPress={onOpenAlbum}
-          className="mt-4 overflow-hidden rounded-[20px] border active:opacity-95"
+          containerClassName="mt-4"
+          className="overflow-hidden rounded-tile border"
           style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.74)" }}
+          accessibilityRole={onOpenAlbum ? "button" : undefined}
+          accessibilityLabel={onOpenAlbum ? "Nächsten Sticker im Album ansehen" : undefined}
         >
           <Image
             source={stickerAlbumCoverImage}
@@ -403,7 +436,10 @@ export function StickerAlbum({
           />
           <View className="flex-row items-start justify-between gap-3 px-4 pb-4 pt-4">
             <View className="flex-1">
-              <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+              <Text
+                className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground"
+                maxFontSizeMultiplier={1.3}
+              >
                 Als Nächstes
               </Text>
               <Text className="mt-1 text-lg font-headline text-foreground">
@@ -443,7 +479,7 @@ export function StickerAlbum({
               />
             </View>
           ) : null}
-        </Pressable>
+        </PressableScale>
 
         {groups.map((group, groupIndex) => (
           <View key={group.key} className={groupIndex === 0 ? "mt-5" : "mt-6"}>
@@ -458,7 +494,11 @@ export function StickerAlbum({
                 className="rounded-full px-2.5 py-1"
                 style={{ backgroundColor: palette.tabActiveBg }}
               >
-                <Text className="text-[10px] font-body-semibold" style={{ color: palette.accentText }}>
+                <Text
+                  className="text-xs font-body-semibold"
+                  style={{ color: palette.accentText }}
+                  maxFontSizeMultiplier={1.3}
+                >
                   {group.entries.filter((entry) => entry.unlocked).length}/{group.entries.length}
                 </Text>
               </View>

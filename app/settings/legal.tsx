@@ -1,75 +1,83 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, Pressable, Linking } from "react-native";
+import React, { useState } from "react";
+import { View, Text, ScrollView, Linking, ActivityIndicator } from "react-native";
+import Animated from "react-native-reanimated";
+import Constants from "expo-constants";
 import {
   Building2,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
   Download,
   FileText,
+  Globe,
   MessageCircle,
-  Scale,
   Shield,
-} from "lucide-react-native";
+  ShieldCheck,
+  Smartphone,
+  Trash2,
+  TriangleAlert,
+} from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { Separator } from "@/components/ui/separator";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
+import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
 import { useToast } from "@/hooks/use-toast";
-import { storage, KEYS } from "@/lib/storage";
-import { getThemePalette } from "@/lib/theme";
+import { exportAppData } from "@/lib/backup";
+import { triggerFeedback } from "@/lib/feedback";
+import { enterFade, enterStagger, exitFade } from "@/lib/motion";
+import { getThemePalette, semanticColors, shadowPresets } from "@/lib/theme";
+import {
+  legalDocuments,
+  legalLastUpdated,
+  privacySummary,
+  type LegalDocumentId,
+} from "@/lib/legal-content";
 
-interface LegalPreferences {
-  analyticsConsent: boolean;
-  personalizedContent: boolean;
-}
+type LegalIcon = typeof Shield;
 
-const legalItems = [
+const documentIcons: Record<LegalDocumentId, LegalIcon> = {
+  datenschutz: Shield,
+  nutzungsbedingungen: FileText,
+  impressum: Building2,
+};
+
+const summaryIcons: LegalIcon[] = [Smartphone, ShieldCheck, Globe];
+
+/** Secondary: the same texts as web pages, handy for sharing. */
+const onlineLinks: { label: string; url: string; icon?: LegalIcon }[] = [
   {
-    label: "Datenschutzrichtlinie",
-    icon: Shield,
+    label: "Datenschutzerklärung online",
     url: "https://routinestars.app/privacy",
   },
   {
-    label: "Nutzungsbedingungen",
-    icon: FileText,
+    label: "Nutzungsbedingungen online",
     url: "https://routinestars.app/terms",
   },
   {
-    label: "Impressum",
-    icon: Building2,
+    label: "Impressum online",
     url: "https://routinestars.app/imprint",
   },
   {
     label: "Support kontaktieren",
-    icon: MessageCircle,
     url: "mailto:support@routinestars.app",
+    icon: MessageCircle,
   },
 ];
 
 export default function LegalSettings() {
   const { selectedChild } = useChildren();
   const { toast } = useToast();
-  const [analyticsConsent, setAnalyticsConsent] = useState(false);
-  const [personalizedContent, setPersonalizedContent] = useState(false);
+  const [expandedId, setExpandedId] = useState<LegalDocumentId | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const palette = getThemePalette(selectedChild?.theme);
+  const appVersion = Constants.expoConfig?.version ?? null;
 
-  useEffect(() => {
-    async function loadPreferences() {
-      const stored = await storage.getItem<LegalPreferences>(KEYS.LEGAL_PREFERENCES);
-      if (stored) {
-        setAnalyticsConsent(stored.analyticsConsent);
-        setPersonalizedContent(stored.personalizedContent);
-      }
-    }
-
-    void loadPreferences();
-  }, []);
-
-  async function persistPreferences(next: LegalPreferences) {
-    setAnalyticsConsent(next.analyticsConsent);
-    setPersonalizedContent(next.personalizedContent);
-    await storage.setItem(KEYS.LEGAL_PREFERENCES, next);
+  function handleToggleDocument(id: LegalDocumentId) {
+    void triggerFeedback("theme_preview", { disableSound: true });
+    setExpandedId((current) => (current === id ? null : id));
   }
 
   function handleOpenLink(url: string, label: string) {
@@ -78,11 +86,30 @@ export default function LegalSettings() {
     });
   }
 
-  function handleExportData() {
-    toast({
-      title: "Datenexport folgt später",
-      description: "In dieser Version gibt es noch keinen lokalen Export als Datei.",
-    });
+  async function handleExportData() {
+    if (isExporting) return;
+
+    setIsExporting(true);
+
+    try {
+      const result = await exportAppData();
+
+      if (result.ok) {
+        toast({
+          title: "Export erstellt",
+          description: "Die JSON-Datei wurde zum Teilen bereitgestellt.",
+        });
+        return;
+      }
+
+      toast({
+        title: "Export fehlgeschlagen",
+        description: result.error,
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   return (
@@ -91,185 +118,295 @@ export default function LegalSettings() {
       backgroundSkin={selectedChild?.backgroundSkin}
     >
       <ScrollView className="flex-1" contentContainerClassName="p-4 pb-8">
-        <Card
-          className="mb-4 overflow-hidden rounded-[30px]"
-          style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
-        >
-          <View
-            className="absolute inset-x-0 top-0 h-32"
-            style={{ backgroundColor: palette.heroSurface }}
+        <Animated.View entering={enterStagger(0)}>
+          <SettingsHeroCard
+            label="Transparenz"
+            title="Alles bleibt auf dem Gerät"
+            description="Rechtliche Texte stehen vollständig in der App. Es gibt keine Einwilligungen zu verwalten, weil nichts erhoben und nichts weitergegeben wird."
+            badges={[{ label: "Lokal" }, { label: "Kein Tracking" }]}
+            palette={palette}
           />
-          <View
-            className="absolute right-[-16px] top-[-10px] h-24 w-24 rounded-full"
-            style={{ backgroundColor: palette.motifPrimary, opacity: 0.18 }}
-          />
-          <View className="flex-row items-start justify-between gap-3">
-            <View className="flex-1">
+        </Animated.View>
+
+        <Animated.View entering={enterStagger(1)}>
+          <Card
+            className="mb-4 rounded-card"
+            style={{
+              backgroundColor: palette.cardTint,
+              borderColor: palette.accentBorder,
+              ...shadowPresets.shadowCard,
+            }}
+          >
+            <View className="flex-row items-start gap-3">
               <View
-                className="self-start rounded-full px-3 py-1.5"
-                style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
+                className="h-11 w-11 items-center justify-center rounded-tile"
+                style={{ backgroundColor: palette.heroSurface }}
               >
-                <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
-                  Transparenz
+                <ShieldCheck size={20} color={palette.accentStrong} />
+              </View>
+              <View className="flex-1">
+                <Text className="text-lg font-headline text-foreground">
+                  {privacySummary.title}
+                </Text>
+                <Text className="mt-1 text-base font-body leading-6 text-foreground">
+                  {privacySummary.statement}
                 </Text>
               </View>
-              <Text
-                className="mt-3 text-[26px] font-headline leading-[32px] text-foreground"
-                numberOfLines={2}
-                adjustsFontSizeToFit
-                minimumFontScale={0.7}
-              >
-                Rechtliches & Einwilligungen
-              </Text>
-              <Text className="mt-2 text-sm font-body leading-6" style={{ color: palette.accentText }}>
-                Links funktionieren direkt. Einwilligungen werden lokal gespeichert. Der Datenexport ist in dieser Version noch nicht verfügbar.
-              </Text>
             </View>
-            <View
-              className="rounded-[22px] px-3.5 py-3"
-              style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
-            >
-              <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
-                Status
-              </Text>
-              <Text className="mt-1 text-base font-headline" style={{ color: palette.accentText }}>
-                lokal
-              </Text>
-            </View>
-          </View>
-        </Card>
 
-        <Card
-          className="mb-4 overflow-hidden rounded-[28px] p-0"
-          style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
-        >
-          {legalItems.map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <View key={item.label}>
-                <Pressable
-                  onPress={() => handleOpenLink(item.url, item.label)}
-                  className="flex-row items-center px-4 py-4 active:bg-secondary/50"
-                >
+            <View className="mt-4 gap-2">
+              {privacySummary.points.map((point, index) => {
+                const PointIcon = summaryIcons[index] ?? ShieldCheck;
+                return (
                   <View
-                    className="h-11 w-11 items-center justify-center rounded-[18px]"
+                    key={point}
+                    className="flex-row items-start gap-3 rounded-tile px-3 py-2.5"
                     style={{ backgroundColor: palette.heroSurface }}
                   >
-                    <Icon size={20} color={palette.accentStrong} />
+                    <PointIcon size={16} color={palette.accentStrong} />
+                    <Text className="flex-1 text-sm font-body leading-5 text-muted-foreground">
+                      {point}
+                    </Text>
                   </View>
-                  <Text className="ml-3 flex-1 text-base font-body text-foreground">
-                    {item.label}
-                  </Text>
-                  <ChevronRight size={18} color={palette.accentText} />
-                </Pressable>
-                {index < legalItems.length - 1 && <Separator />}
-              </View>
-            );
-          })}
-        </Card>
+                );
+              })}
+            </View>
+          </Card>
+        </Animated.View>
 
-        <Card
-          className="mb-4 rounded-[28px]"
-          style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
-        >
-          <View className="flex-row items-center gap-3">
-            <View
-              className="h-11 w-11 items-center justify-center rounded-[18px]"
-              style={{ backgroundColor: palette.heroSurface }}
-            >
-              <Scale size={20} color={palette.accentStrong} />
-            </View>
-            <View className="flex-1">
-              <Text className="text-lg font-headline text-foreground">DSGVO</Text>
-              <Text className="text-sm font-body text-muted-foreground">
-                Exportrecht ist vorgesehen, der lokale Dateiexport folgt später.
-              </Text>
-            </View>
-          </View>
-          <Button
-            variant="outline"
-            onPress={handleExportData}
-            className="mt-4 w-full rounded-[22px] border"
-            style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.82)" }}
+        <Animated.View entering={enterStagger(2)}>
+          <Card
+            className="mb-4 overflow-hidden rounded-card p-0"
+            style={{
+              backgroundColor: palette.cardTint,
+              borderColor: palette.accentBorder,
+              ...shadowPresets.shadowCard,
+            }}
           >
-            <View className="flex-row items-center gap-2">
-              <Download size={18} color={palette.accentText} />
-              <Text className="text-base font-body-semibold" style={{ color: palette.accentText }}>
-                Datenexport folgt später
+            {legalDocuments.map((document, index) => {
+              const Icon = documentIcons[document.id];
+              const isExpanded = expandedId === document.id;
+              const Chevron = isExpanded ? ChevronUp : ChevronDown;
+
+              return (
+                <View key={document.id}>
+                  <PressableScale
+                    onPress={() => handleToggleDocument(document.id)}
+                    className="flex-row items-center px-4 py-4"
+                    accessibilityRole="button"
+                    accessibilityLabel={document.title}
+                    accessibilityHint={
+                      isExpanded ? "Text schließen" : "Text in der App öffnen"
+                    }
+                    accessibilityState={{ expanded: isExpanded }}
+                  >
+                    <View
+                      className="h-11 w-11 items-center justify-center rounded-tile"
+                      style={{ backgroundColor: palette.heroSurface }}
+                    >
+                      <Icon size={20} color={palette.accentStrong} />
+                    </View>
+                    <View className="ml-3 flex-1">
+                      <Text className="text-base font-body-semibold text-foreground">
+                        {document.title}
+                      </Text>
+                      <Text className="mt-0.5 text-sm font-body leading-5 text-muted-foreground">
+                        {document.summary}
+                      </Text>
+                    </View>
+                    <Chevron
+                      size={18}
+                      color={palette.accentText}
+                      accessibilityElementsHidden
+                      importantForAccessibility="no-hide-descendants"
+                    />
+                  </PressableScale>
+
+                  {isExpanded ? (
+                    <Animated.View
+                      entering={enterFade()}
+                      exiting={exitFade()}
+                      className="px-4 pb-5"
+                    >
+                      {document.hasPlaceholders ? (
+                        <View className="flex-row items-start gap-2 rounded-tile bg-warning-soft px-3 py-2.5">
+                          <TriangleAlert size={16} color={semanticColors.warningForeground} />
+                          <Text className="flex-1 text-sm font-body leading-5 text-warning-foreground">
+                            Angaben in eckigen Klammern sind Platzhalter und werden vor der
+                            Veröffentlichung ergänzt.
+                          </Text>
+                        </View>
+                      ) : null}
+
+                      {document.sections.map((section) => (
+                        <View key={section.heading} className="mt-4">
+                          <Text className="text-base font-body-semibold text-foreground">
+                            {section.heading}
+                          </Text>
+                          {section.paragraphs.map((paragraph) => (
+                            <Text
+                              key={paragraph}
+                              className="mt-1.5 text-sm font-body leading-6 text-muted-foreground"
+                            >
+                              {paragraph}
+                            </Text>
+                          ))}
+                        </View>
+                      ))}
+                    </Animated.View>
+                  ) : null}
+
+                  {index < legalDocuments.length - 1 ? <Separator /> : null}
+                </View>
+              );
+            })}
+          </Card>
+        </Animated.View>
+
+        <Animated.View entering={enterStagger(3)}>
+          <Card
+            className="mb-4 rounded-card"
+            style={{
+              backgroundColor: palette.cardTint,
+              borderColor: palette.accentBorder,
+              ...shadowPresets.shadowCard,
+            }}
+          >
+            <View className="flex-row items-start gap-3">
+              <View
+                className="h-11 w-11 items-center justify-center rounded-tile"
+                style={{ backgroundColor: palette.heroSurface }}
+              >
+                <Trash2 size={20} color={palette.accentStrong} />
+              </View>
+              <View className="flex-1">
+                <Text className="text-lg font-headline text-foreground">Daten löschen</Text>
+                <Text className="mt-1 text-sm font-body leading-6 text-muted-foreground">
+                  Einzelne Profile, Routinen und Belohnungen entfernst du direkt im
+                  Elternbereich. Alle lokalen Daten löschst du unter „Konto“ mit
+                  „Alles zurücksetzen“ — oder indem du die App vom Gerät entfernst.
+                </Text>
+              </View>
+            </View>
+          </Card>
+        </Animated.View>
+
+        <Animated.View entering={enterStagger(4)}>
+          <Card
+            className="mb-4 rounded-card"
+            style={{
+              backgroundColor: palette.cardTint,
+              borderColor: palette.accentBorder,
+              ...shadowPresets.shadowCard,
+            }}
+          >
+            <View className="flex-row items-start gap-3">
+              <View
+                className="h-11 w-11 items-center justify-center rounded-tile"
+                style={{ backgroundColor: palette.heroSurface }}
+              >
+                <Download size={20} color={palette.accentStrong} />
+              </View>
+              <View className="flex-1">
+                <Text className="text-lg font-headline text-foreground">Datenexport</Text>
+                <Text className="mt-1 text-sm font-body leading-6 text-muted-foreground">
+                  Sichere alle lokal gespeicherten Daten als JSON-Datei und teile sie mit dir
+                  selbst. Avatar-Fotos und die Eltern-PIN sind nicht enthalten.
+                </Text>
+              </View>
+            </View>
+            <Button
+              variant="outline"
+              onPress={() => {
+                void handleExportData();
+              }}
+              disabled={isExporting}
+              accessibilityRole="button"
+              accessibilityLabel="Daten als JSON-Datei exportieren"
+              accessibilityState={{ busy: isExporting, disabled: isExporting }}
+              className="mt-4 w-full rounded-card border"
+              style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.82)" }}
+            >
+              <View className="flex-row items-center gap-2">
+                <View className="h-[18px] w-[18px] items-center justify-center">
+                  {isExporting ? (
+                    <ActivityIndicator size="small" color={palette.accentText} />
+                  ) : (
+                    <Download size={18} color={palette.accentText} />
+                  )}
+                </View>
+                <Text
+                  className="text-base font-body-semibold"
+                  style={{ color: palette.accentText }}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  {isExporting ? "Export wird erstellt …" : "Daten exportieren"}
+                </Text>
+              </View>
+            </Button>
+          </Card>
+        </Animated.View>
+
+        <Animated.View entering={enterStagger(5)}>
+          <Card
+            className="overflow-hidden rounded-card p-0"
+            style={{
+              backgroundColor: palette.cardTint,
+              borderColor: palette.accentBorder,
+              ...shadowPresets.shadowSubtle,
+            }}
+          >
+            <View className="px-4 pt-4">
+              <Text
+                className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground"
+                accessibilityRole="header"
+                maxFontSizeMultiplier={1.3}
+              >
+                Online-Version
+              </Text>
+              <Text className="mt-1 text-sm font-body leading-5 text-muted-foreground">
+                Dieselben Texte im Web — praktisch zum Weiterleiten. Maßgeblich ist die
+                Fassung in der App.
               </Text>
             </View>
-          </Button>
-        </Card>
 
-        <Card
-          className="rounded-[28px]"
-          style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
-        >
-          <Text className="text-lg font-headline text-foreground">Einwilligungen</Text>
-          <Text className="mt-1 text-sm font-body text-muted-foreground">
-            Diese Präferenzen werden lokal auf diesem Gerät gespeichert.
+            <View className="mt-2">
+              {onlineLinks.map((item, index) => {
+                const Icon = item.icon ?? Globe;
+                return (
+                  <View key={item.label}>
+                    <PressableScale
+                      onPress={() => handleOpenLink(item.url, item.label)}
+                      className="flex-row items-center px-4 py-3"
+                      accessibilityRole="link"
+                      accessibilityLabel={item.label}
+                      accessibilityHint="Öffnet den Browser"
+                    >
+                      <Icon size={18} color={palette.accentText} />
+                      <Text className="ml-3 flex-1 text-sm font-body text-foreground">
+                        {item.label}
+                      </Text>
+                      <ChevronRight
+                        size={16}
+                        color={palette.accentText}
+                        accessibilityElementsHidden
+                        importantForAccessibility="no-hide-descendants"
+                      />
+                    </PressableScale>
+                    {index < onlineLinks.length - 1 ? <Separator /> : null}
+                  </View>
+                );
+              })}
+            </View>
+          </Card>
+        </Animated.View>
+
+        <View className="mt-6 items-center gap-1">
+          <Text className="text-xs font-body text-muted-foreground" maxFontSizeMultiplier={1.3}>
+            {appVersion ? `Routine Stars v${appVersion}` : "Routine Stars"}
           </Text>
-
-          <View className="mt-4 gap-0">
-            <View className="flex-row items-center justify-between py-3">
-              <View className="mr-3 flex-1">
-                <Text className="text-base font-body text-foreground">
-                  Analyse & Statistiken
-                </Text>
-                <Text className="text-xs font-body text-muted-foreground">
-                  Hilft uns, die App zu verbessern
-                </Text>
-              </View>
-              <Switch
-                checked={analyticsConsent}
-                onCheckedChange={(value) => {
-                  const next = {
-                    analyticsConsent: value,
-                    personalizedContent,
-                  };
-                  void persistPreferences(next);
-                  toast({
-                    title: value
-                      ? "Analyse-Präferenz gespeichert"
-                      : "Analyse-Präferenz entfernt",
-                  });
-                }}
-              />
-            </View>
-
-            <Separator />
-
-            <View className="flex-row items-center justify-between py-3">
-              <View className="mr-3 flex-1">
-                <Text className="text-base font-body text-foreground">
-                  Personalisierte Inhalte
-                </Text>
-                <Text className="text-xs font-body text-muted-foreground">
-                  Vorschläge basierend auf Nutzung
-                </Text>
-              </View>
-              <Switch
-                checked={personalizedContent}
-                onCheckedChange={(value) => {
-                  const next = {
-                    analyticsConsent,
-                    personalizedContent: value,
-                  };
-                  void persistPreferences(next);
-                  toast({
-                    title: value
-                      ? "Personalisierung lokal gespeichert"
-                      : "Personalisierung entfernt",
-                  });
-                }}
-              />
-            </View>
-          </View>
-        </Card>
-
-        <View className="mt-6 items-center">
           <Text className="text-xs font-body text-muted-foreground">
-            Routine Stars v0.1.0
+            Rechtliche Texte · Stand: {legalLastUpdated}
           </Text>
         </View>
       </ScrollView>

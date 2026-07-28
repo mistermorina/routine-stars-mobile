@@ -1,11 +1,5 @@
 import type { TimeOfDay } from "@/lib/types";
 
-export function getDefaultRoutineName(hour: number): string {
-  if (hour < 12) return "Morgenroutine";
-  if (hour < 17) return "Nachmittagsroutine";
-  return "Abendroutine";
-}
-
 export function getDefaultRoutineColor(timeOfDay: TimeOfDay): string {
   switch (timeOfDay) {
     case "morning":
@@ -19,25 +13,8 @@ export function getDefaultRoutineColor(timeOfDay: TimeOfDay): string {
   }
 }
 
-export function getDefaultStarCost(taskCategory: string): number {
-  switch (taskCategory) {
-    case "hygiene":
-      return 1;
-    case "school":
-      return 2;
-    case "household":
-      return 2;
-    default:
-      return 1;
-  }
-}
-
-export function getTimeOfDayFromHour(hour: number): TimeOfDay {
-  if (hour < 12) return "morning";
-  if (hour < 17) return "afternoon";
-  return "evening";
-}
-
+// Kept for the upcoming routine-reminder notifications (Phase 2):
+// default weekday selection per routine slot.
 export function getDefaultScheduleDays(timeOfDay: TimeOfDay): ("Mo" | "Di" | "Mi" | "Do" | "Fr" | "Sa" | "So")[] {
   switch (timeOfDay) {
     case "morning":
@@ -51,6 +28,8 @@ export function getDefaultScheduleDays(timeOfDay: TimeOfDay): ("Mo" | "Di" | "Mi
   }
 }
 
+// Kept for the upcoming routine-reminder notifications (Phase 2):
+// default push-notification body per routine slot.
 export function getDefaultReminderMessage(timeOfDay: TimeOfDay): string {
   switch (timeOfDay) {
     case "morning":

@@ -1,39 +1,38 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
-  Pressable,
   Modal,
   ScrollView,
   StyleSheet,
+  AppState,
   useWindowDimensions,
   type ImageSourcePropType,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import Animated, {
+  ReduceMotion,
+  cancelAnimation,
+  runOnJS,
   useSharedValue,
   useAnimatedStyle,
   useAnimatedProps,
+  withRepeat,
+  withSequence,
   withTiming,
   withSpring,
-  Easing,
 } from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
-import {
-  X,
-  Check,
-  Award,
-  ThumbsUp,
-  ThumbsDown,
-  Sparkles,
-  Star,
-  CircleCheckBig,
-} from "lucide-react-native";
+import { X, Check, Award, ThumbsUp, ThumbsDown, Sparkles, Star, CircleCheckBig } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
+import { PressableScale } from "@/components/ui/pressable-scale";
+import { ParentGateChallenge } from "@/components/parent-gate-challenge";
 import { Confetti } from "./confetti";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { triggerFeedback } from "@/lib/feedback";
-import { getThemePalette } from "@/lib/theme";
+import { durations, easings, modalSpring, springs, timings } from "@/lib/motion";
+import { getThemePalette, semanticColors, shadowPresets } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { ChildTheme, Task } from "@/lib/types";
 import timerChallengeBackground from "@/assets/images/timer-challenge-bg.png";
@@ -61,11 +60,66 @@ interface TaskTimerModalProps {
   onClose: (success: boolean) => void;
 }
 
-const MODAL_NAVY = "#071A49";
-const MODAL_MUTED = "#606B80";
+const MODAL_NAVY = semanticColors.foreground;
+const MODAL_MUTED = semanticColors.mutedForeground;
+const MODAL_GOLD = semanticColors.goldDeep;
+/**
+ * Bespoke skin of the timer modal — a lavender/blue world that exists nowhere
+ * else in the app and has no counterpart in the token set. Kept as named
+ * constants (never inline literals) so the surface stays swappable.
+ */
 const MODAL_BLUE = "#2F6FDC";
 const MODAL_LAVENDER_SOFT = "#F2EFFF";
-const MODAL_GOLD = "#F7B633";
+const MODAL_LAVENDER_INK = "#5364A9";
+const MODAL_SPARKLE = "#B9AAF2";
+const MODAL_GLOW = "#DDD3FF";
+const MODAL_BACKDROP = "rgba(16, 24, 48, 0.42)";
+
+/** Card entrance scale — small enough to read as "arriving", not as a zoom. */
+const CARD_ENTER_SCALE = 0.86;
+/** Card exit scale — mirrors the entrance so open and close are one gesture. */
+const CARD_EXIT_SCALE = 0.92;
+
+/**
+ * Dismissal timing, composed from motion tokens. Ease-in-out so the card
+ * leaves with intent instead of drifting; ReduceMotion.System makes it resolve
+ * instantly (and still fire its completion callback) when the OS asks for it.
+ */
+const CARD_EXIT_TIMING = {
+  duration: durations.fast,
+  easing: easings.inOut,
+  reduceMotion: ReduceMotion.System,
+} as const;
+
+/** Last stretch of the countdown, where the ring is nearly closed. */
+const FINAL_COUNTDOWN_SECONDS = 10;
+const COUNTDOWN_PULSE_SCALE = 1.05;
+/** ~800ms per beat: urgent enough to notice, calm enough for a kids app. */
+const COUNTDOWN_PULSE_TIMING = {
+  duration: durations.slow,
+  easing: easings.inOut,
+  reduceMotion: ReduceMotion.System,
+} as const;
+
+/**
+ * Wall-clock resync cadence. The interval never *counts* — it only re-reads
+ * `Date.now()` against the stored end timestamp, so locking the phone or
+ * backgrounding the app cannot slow the countdown down.
+ */
+const TIMER_TICK_MS = durations.base;
+
+/**
+ * One tick of ring travel per tick of clock: same duration as the resync
+ * cadence plus linear easing, so the sweep is continuous instead of stepped.
+ */
+const RING_TIMING = {
+  duration: durations.base,
+  easing: easings.linear,
+  reduceMotion: ReduceMotion.System,
+} as const;
+
+/** How long the success screen stays up before the modal reports back. */
+const SUCCESS_CLOSE_DELAY_MS = 2500;
 
 function ModalBadge({ label }: { label: string }) {
   return (
@@ -74,8 +128,9 @@ function ModalBadge({ label }: { label: string }) {
       style={{ backgroundColor: MODAL_LAVENDER_SOFT }}
     >
       <Text
-        className="text-[11px] font-body-bold uppercase tracking-[1px]"
-        style={{ color: "#5364A9" }}
+        className="text-xs font-body-bold uppercase tracking-[1px]"
+        style={{ color: MODAL_LAVENDER_INK }}
+        maxFontSizeMultiplier={1.2}
       >
         {label}
       </Text>
@@ -128,15 +183,33 @@ export function TaskTimerModal({
   onClose,
 }: TaskTimerModalProps) {
   const [timeLeft, setTimeLeft] = useState(0);
-  const [isActive, setIsActive] = useState(false);
+  const [endTimestamp, setEndTimestamp] = useState<number | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [timerState, setTimerState] = useState<TimerState>("running");
+  const [isParentGateVisible, setIsParentGateVisible] = useState(false);
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const reduceMotion = useReducedMotion();
+
+  const successTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const circleProgress = useSharedValue(0);
-  const contentScale = useSharedValue(0.8);
+  const contentScale = useSharedValue(CARD_ENTER_SCALE);
   const contentOpacity = useSharedValue(0);
+  const backdropOpacity = useSharedValue(0);
+  const countdownPulse = useSharedValue(1);
+
+  // The card outlives `task` by one exit animation so closing is a scale-down
+  // instead of the Modal ripping its children out of the tree mid-frame.
+  const [renderedTask, setRenderedTask] = useState<Task | null>(task);
+  if (task && task.id !== renderedTask?.id) {
+    // Adjusted during render, not in an effect: an effect would leave the modal
+    // blank for one commit before the incoming task reached the tree.
+    setRenderedTask(task);
+  }
+
+  const taskId = task?.id ?? null;
+  const totalSeconds = Math.max(0, Math.round((task?.timerInMinutes ?? 0) * 60));
 
   const palette = getThemePalette(childTheme);
   const isCompactLayout = screenHeight < 760;
@@ -165,46 +238,134 @@ export function TaskTimerModal({
   const timerArtImageSize = isCompactLayout ? 86 : 98;
   const modalMaxWidth = Math.min(screenWidth - 34, 372);
 
+  // Anchor the run to a wall-clock end timestamp, keyed on the task identity so
+  // an unrelated re-render of the parent can never restart a running countdown.
   useEffect(() => {
-    if (task && task.timerInMinutes) {
-      setTimeLeft(task.timerInMinutes * 60);
-      setIsActive(true);
-      setTimerState("running");
-      setShowConfetti(false);
-      circleProgress.value = 0;
-      contentScale.value = withSpring(1, { damping: 15, stiffness: 200 });
-      contentOpacity.value = withTiming(1, { duration: 300 });
-    } else {
-      setIsActive(false);
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = null;
     }
-  }, [task, circleProgress, contentOpacity, contentScale]);
 
-  useEffect(() => {
-    if (!isActive || timeLeft <= 0) {
-      if (isActive && timeLeft <= 0) {
-        setIsActive(false);
-        setTimerState("confirming");
-      }
+    setIsParentGateVisible(false);
+
+    if (!taskId || totalSeconds <= 0) {
+      // Leave the animated values alone — a pending exit animation owns them.
+      setEndTimestamp(null);
       return;
     }
 
-    const intervalId = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
+    setTimeLeft(totalSeconds);
+    setEndTimestamp(Date.now() + totalSeconds * 1000);
+    setTimerState("running");
+    setShowConfetti(false);
+    circleProgress.value = 0;
 
-    return () => clearInterval(intervalId);
-  }, [isActive, timeLeft]);
+    // Explicit start values so a re-open right after a dismissal still gets the
+    // full entrance instead of springing from wherever the exit stopped.
+    backdropOpacity.value = 0;
+    contentOpacity.value = 0;
+    contentScale.value = CARD_ENTER_SCALE;
+
+    backdropOpacity.value = withTiming(1, timings.base);
+    contentOpacity.value = withTiming(1, timings.fast);
+    contentScale.value = withSpring(1, modalSpring);
+  }, [taskId, totalSeconds, backdropOpacity, circleProgress, contentOpacity, contentScale]);
+
+  // Dismissal: mirror the entrance, then drop the card from the tree. A re-open
+  // mid-exit cancels these animations, so the callback lands with
+  // `finished === false` and never unmounts a card that is coming back.
+  useEffect(() => {
+    if (task || !renderedTask) {
+      return;
+    }
+
+    backdropOpacity.value = withTiming(0, timings.fast);
+    contentOpacity.value = withTiming(0, timings.fast);
+    contentScale.value = withTiming(CARD_EXIT_SCALE, CARD_EXIT_TIMING, (finished) => {
+      if (finished) {
+        runOnJS(setRenderedTask)(null);
+      }
+    });
+  }, [backdropOpacity, contentOpacity, contentScale, renderedTask, task]);
+
+  // The only source of truth is `endTimestamp - Date.now()`; the interval and
+  // the foreground listener merely resync. Returning from background past zero
+  // therefore lands directly in the parent-check step.
+  useEffect(() => {
+    if (timerState !== "running" || endTimestamp === null || totalSeconds <= 0) {
+      return;
+    }
+
+    const totalMs = totalSeconds * 1000;
+
+    const syncToWallClock = () => {
+      const remainingMs = Math.max(0, endTimestamp - Date.now());
+      const remaining = Math.ceil(remainingMs / 1000);
+
+      setTimeLeft((previous) => (previous === remaining ? previous : remaining));
+      circleProgress.value = withTiming(
+        Math.min(1, Math.max(0, 1 - remainingMs / totalMs)),
+        RING_TIMING
+      );
+
+      if (remainingMs === 0) {
+        setTimerState("confirming");
+      }
+    };
+
+    syncToWallClock();
+
+    const intervalId = setInterval(syncToWallClock, TIMER_TICK_MS);
+    const appStateSubscription = AppState.addEventListener("change", (nextAppState) => {
+      if (nextAppState === "active") {
+        syncToWallClock();
+      }
+    });
+
+    return () => {
+      clearInterval(intervalId);
+      appStateSubscription.remove();
+    };
+  }, [circleProgress, endTimestamp, timerState, totalSeconds]);
+
+  // Decorative heartbeat for the closing seconds. Infinite loop, so it needs
+  // the explicit reduced-motion gate on top of the token's ReduceMotion.System.
+  const isFinalCountdown =
+    timerState === "running" &&
+    endTimestamp !== null &&
+    timeLeft > 0 &&
+    timeLeft <= FINAL_COUNTDOWN_SECONDS;
 
   useEffect(() => {
-    if (task && task.timerInMinutes) {
-      const totalSeconds = task.timerInMinutes * 60;
-      const progress = totalSeconds > 0 ? (totalSeconds - timeLeft) / totalSeconds : 0;
-      circleProgress.value = withTiming(progress, {
-        duration: 1000,
-        easing: Easing.linear,
-      });
+    if (!isFinalCountdown || reduceMotion) {
+      cancelAnimation(countdownPulse);
+      countdownPulse.value = withTiming(1, timings.fast);
+      return;
     }
-  }, [timeLeft, task, circleProgress]);
+
+    countdownPulse.value = withRepeat(
+      withSequence(
+        withTiming(COUNTDOWN_PULSE_SCALE, COUNTDOWN_PULSE_TIMING),
+        withTiming(1, COUNTDOWN_PULSE_TIMING)
+      ),
+      -1,
+      false
+    );
+
+    return () => {
+      cancelAnimation(countdownPulse);
+    };
+  }, [countdownPulse, isFinalCountdown, reduceMotion]);
+
+  useEffect(
+    () => () => {
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current);
+        successTimeoutRef.current = null;
+      }
+    },
+    []
+  );
 
   const circleAnimatedProps = useAnimatedProps(() => ({
     strokeDashoffset: circumference * (1 - circleProgress.value),
@@ -215,27 +376,60 @@ export function TaskTimerModal({
     opacity: contentOpacity.value,
   }));
 
+  const backdropAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: backdropOpacity.value,
+  }));
+
+  const countdownAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: countdownPulse.value }],
+  }));
+
   const handleChildFinished = () => {
-    setIsActive(false);
     setTimerState("confirming");
   };
 
   const handleParentConfirmation = useCallback(
     (success: boolean) => {
-      if (success) {
-        setTimerState("success");
-        setShowConfetti(true);
-        void triggerFeedback("stars_added");
-        contentScale.value = withSpring(1, { damping: 15, stiffness: 200 });
-        setTimeout(() => {
-          onClose(true);
-        }, 2500);
-      } else {
+      if (!success) {
         onClose(false);
+        return;
       }
+
+      setTimerState("success");
+      setShowConfetti(true);
+      void triggerFeedback("stars_added");
+      // Small "yes!" pop as the card swaps to the success face.
+      contentScale.value = withSequence(
+        withSpring(1.03, springs.playful),
+        withSpring(1, springs.gentle)
+      );
+
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current);
+      }
+
+      successTimeoutRef.current = setTimeout(() => {
+        successTimeoutRef.current = null;
+        onClose(true);
+      }, SUCCESS_CLOSE_DELAY_MS);
     },
     [contentScale, onClose]
   );
+
+  // The bonus is real currency for the child, so only an adult may grant it.
+  // The gate sits on the confirming tap alone — declining stays one tap.
+  const handleParentApprovalRequest = useCallback(() => {
+    setIsParentGateVisible(true);
+  }, []);
+
+  const handleParentGateSuccess = useCallback(() => {
+    setIsParentGateVisible(false);
+    handleParentConfirmation(true);
+  }, [handleParentConfirmation]);
+
+  const handleParentGateCancel = useCallback(() => {
+    setIsParentGateVisible(false);
+  }, []);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -243,12 +437,12 @@ export function TaskTimerModal({
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  if (!task) {
+  if (!renderedTask) {
     return null;
   }
 
-  const visibleBonusStars = Math.max(task.bonusStars ?? 0, 0);
-  const timerArtImage = getTimerArt(task);
+  const visibleBonusStars = Math.max(renderedTask.bonusStars ?? 0, 0);
+  const timerArtImage = getTimerArt(renderedTask);
   const cardBackgroundImage =
     timerState === "running"
       ? timerChallengeBackground
@@ -266,46 +460,49 @@ export function TaskTimerModal({
 
   return (
     <Modal
-      visible={!!task}
+      visible={!!renderedTask}
       transparent
-      animationType="fade"
+      animationType="none"
       onRequestClose={() => onClose(false)}
     >
       <View
         className="flex-1 px-4"
         style={{
-          backgroundColor: "rgba(16, 24, 48, 0.42)",
           paddingTop: modalPaddingTop,
           paddingBottom: modalPaddingBottom,
         }}
       >
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFillObject,
+            { backgroundColor: MODAL_BACKDROP },
+            backdropAnimatedStyle,
+          ]}
+        />
+
         {showConfetti && <Confetti colors={palette.celebrationColors} />}
 
         <View className="flex-1 items-center justify-center">
           <Animated.View
             className="w-full items-center self-center"
+            pointerEvents={task ? "auto" : "none"}
             style={[
               contentAnimatedStyle,
               {
                 maxWidth: modalMaxWidth,
                 maxHeight: modalMaxHeight,
-                shadowColor: "#2E3A68",
-                shadowOpacity: 0.2,
-                shadowRadius: 30,
-                shadowOffset: { width: 0, height: 18 },
+                ...shadowPresets.shadowFloating,
               },
             ]}
           >
             <View
               className="w-full overflow-hidden rounded-[32px] border"
               style={{
-                backgroundColor: "#FBFAFF",
+                backgroundColor: semanticColors.card,
                 borderColor: "rgba(255,255,255,0.88)",
                 maxHeight: modalMaxHeight,
-                shadowColor: "#9DB8D8",
-                shadowOpacity: 0.18,
-                shadowRadius: 28,
-                shadowOffset: { width: 0, height: 12 },
+                ...shadowPresets.shadowCard,
               }}
             >
               <Image
@@ -313,6 +510,8 @@ export function TaskTimerModal({
                 style={StyleSheet.absoluteFillObject}
                 contentFit="cover"
                 transition={160}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
               />
               <View
                 style={[
@@ -348,7 +547,7 @@ export function TaskTimerModal({
                         minimumFontScale={0.68}
                         style={{ color: MODAL_NAVY }}
                       >
-                        {task.title}
+                        {renderedTask.title}
                       </Text>
                       <Text
                         className={cn(
@@ -417,45 +616,51 @@ export function TaskTimerModal({
                             }}
                             contentFit="contain"
                             transition={160}
+                            accessibilityElementsHidden
+                            importantForAccessibility="no-hide-descendants"
                           />
                         </View>
-                        <Text
-                          className="font-body-bold"
-                          numberOfLines={1}
-                          adjustsFontSizeToFit
-                          minimumFontScale={0.72}
-                          maxFontSizeMultiplier={timerTextMaxFontMultiplier}
-                          style={{
-                            fontSize: timerTextFontSize,
-                            lineHeight: timerTextLineHeight,
-                            color: MODAL_NAVY,
-                            marginTop: -2,
-                          }}
-                        >
-                          {formatTime(timeLeft)}
-                        </Text>
+                        <Animated.View style={countdownAnimatedStyle}>
+                          <Text
+                            className="font-body-bold"
+                            numberOfLines={1}
+                            adjustsFontSizeToFit
+                            minimumFontScale={0.72}
+                            maxFontSizeMultiplier={timerTextMaxFontMultiplier}
+                            style={{
+                              fontSize: timerTextFontSize,
+                              lineHeight: timerTextLineHeight,
+                              color: MODAL_NAVY,
+                              marginTop: -2,
+                            }}
+                          >
+                            {formatTime(timeLeft)}
+                          </Text>
+                        </Animated.View>
                       </View>
                     </View>
 
                     <Button
                       onPress={handleChildFinished}
+                      accessibilityRole="button"
+                      accessibilityLabel="Aufgabe als fertig melden"
                       className={cn(
-                        "mb-4 w-full max-w-[320px] rounded-[22px]",
+                        "mb-4 w-full max-w-[320px] rounded-card",
                         isCompactLayout ? "h-[54px]" : "h-[60px]"
                       )}
                       size="lg"
                       style={{
                         backgroundColor: MODAL_BLUE,
-                        shadowColor: MODAL_BLUE,
-                        shadowOpacity: 0.26,
-                        shadowRadius: 12,
-                        shadowOffset: { width: 0, height: 8 },
+                        ...shadowPresets.shadowCard,
                       }}
                       textClassName="text-white"
                     >
                       <View className="flex-row items-center gap-3">
-                        <Check size={22} color="#FFFFFF" />
-                        <Text className="text-lg font-body-bold leading-6 text-white">
+                        <Check size={22} color={semanticColors.card} />
+                        <Text
+                          className="text-lg font-body-bold leading-6 text-white"
+                          maxFontSizeMultiplier={1.3}
+                        >
                           Fertig!
                         </Text>
                       </View>
@@ -464,7 +669,11 @@ export function TaskTimerModal({
                     {visibleBonusStars > 0 ? (
                       <View className="flex-row items-center gap-2">
                         <Award size={19} color={MODAL_GOLD} />
-                        <Text className="text-sm font-body-semibold leading-5" style={{ color: "#5364A9" }}>
+                        <Text
+                          className="text-sm font-body-semibold leading-5"
+                          style={{ color: MODAL_LAVENDER_INK }}
+                          maxFontSizeMultiplier={1.3}
+                        >
                           +{visibleBonusStars} Bonus-Sterne
                         </Text>
                       </View>
@@ -494,7 +703,8 @@ export function TaskTimerModal({
                       )}
                       style={{ color: MODAL_MUTED }}
                     >
-                      Bestätige, ob die Aufgabe rechtzeitig erledigt wurde.
+                      Bestätige, ob die Aufgabe rechtzeitig erledigt wurde. Für „Ja“ folgt eine
+                      kurze Eltern-Frage.
                     </Text>
 
                     <View
@@ -511,44 +721,52 @@ export function TaskTimerModal({
                         }}
                         contentFit="contain"
                         transition={160}
+                        accessibilityElementsHidden
+                        importantForAccessibility="no-hide-descendants"
                       />
                       <Sparkles
                         size={18}
-                        color="#B9AAF2"
+                        color={MODAL_SPARKLE}
                         style={{ position: "absolute", right: 4, top: 18 }}
                       />
                       <Star
                         size={13}
-                        color="#B9AAF2"
-                        fill="#B9AAF2"
+                        color={MODAL_SPARKLE}
+                        fill={MODAL_SPARKLE}
                         style={{ position: "absolute", left: 10, bottom: 26 }}
                       />
                     </View>
                     <View className="w-full max-w-[320px] flex-row gap-3">
-                      <Pressable
-                        onPress={() => handleParentConfirmation(true)}
-                        className="h-[58px] flex-1 items-center justify-center rounded-[20px]"
+                      <PressableScale
+                        onPress={handleParentApprovalRequest}
+                        containerClassName="flex-1"
+                        className="h-[58px] items-center justify-center rounded-card"
                         style={{
                           backgroundColor: MODAL_BLUE,
-                          shadowColor: MODAL_BLUE,
-                          shadowOpacity: 0.24,
-                          shadowRadius: 10,
-                          shadowOffset: { width: 0, height: 7 },
+                          ...shadowPresets.shadowCard,
                         }}
                         accessibilityRole="button"
                         accessibilityLabel={`${childName} hat die Aufgabe geschafft`}
+                        accessibilityHint="Öffnet den Eltern-Check zum Bestätigen der Bonus-Sterne"
                       >
                         <View className="flex-row items-center gap-2">
-                          <ThumbsUp size={24} color="#FFFFFF" />
-                          <Text className="text-lg font-body-bold leading-6 text-white">
+                          <ThumbsUp size={24} color={semanticColors.card} />
+                          <Text
+                            className="text-lg font-body-bold leading-6 text-white"
+                            maxFontSizeMultiplier={1.3}
+                          >
                             Ja!
                           </Text>
                         </View>
-                      </Pressable>
-                      <Pressable
+                      </PressableScale>
+                      <PressableScale
                         onPress={() => handleParentConfirmation(false)}
-                        className="h-[58px] flex-1 items-center justify-center rounded-[20px] border"
-                        style={{ backgroundColor: "#FFFFFF", borderColor: "rgba(7,26,73,0.28)" }}
+                        containerClassName="flex-1"
+                        className="h-[58px] items-center justify-center rounded-card border"
+                        style={{
+                          backgroundColor: semanticColors.card,
+                          borderColor: "rgba(7,26,73,0.28)",
+                        }}
                         accessibilityRole="button"
                         accessibilityLabel={`${childName} hat die Aufgabe nicht geschafft`}
                       >
@@ -557,11 +775,12 @@ export function TaskTimerModal({
                           <Text
                             className="text-lg font-body-bold leading-6"
                             style={{ color: MODAL_BLUE }}
+                            maxFontSizeMultiplier={1.3}
                           >
                             Nein
                           </Text>
                         </View>
-                      </Pressable>
+                      </PressableScale>
                     </View>
                   </>
                 )}
@@ -576,11 +795,11 @@ export function TaskTimerModal({
                     >
                       <View
                         className="absolute h-32 w-32 rounded-full"
-                        style={{ backgroundColor: "#DDD3FF", opacity: 0.8 }}
+                        style={{ backgroundColor: MODAL_GLOW, opacity: 0.8 }}
                       />
                       <Sparkles
                         size={18}
-                        color="#B9AAF2"
+                        color={MODAL_SPARKLE}
                         style={{ position: "absolute", left: 24, top: 22 }}
                       />
                       <Star
@@ -597,6 +816,8 @@ export function TaskTimerModal({
                         }}
                         contentFit="contain"
                         transition={160}
+                        accessibilityElementsHidden
+                        importantForAccessibility="no-hide-descendants"
                       />
                     </View>
                     <Text
@@ -616,17 +837,21 @@ export function TaskTimerModal({
                     </Text>
                     <View
                       className="mb-1 h-[58px] w-[58px] items-center justify-center rounded-full"
-                      style={{ backgroundColor: "#F0F7EC" }}
+                      style={{ backgroundColor: semanticColors.successSoft }}
                     >
                       <View
                         className="h-[42px] w-[42px] items-center justify-center rounded-full"
                         style={{
-                          backgroundColor: "#FFFFFF",
-                          borderColor: "#DCEED3",
+                          backgroundColor: semanticColors.card,
+                          borderColor: semanticColors.success,
                           borderWidth: 1,
                         }}
                       >
-                        <CircleCheckBig size={27} color="#7FB565" strokeWidth={3} />
+                        <CircleCheckBig
+                          size={27}
+                          color={semanticColors.success}
+                          strokeWidth={3}
+                        />
                       </View>
                     </View>
                     {visibleBonusStars > 0 ? (
@@ -637,7 +862,8 @@ export function TaskTimerModal({
                         <Award size={28} color={MODAL_GOLD} />
                         <Text
                           className="text-center text-base font-body-bold leading-6"
-                          style={{ color: "#5364A9" }}
+                          style={{ color: MODAL_LAVENDER_INK }}
+                          maxFontSizeMultiplier={1.3}
                         >
                           +{visibleBonusStars} Bonus-Sterne!
                         </Text>
@@ -649,24 +875,29 @@ export function TaskTimerModal({
               </ScrollView>
             </View>
 
-            <Pressable
+            <PressableScale
               onPress={() => onClose(false)}
-              className="absolute right-[-8px] top-[-12px] z-50 h-12 w-12 items-center justify-center rounded-full"
+              containerClassName="absolute right-[-8px] top-[-12px] z-50"
+              className="h-12 w-12 items-center justify-center rounded-full"
               style={{
-                backgroundColor: "#FFFFFF",
-                shadowColor: "#2E3A68",
-                shadowOpacity: 0.14,
-                shadowRadius: 10,
-                shadowOffset: { width: 0, height: 5 },
+                backgroundColor: semanticColors.card,
+                ...shadowPresets.shadowSubtle,
               }}
               hitSlop={12}
               accessibilityRole="button"
               accessibilityLabel="Timer schließen"
             >
               <X size={25} color={MODAL_NAVY} />
-            </Pressable>
+            </PressableScale>
           </Animated.View>
         </View>
+
+        <ParentGateChallenge
+          visible={isParentGateVisible}
+          title="Eltern-Check"
+          onSuccess={handleParentGateSuccess}
+          onCancel={handleParentGateCancel}
+        />
       </View>
     </Modal>
   );

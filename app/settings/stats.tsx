@@ -1,17 +1,18 @@
 import React, { useMemo } from "react";
-import { View, Text, ScrollView, Pressable } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
-import { BarChart3, Sparkles, Star } from "lucide-react-native";
+import { BarChart3, Sparkles, Star } from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
 import { Card } from "@/components/ui/card";
 import { AvatarImage } from "@/components/ui/avatar-image";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
 import { SettingsMetricCard } from "@/components/settings/settings-metric-card";
 import { formatFriendlyDate, getActivityInsights } from "@/lib/activity-insights";
-import { getThemePalette } from "@/lib/theme";
+import { getThemePalette, semanticColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 const WEEKDAY_SHORT = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"] as const;
@@ -74,20 +75,18 @@ export default function StatsSettings() {
     >
       <ScrollView className="flex-1" contentContainerClassName="p-4 pb-8">
         {children.length > 1 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="mb-4"
-            contentContainerClassName="gap-2"
-          >
+          <View className="mb-4 flex-row flex-wrap gap-2">
             {children.map((child) => (
-              <Pressable
+              <PressableScale
                 key={child.id}
                 onPress={() => selectChild(child.id)}
                 className={cn(
-                  "flex-row items-center rounded-full border px-4 py-2",
+                  "min-h-11 flex-row items-center rounded-full border px-4 py-2",
                   selectedChildId === child.id ? "" : "border-border"
                 )}
+                accessibilityRole="button"
+                accessibilityLabel={`${child.name} auswählen`}
+                accessibilityState={{ selected: selectedChildId === child.id }}
                 style={
                   selectedChildId === child.id
                     ? {
@@ -107,14 +106,19 @@ export default function StatsSettings() {
                 <Text
                   className="text-sm font-body-semibold"
                   style={{
-                    color: selectedChildId === child.id ? palette.accentText : "#1a1a2e",
+                    color:
+                      selectedChildId === child.id
+                        ? palette.accentText
+                        : semanticColors.foreground,
                   }}
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={1.3}
                 >
                   {child.name}
                 </Text>
-              </Pressable>
+              </PressableScale>
             ))}
-          </ScrollView>
+          </View>
         )}
 
         <Animated.View entering={FadeInDown.duration(300)}>
@@ -135,7 +139,10 @@ export default function StatsSettings() {
           >
             <View className="flex-row items-center gap-4">
               <View className="min-w-0 flex-1">
-                <Text className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground">
+                <Text
+                  className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground"
+                  maxFontSizeMultiplier={1.3}
+                >
                   Diese Woche
                 </Text>
                 <Text className="mt-1 text-[40px] font-headline leading-[46px] text-foreground">
@@ -145,7 +152,12 @@ export default function StatsSettings() {
                   An {activeDaysThisWeek} von 7 Tagen wurden Aufgaben erledigt.
                 </Text>
               </View>
-              <View className="h-[128px] w-[128px] items-center justify-center">
+              <View
+                className="h-[128px] w-[128px] items-center justify-center"
+                accessible
+                accessibilityRole="image"
+                accessibilityLabel={`An ${activeDaysThisWeek} von 7 Tagen aktiv, ${weekPercent} Prozent`}
+              >
                 <Svg width={128} height={128} viewBox="0 0 128 128">
                   <Circle
                     cx={64}
@@ -170,10 +182,17 @@ export default function StatsSettings() {
                   />
                 </Svg>
                 <View className="absolute items-center">
-                  <Text className="text-lg font-headline" style={{ color: palette.accentText }}>
+                  <Text
+                    className="text-lg font-headline"
+                    style={{ color: palette.accentText }}
+                    maxFontSizeMultiplier={1.2}
+                  >
                     {activeDaysThisWeek}/7
                   </Text>
-                  <Text className="text-[10px] font-body-semibold text-muted-foreground">
+                  <Text
+                    className="text-xs font-body-semibold text-muted-foreground"
+                    maxFontSizeMultiplier={1.2}
+                  >
                     Tagen
                   </Text>
                 </View>
@@ -190,7 +209,7 @@ export default function StatsSettings() {
             >
               <View className="flex-row items-center gap-3">
                 <View
-                  className="h-11 w-11 items-center justify-center rounded-[18px]"
+                  className="h-11 w-11 items-center justify-center rounded-tile"
                   style={{ backgroundColor: palette.heroSurface }}
                 >
                   <Sparkles size={20} color={palette.accentStrong} />
@@ -252,10 +271,12 @@ export default function StatsSettings() {
             <View
               className="absolute right-[-12px] top-[-10px] h-20 w-20 rounded-full"
               style={{ backgroundColor: palette.motifSecondary, opacity: 0.16 }}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
             />
             <View className="flex-row items-center gap-3">
               <View
-                className="h-11 w-11 items-center justify-center rounded-[18px]"
+                className="h-11 w-11 items-center justify-center rounded-tile"
                 style={{ backgroundColor: palette.heroSurface }}
               >
                 <BarChart3 size={20} color={palette.accentStrong} />
@@ -279,7 +300,12 @@ export default function StatsSettings() {
                       : 6;
 
                   return (
-                    <View key={day.date} className="flex-1 items-center">
+                    <View
+                      key={day.date}
+                      className="flex-1 items-center"
+                      accessible
+                      accessibilityLabel={`${day.weekday}: ${day.totalStars} Sterne`}
+                    >
                       <View
                         className="w-full rounded-full"
                         style={{
@@ -295,8 +321,11 @@ export default function StatsSettings() {
                           day.isToday ? "font-body-bold" : "font-body-semibold"
                         )}
                         style={{
-                          color: day.isToday ? palette.accentText : "#8E99A6",
+                          color: day.isToday
+                            ? palette.accentText
+                            : semanticColors.mutedForeground,
                         }}
+                        maxFontSizeMultiplier={1.2}
                       >
                         {day.weekday}
                       </Text>
@@ -320,12 +349,24 @@ export default function StatsSettings() {
             <View
               className="absolute right-[-14px] top-[-10px] h-20 w-20 rounded-full"
               style={{ backgroundColor: palette.motifSecondary, opacity: 0.16 }}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
             />
             <View className="flex-row items-center justify-between">
               <Text className="text-lg font-headline text-foreground">Letzte Einträge</Text>
               <View className="flex-row items-center gap-1">
-                <Star size={14} color="#FFD700" fill="#FFD700" />
-                <Text className="text-sm font-body-semibold text-muted-foreground">
+                <Star
+                  size={14}
+                  color={semanticColors.gold}
+                  fill={semanticColors.gold}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                />
+                <Text
+                  className="text-sm font-body-semibold text-muted-foreground"
+                  maxFontSizeMultiplier={1.3}
+                  accessibilityLabel={`${insights.totalStars} Sterne gesamt`}
+                >
                   {insights.totalStars}
                 </Text>
               </View>
@@ -340,7 +381,7 @@ export default function StatsSettings() {
                 {groupedLogs.map((group) => (
                   <View
                     key={group.date}
-                    className="rounded-[22px] border px-4 py-4"
+                    className="rounded-card border px-4 py-4"
                     style={{
                       backgroundColor: "rgba(255,255,255,0.76)",
                       borderColor: palette.accentBorder,
@@ -350,7 +391,11 @@ export default function StatsSettings() {
                       <Text className="text-base font-headline text-foreground">
                         {formatFriendlyDate(group.date)}
                       </Text>
-                      <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>
+                      <Text
+                        className="text-sm font-body-semibold"
+                        style={{ color: palette.accentText }}
+                        maxFontSizeMultiplier={1.3}
+                      >
                         {group.totalStars} Sterne
                       </Text>
                     </View>
@@ -361,7 +406,7 @@ export default function StatsSettings() {
                             {entry.taskTitle}
                           </Text>
                           <Text className="text-sm font-body-semibold text-muted-foreground">
-                            +{entry.stars}
+                            {entry.stars >= 0 ? `+${entry.stars}` : `${entry.stars}`}
                           </Text>
                         </View>
                       ))}

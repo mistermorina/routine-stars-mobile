@@ -1,11 +1,20 @@
-import React from "react";
-import { Pressable, ScrollView, View, Text } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
-import { Settings, Star, Flame, Trophy, Sparkles } from "lucide-react-native";
+import React, { useEffect } from "react";
+import { View, Text, useWindowDimensions } from "react-native";
+import Animated, {
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import { Settings, Star, Flame, Trophy, Sparkles } from "@/lib/icons";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 import { Card } from "@/components/ui/card";
 import { AvatarImage } from "@/components/ui/avatar-image";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { SoftHeroWash } from "@/components/ui/soft-hero-wash";
-import type { ThemePalette } from "@/lib/theme";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { timings } from "@/lib/motion";
+import { semanticColors, type ThemePalette } from "@/lib/theme";
 import type { Child } from "@/lib/types";
 
 interface ProfileHeroCardProps {
@@ -29,12 +38,34 @@ export function ProfileHeroCard({
   onSelectChild,
   onSettingsPress,
 }: ProfileHeroCardProps) {
+  const { width } = useWindowDimensions();
+  const reduceMotion = useReducedMotion();
+  const isCompactWidth = width < 380;
   const hasChildSwitcher = Boolean(allChildren && allChildren.length > 1 && onSelectChild);
+
+  // Honest XP: how far this child is toward the next reward.
+  const rewardCost = nextReward ? stars + nextReward.missingStars : 0;
+  const rewardProgress = nextReward
+    ? Math.min(1, Math.max(0, rewardCost > 0 ? stars / rewardCost : 0))
+    : 1;
+  const rewardPercent = Math.round(rewardProgress * 100);
+  const fill = useSharedValue(0);
+
+  useEffect(() => {
+    fill.value = reduceMotion ? rewardProgress : withTiming(rewardProgress, timings.slow);
+  }, [fill, reduceMotion, rewardProgress]);
+
+  // scaleX only — the fill is twice the track's width and hangs one track to the
+  // left, so its center sits exactly on the track's left edge and center-origin
+  // scaling reads as a left-anchored fill. No width/layout animation.
+  const fillStyle = useAnimatedStyle(() => ({
+    transform: [{ scaleX: fill.value }],
+  }));
 
   return (
     <Animated.View entering={FadeInDown.duration(320)}>
       <Card
-        className="overflow-hidden rounded-[24px] px-4 pb-4 pt-4"
+        className="overflow-hidden rounded-card px-4 pb-4 pt-4"
         style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
       >
         <SoftHeroWash
@@ -45,10 +76,14 @@ export function ProfileHeroCard({
         <View
           className="absolute right-[-30px] top-[-26px] h-36 w-36 rounded-full"
           style={{ backgroundColor: palette.motifSecondary, opacity: 0.28 }}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
         />
         <View
           className="absolute left-[-18px] bottom-10 h-24 w-24 rounded-full"
           style={{ backgroundColor: palette.motifPrimary, opacity: 0.16 }}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
         />
         <View className="relative">
           <View className="flex-row items-start justify-between gap-3">
@@ -72,7 +107,12 @@ export function ProfileHeroCard({
                     className="rounded-full px-2.5 py-1"
                     style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
                   >
-                    <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px]" style={{ color: palette.accentText }}>
+                    <Text
+                      className="text-xs font-body-semibold uppercase tracking-[0.6px]"
+                      style={{ color: palette.accentText }}
+                      numberOfLines={1}
+                      maxFontSizeMultiplier={1.3}
+                    >
                       Storyworld
                     </Text>
                   </View>
@@ -81,7 +121,12 @@ export function ProfileHeroCard({
                     style={{ backgroundColor: palette.tabActiveBg }}
                   >
                     <Sparkles size={12} color={palette.accentStrong} />
-                    <Text className="text-[10px] font-body-semibold" style={{ color: palette.accentText }}>
+                    <Text
+                      className="text-xs font-body-semibold"
+                      style={{ color: palette.accentText }}
+                      numberOfLines={1}
+                      maxFontSizeMultiplier={1.3}
+                    >
                       Im Flow
                     </Text>
                   </View>
@@ -91,16 +136,17 @@ export function ProfileHeroCard({
                   numberOfLines={1}
                   adjustsFontSizeToFit
                   minimumFontScale={0.82}
+                  maxFontSizeMultiplier={1.3}
                 >
                   {child.name}
                 </Text>
-                <Text className="mt-1 text-sm font-body leading-5" style={{ color: palette.accentText }}>
+                <Text className="mt-1 text-base font-body leading-6" style={{ color: palette.accentText }}>
                   Fortschritt, Sterne und schöne Momente an einem Ort.
                 </Text>
               </View>
             </View>
             {onSettingsPress ? (
-              <Pressable
+              <PressableScale
                 onPress={onSettingsPress}
                 className="h-11 w-11 items-center justify-center rounded-full"
                 style={{ backgroundColor: "rgba(255,255,255,0.82)" }}
@@ -109,51 +155,69 @@ export function ProfileHeroCard({
                 accessibilityLabel="Elternbereich öffnen"
               >
                 <Settings size={20} color={palette.accentText} />
-              </Pressable>
+              </PressableScale>
             ) : null}
           </View>
 
-          <View className="mt-5 flex-row gap-3">
+          <View className={isCompactWidth ? "mt-5 gap-3" : "mt-5 flex-row gap-3"}>
             <View
-              className="flex-1 rounded-[18px] px-4 py-3.5"
+              className={isCompactWidth ? "rounded-tile px-4 py-3.5" : "flex-1 rounded-tile px-4 py-3.5"}
               style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
             >
               <View className="flex-row items-center gap-2">
-                <Star size={17} color="#FFD700" fill="#FFD700" />
-                <Text className="text-sm font-body-semibold text-muted-foreground">Sterne</Text>
+                <Star size={17} color={semanticColors.gold} fill={semanticColors.gold} />
+                <Text
+                  className="text-sm font-body-semibold text-muted-foreground"
+                  maxFontSizeMultiplier={1.3}
+                >
+                  Sterne
+                </Text>
               </View>
-              <Text className="mt-2 text-[34px] font-headline leading-[39px] text-foreground">
-                {stars}
-              </Text>
-              <Text className="mt-1 text-xs font-body text-muted-foreground">
+              <View className="mt-2">
+                <AnimatedNumber
+                  value={stars}
+                  textClassName="text-[34px] font-headline leading-[39px] text-foreground"
+                  maxFontSizeMultiplier={1.3}
+                />
+              </View>
+              <Text className="mt-1 text-base font-body leading-6 text-muted-foreground">
                 Verfügbar für Wünsche.
               </Text>
             </View>
 
             <View
-              className="flex-1 rounded-[18px] px-4 py-3.5"
+              className={isCompactWidth ? "rounded-tile px-4 py-3.5" : "flex-1 rounded-tile px-4 py-3.5"}
               style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
             >
               <View className="flex-row items-center gap-2">
                 <Flame size={17} color={palette.chartSecondary} />
-                <Text className="text-sm font-body-semibold text-muted-foreground">Serie</Text>
+                <Text
+                  className="text-sm font-body-semibold text-muted-foreground"
+                  maxFontSizeMultiplier={1.3}
+                >
+                  Serie
+                </Text>
               </View>
-              <Text className="mt-2 text-[34px] font-headline leading-[39px] text-foreground">
-                {streak}
-              </Text>
-              <Text className="mt-1 text-xs font-body text-muted-foreground">
+              <View className="mt-2">
+                <AnimatedNumber
+                  value={streak}
+                  textClassName="text-[34px] font-headline leading-[39px] text-foreground"
+                  maxFontSizeMultiplier={1.3}
+                />
+              </View>
+              <Text className="mt-1 text-base font-body leading-6 text-muted-foreground">
                 Tage im Rhythmus.
               </Text>
             </View>
           </View>
 
           <View
-            className="mt-3 rounded-[18px] border px-4 py-3.5"
+            className="mt-3 rounded-tile border px-4 py-3.5"
             style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.76)" }}
           >
             <View className="flex-row items-start gap-3">
               <View
-                className="h-12 w-12 shrink-0 items-center justify-center rounded-[18px]"
+                className="h-12 w-12 shrink-0 items-center justify-center rounded-tile"
                 style={{ backgroundColor: palette.tabActiveBg }}
               >
                 <Trophy size={20} color={palette.accentStrong} />
@@ -161,7 +225,10 @@ export function ProfileHeroCard({
               <View className="min-w-0 flex-1">
                 <View className="flex-row items-start gap-2">
                   <View className="min-w-0 flex-1">
-                    <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+                    <Text
+                      className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground"
+                      maxFontSizeMultiplier={1.3}
+                    >
                       Nächster Moment
                     </Text>
                     <Text
@@ -176,39 +243,62 @@ export function ProfileHeroCard({
                     style={{ backgroundColor: palette.tabActiveBg }}
                   >
                     <Text
-                      className="text-[10px] font-body-semibold"
+                      className="text-xs font-body-semibold"
                       style={{ color: palette.accentText }}
                       numberOfLines={1}
                       adjustsFontSizeToFit
                       minimumFontScale={0.85}
+                      maxFontSizeMultiplier={1.3}
                     >
                       {nextReward ? `${nextReward.missingStars} offen` : "Bereit"}
                     </Text>
                   </View>
                 </View>
-                <Text className="mt-1 text-xs font-body" style={{ color: palette.accentText }}>
+                <Text className="mt-1 text-base font-body leading-6" style={{ color: palette.accentText }}>
                   {nextReward
                     ? `${nextReward.missingStars} Sterne fehlen noch bis zur nächsten Belohnung.`
                     : "Gerade ist alles freigeschaltet und bereit."}
                 </Text>
+                <View
+                  className="mt-3 h-2.5 w-full overflow-hidden rounded-full"
+                  style={{ backgroundColor: palette.accentSoft }}
+                  accessible
+                  accessibilityRole="progressbar"
+                  accessibilityValue={{
+                    min: 0,
+                    max: 100,
+                    now: rewardPercent,
+                    text: nextReward
+                      ? `${rewardPercent} Prozent bis zur nächsten Belohnung`
+                      : "Alles freigeschaltet",
+                  }}
+                >
+                  <Animated.View
+                    pointerEvents="none"
+                    className="absolute bottom-0 top-0 rounded-full"
+                    style={[
+                      fillStyle,
+                      { left: "-100%", width: "200%", backgroundColor: palette.chartPrimary },
+                    ]}
+                  />
+                </View>
               </View>
             </View>
           </View>
 
           {hasChildSwitcher ? (
             <View className="mt-3">
-              <Text className="mb-2 text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+              <Text
+                className="mb-2 text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground"
+                maxFontSizeMultiplier={1.3}
+              >
                 Kind wechseln
               </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerClassName="gap-2"
-              >
+              <View className="flex-row flex-wrap gap-2">
                 {allChildren?.map((entry) => {
                   const isActive = entry.id === child.id;
                   return (
-                    <Pressable
+                    <PressableScale
                       key={entry.id}
                       onPress={() => onSelectChild?.(entry.id)}
                       className="h-12 w-12 items-center justify-center rounded-full border"
@@ -218,6 +308,7 @@ export function ProfileHeroCard({
                       }}
                       accessibilityRole="button"
                       accessibilityLabel={`${entry.name} auswählen`}
+                      accessibilityState={{ selected: isActive }}
                     >
                       <AvatarImage
                         avatar={entry.avatar}
@@ -226,10 +317,10 @@ export function ProfileHeroCard({
                         backgroundColor="transparent"
                         accessibilityLabel={`${entry.name} Avatar`}
                       />
-                    </Pressable>
+                    </PressableScale>
                   );
                 })}
-              </ScrollView>
+              </View>
             </View>
           ) : null}
         </View>

@@ -1,10 +1,11 @@
 import React from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
-import { Check, Palette, Sparkles } from "lucide-react-native";
+import { Check, Palette, Sparkles } from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
 import { AvatarImage } from "@/components/ui/avatar-image";
 import { Card } from "@/components/ui/card";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
 import {
@@ -12,15 +13,17 @@ import {
   normalizeBackgroundSkin,
   type BackgroundSkinOption,
 } from "@/lib/background-skins";
-import { getThemePalette } from "@/lib/theme";
+import { getThemePalette, semanticColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { BackgroundSkinId } from "@/lib/types";
 
 function SkinPreview({ skin }: { skin: BackgroundSkinOption }) {
   return (
     <View
-      className="h-28 overflow-hidden rounded-[22px]"
+      className="h-28 overflow-hidden rounded-card"
       style={{ backgroundColor: skin.previewBackground }}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
     >
       {skin.image ? (
         <Image
@@ -43,11 +46,11 @@ function SkinPreview({ skin }: { skin: BackgroundSkinOption }) {
       )}
 
       <View
-        className="absolute left-3 top-3 h-7 w-24 rounded-[12px]"
+        className="absolute left-3 top-3 h-7 w-24 rounded-chip"
         style={{ backgroundColor: "rgba(255,255,255,0.84)" }}
       />
       <View
-        className="absolute bottom-3 right-3 h-12 w-20 rounded-[16px]"
+        className="absolute bottom-3 right-3 h-12 w-20 rounded-tile"
         style={{ backgroundColor: "rgba(255,255,255,0.78)" }}
       />
     </View>
@@ -75,21 +78,19 @@ export default function BackgroundSettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {children.length > 1 ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="mb-4"
-            contentContainerClassName="gap-2"
-          >
+          <View className="mb-4 flex-row flex-wrap gap-2">
             {children.map((child) => {
               const childPalette = getThemePalette(child.theme);
               const isSelected = selectedChildId === child.id;
 
               return (
-                <Pressable
+                <PressableScale
                   key={child.id}
                   onPress={() => selectChild(child.id)}
-                  className="flex-row items-center rounded-full border px-4 py-2"
+                  className="min-h-11 flex-row items-center rounded-full border px-4 py-2"
+                  accessibilityRole="button"
+                  accessibilityLabel={`${child.name} auswählen`}
+                  accessibilityState={{ selected: isSelected }}
                   style={{
                     backgroundColor: isSelected ? childPalette.tabActiveBg : "rgba(255,255,255,0.78)",
                     borderColor: isSelected ? childPalette.accent : "rgba(157,184,216,0.32)",
@@ -104,14 +105,18 @@ export default function BackgroundSettingsScreen() {
                   />
                   <Text
                     className="text-sm font-body-semibold"
-                    style={{ color: isSelected ? childPalette.accentText : "#1a1a2e" }}
+                    style={{
+                      color: isSelected ? childPalette.accentText : semanticColors.foreground,
+                    }}
+                    numberOfLines={1}
+                    maxFontSizeMultiplier={1.3}
                   >
                     {child.name}
                   </Text>
-                </Pressable>
+                </PressableScale>
               );
             })}
-          </ScrollView>
+          </View>
         ) : null}
 
         <SettingsHeroCard
@@ -132,7 +137,7 @@ export default function BackgroundSettingsScreen() {
           >
             <View className="flex-row items-center gap-3">
               <View
-                className="h-11 w-11 items-center justify-center rounded-[18px]"
+                className="h-11 w-11 items-center justify-center rounded-tile"
                 style={{ backgroundColor: palette.heroSurface }}
               >
                 <Sparkles size={20} color={palette.accentStrong} />
@@ -153,14 +158,16 @@ export default function BackgroundSettingsScreen() {
               const isSelected = selectedSkinId === skin.id;
 
               return (
-                <Pressable
+                <PressableScale
                   key={skin.id}
                   onPress={() => handleSelectSkin(skin.id)}
                   accessibilityRole="button"
+                  accessibilityLabel={`Hintergrund ${skin.label} wählen`}
+                  accessibilityHint={skin.description}
                   accessibilityState={{ selected: isSelected }}
-                  className={cn("rounded-[26px] border p-2 active:opacity-80")}
+                  containerStyle={{ width: "48%" }}
+                  className={cn("rounded-[26px] border p-2")}
                   style={{
-                    width: "48%",
                     backgroundColor: "rgba(255,255,255,0.84)",
                     borderColor: isSelected ? palette.accent : "rgba(157,184,216,0.34)",
                     borderWidth: isSelected ? 2 : 1,
@@ -175,10 +182,15 @@ export default function BackgroundSettingsScreen() {
                         numberOfLines={1}
                         adjustsFontSizeToFit
                         minimumFontScale={0.86}
+                        maxFontSizeMultiplier={1.3}
                       >
                         {skin.label}
                       </Text>
-                      <Text className="mt-0.5 text-[11px] font-body text-muted-foreground" numberOfLines={1}>
+                      <Text
+                        className="mt-0.5 text-sm font-body text-muted-foreground"
+                        numberOfLines={1}
+                        maxFontSizeMultiplier={1.3}
+                      >
                         {skin.description}
                       </Text>
                     </View>
@@ -195,7 +207,7 @@ export default function BackgroundSettingsScreen() {
                       )}
                     </View>
                   </View>
-                </Pressable>
+                </PressableScale>
               );
             })}
           </View>

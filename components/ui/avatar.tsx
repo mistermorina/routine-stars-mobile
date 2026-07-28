@@ -20,6 +20,8 @@ export function Avatar({ src, fallback, size = 48, className }: AvatarProps) {
         className
       )}
       style={{ width: size, height: size }}
+      accessibilityRole="image"
+      accessibilityLabel={`Avatar ${fallback}`}
     >
       {src && !hasError ? (
         <Image
@@ -31,7 +33,9 @@ export function Avatar({ src, fallback, size = 48, className }: AvatarProps) {
       ) : (
         <Text
           className="font-headline text-muted-foreground"
-          style={{ fontSize: size * 0.4 }}
+          // Never below the 12px type floor, even for tiny avatars.
+          style={{ fontSize: Math.max(12, Math.round(size * 0.4)) }}
+          maxFontSizeMultiplier={1.2}
         >
           {fallback}
         </Text>

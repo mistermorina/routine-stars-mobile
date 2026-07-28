@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { View, Text, ScrollView, Pressable } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { routineTemplates } from "@/lib/routine-templates";
 import { TemplateCard } from "./template-card";
 import { getThemePalette } from "@/lib/theme";
@@ -40,19 +40,13 @@ export function TemplateSelector({
   return (
     <View>
       {/* Category filter */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 2, paddingRight: 18, gap: 10 }}
-        className="mb-4"
-        nestedScrollEnabled
-      >
+      <View className="mb-4 flex-row flex-wrap gap-2">
         {categoryFilters.map((f) => (
           <Pressable
             key={f.id}
             onPress={() => setCategory(f.id)}
             className={cn(
-              "rounded-full border px-3 py-1.5",
+              "min-h-11 rounded-full border px-4 py-2.5",
               category === f.id ? "" : "border-transparent"
             )}
             style={
@@ -67,24 +61,18 @@ export function TemplateSelector({
             }
           >
             <Text
-              className={cn("text-xs font-body-semibold", category === f.id ? "" : "text-muted-foreground")}
+              className={cn("text-sm font-body-semibold", category === f.id ? "" : "text-muted-foreground")}
               style={category === f.id ? { color: palette.accentText } : undefined}
+              numberOfLines={1}
             >
               {f.label}
             </Text>
           </Pressable>
         ))}
-      </ScrollView>
+      </View>
 
       {/* Template cards */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 2, paddingRight: 24, gap: 18 }}
-        nestedScrollEnabled
-        snapToInterval={270}
-        decelerationRate="fast"
-      >
+      <View className="gap-3">
         {filtered.map((template) => (
           <TemplateCard
             key={template.id}
@@ -94,7 +82,7 @@ export function TemplateSelector({
             theme={theme}
           />
         ))}
-      </ScrollView>
+      </View>
     </View>
   );
 }

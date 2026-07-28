@@ -12,4 +12,19 @@ module.exports = defineConfig([
       "coverage/**",
     ],
   },
+  {
+    // Node-only maintenance scripts (smoke checks, asset generation).
+    files: ["scripts/**/*.mjs"],
+    languageOptions: {
+      globals: {
+        console: "readonly",
+        process: "readonly",
+        Buffer: "readonly",
+        URL: "readonly",
+        __dirname: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+      },
+    },
+  },
 ]);

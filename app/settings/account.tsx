@@ -1,17 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { View, Text, ScrollView } from "react-native";
-import { useRouter } from "expo-router";
-import { Lock, Shield, Smartphone, Sparkles } from "lucide-react-native";
+import { useFocusEffect, useRouter } from "expo-router";
+import { ChevronRight, Lock, Shield, Smartphone, Trash2 } from "@/lib/icons";
 import { useAuth } from "@/hooks/use-auth";
 import { useChildren } from "@/hooks/use-children";
 import { useToast } from "@/hooks/use-toast";
 import { hasParentPin } from "@/lib/parent-access";
-import { storage, KEYS } from "@/lib/storage";
+import { resetAppData } from "@/lib/reset";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
-import { getThemePalette } from "@/lib/theme";
+import { getThemePalette, semanticColors, shadowPresets } from "@/lib/theme";
 
 export default function AccountSettings() {
   const router = useRouter();
@@ -19,39 +21,51 @@ export default function AccountSettings() {
   const { selectedChild } = useChildren();
   const { toast } = useToast();
   const [pinConfigured, setPinConfigured] = useState(false);
+  const [resetDialogVisible, setResetDialogVisible] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const palette = getThemePalette(selectedChild?.theme);
 
-  useEffect(() => {
-    async function loadPinStatus() {
-      setPinConfigured(await hasParentPin());
-    }
+  // Re-read on focus so returning from the PIN screen shows the new status.
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
 
-    void loadPinStatus();
-  }, []);
+      void hasParentPin().then((configured) => {
+        if (active) setPinConfigured(configured);
+      });
 
-  async function handleLockParentArea() {
-    auth.deauthorizeParent();
-    toast({ title: "Eltern-Bereich gesperrt" });
-    router.replace("/(tabs)");
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
+
+  function handleChangePin() {
+    router.push("/parent-login?mode=change");
   }
 
-  async function handleResetPin() {
-    await storage.removeItem(KEYS.PARENT_PIN_HASH);
+  function handleLockParentArea() {
+    router.replace("/(tabs)");
     auth.deauthorizeParent();
     toast({
-      title: "PIN zurückgesetzt",
-      description: "Lege beim nächsten Öffnen der Einstellungen einen neuen PIN fest.",
+      title: "Eltern-Bereich gesperrt",
+      description: "Beim nächsten Öffnen wird wieder der PIN abgefragt.",
     });
-    router.replace("/parent-login");
   }
 
-  async function handleResetLocalSession() {
-    auth.logout();
+  async function handleConfirmReset() {
+    if (isResetting) return;
+
+    setIsResetting(true);
+    await resetAppData();
+    setResetDialogVisible(false);
+    router.replace("/(auth)/welcome");
+    auth.deauthorizeParent();
+    setIsResetting(false);
     toast({
-      title: "Lokale Sitzung beendet",
-      description: "Deine Daten bleiben auf diesem Gerät gespeichert.",
+      title: "App zurückgesetzt",
+      description: "Alle lokalen Daten und Fotos wurden gelöscht.",
     });
-    router.replace("/(tabs)");
   }
 
   return (
@@ -61,25 +75,25 @@ export default function AccountSettings() {
     >
       <ScrollView className="flex-1" contentContainerClassName="p-4 pb-8">
         <SettingsHeroCard
-          label="Lokal & geschützt"
-          title="Lokal geschützt"
-          description="Kinderprofile, Routinen und Belohnungen bleiben auf diesem Gerät. Der Elternbereich ist per PIN geschützt."
-          badges={[{ label: pinConfigured ? "PIN aktiv" : "PIN offen" }]}
+          label="Eltern-Bereich"
+          title="Sicherheit & Daten"
+          description="Der Eltern-Bereich ist per PIN geschützt. Alle Inhalte liegen ausschließlich auf diesem Gerät."
+          badges={[{ label: pinConfigured ? "PIN aktiv" : "Kein PIN" }, { label: "Lokal" }]}
           palette={palette}
         />
 
         <Card
-          className="mb-4 rounded-[28px]"
+          className="mb-4 rounded-card"
           style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
         >
           <View className="flex-row items-start">
             <View
-              className="mt-0.5 h-11 w-11 items-center justify-center rounded-[18px]"
+              className="mt-0.5 h-11 w-11 items-center justify-center rounded-tile"
               style={{ backgroundColor: palette.heroSurface }}
             >
               <Smartphone size={20} color={palette.accentStrong} />
             </View>
-            <View className="ml-3 flex-1">
+            <View className="ml-3 min-w-0 flex-1">
               <Text
                 className="text-base font-body-semibold text-foreground"
                 numberOfLines={2}
@@ -89,102 +103,123 @@ export default function AccountSettings() {
                 Daten bleiben auf diesem Gerät
               </Text>
               <Text className="mt-1 text-sm font-body leading-5 text-muted-foreground">
-                Routine Stars speichert Kinder, Routinen und Belohnungen lokal. Cloud-Konten und Synchronisierung kommen später.
+                Es gibt kein Konto und keine Cloud. Kinder, Routinen, Belohnungen, Sterne und
+                Avatar-Fotos werden nur lokal gespeichert.
               </Text>
             </View>
           </View>
         </Card>
 
-        <Card
-          className="mb-4 rounded-[28px] border-dashed"
-          style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+        <Text
+          className="mb-2 ml-1 text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground"
+          accessibilityRole="header"
+          maxFontSizeMultiplier={1.3}
+        >
+          PIN-Schutz
+        </Text>
+
+        <PressableScale
+          onPress={handleChangePin}
+          className="mb-4 flex-row items-center rounded-card px-4 py-4"
+          style={{ backgroundColor: palette.cardTint, ...shadowPresets.shadowCard }}
+          accessibilityRole="button"
+          accessibilityLabel={pinConfigured ? "PIN ändern" : "PIN einrichten"}
+          accessibilityHint="Öffnet die PIN-Eingabe für den Eltern-Bereich"
         >
           <View
-            className="rounded-[22px] px-4 py-4"
+            className="h-11 w-11 items-center justify-center rounded-tile"
             style={{ backgroundColor: palette.heroSurface }}
           >
-            <View className="flex-row items-center gap-2">
-              <Sparkles size={16} color={palette.accentStrong} />
-              <Text
-                className="text-sm font-body-semibold"
-                style={{ color: palette.accentText }}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.86}
-              >
-                Kein Cloud-Konto aktiv
-              </Text>
-            </View>
-            <Text className="mt-2 text-sm font-body leading-5 text-muted-foreground">
-              Diese App arbeitet aktuell komplett lokal auf diesem Gerät. PIN-Schutz und Sitzung betreffen nur diesen lokalen Elternbereich.
+            <Shield size={20} color={palette.accentStrong} />
+          </View>
+          <View className="ml-3 min-w-0 flex-1 pr-3">
+            <Text className="text-base font-body-semibold text-foreground">
+              {pinConfigured ? "PIN ändern" : "PIN einrichten"}
+            </Text>
+            <Text className="mt-1 text-sm font-body leading-5 text-muted-foreground">
+              {pinConfigured
+                ? "Aktuellen PIN bestätigen und einen neuen vergeben."
+                : "Schütze den Eltern-Bereich mit einem vierstelligen PIN."}
             </Text>
           </View>
-        </Card>
+          <ChevronRight
+            size={18}
+            color={semanticColors.mutedForeground}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          />
+        </PressableScale>
 
-        <Card
-          className="mb-4 rounded-[28px]"
-          style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
+        <Button
+          variant="outline"
+          onPress={handleLockParentArea}
+          className="w-full rounded-card border"
+          accessibilityRole="button"
+          accessibilityLabel="Eltern-Bereich sperren"
+          style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.82)" }}
         >
-          <View className="flex-row items-center justify-between">
-            <View className="mr-3 flex-1 flex-row items-center">
-              <View
-                className="h-11 w-11 items-center justify-center rounded-[18px]"
-                style={{ backgroundColor: palette.heroSurface }}
-              >
-                <Shield size={20} color={palette.accentStrong} />
-              </View>
-              <View className="ml-3 flex-1">
-                <Text className="text-base font-body text-foreground">
-                  {pinConfigured ? "PIN ist eingerichtet" : "Noch kein PIN eingerichtet"}
-                </Text>
-                <Text className="text-xs font-body text-muted-foreground">
-                  Der Eltern-Bereich bleibt nur für die aktuelle Sitzung entsperrt.
-                </Text>
-              </View>
-            </View>
-            <Button
-              variant="ghost"
-              size="sm"
-              onPress={handleResetPin}
-              className="rounded-full"
+          <View className="flex-row items-center gap-2">
+            <Lock size={18} color={palette.accentText} />
+            <Text
+              className="text-base font-body-semibold"
+              style={{ color: palette.accentText }}
+              maxFontSizeMultiplier={1.3}
             >
-              <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>
-                {pinConfigured ? "Neu setzen" : "Einrichten"}
-              </Text>
-            </Button>
+              Eltern-Bereich sperren
+            </Text>
           </View>
-        </Card>
+        </Button>
 
-        <View className="mt-2 gap-3">
-          <Button
-            variant="outline"
-            onPress={handleLockParentArea}
-            className="w-full rounded-[22px] border"
-            style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.82)" }}
-          >
-            <View className="flex-row items-center gap-2">
-              <Lock size={18} color={palette.accentText} />
-              <Text className="text-base font-body-semibold" style={{ color: palette.accentText }}>
-                Eltern-Bereich sperren
+        <Text
+          className="mb-2 ml-1 mt-6 text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground"
+          accessibilityRole="header"
+          maxFontSizeMultiplier={1.3}
+        >
+          Zurücksetzen
+        </Text>
+
+        <View
+          className="rounded-card border border-destructive-soft bg-card px-4 py-4"
+          style={shadowPresets.shadowCard}
+        >
+          <View className="flex-row items-start">
+            <View className="mt-0.5 h-11 w-11 items-center justify-center rounded-tile bg-destructive-soft">
+              <Trash2 size={20} color={semanticColors.destructiveStrong} />
+            </View>
+            <View className="ml-3 min-w-0 flex-1">
+              <Text className="text-base font-body-semibold text-destructive-strong">
+                Alles zurücksetzen
+              </Text>
+              <Text className="mt-1 text-sm font-body leading-5 text-muted-foreground">
+                Alle Daten und Fotos werden gelöscht. Danach startet die App wieder bei der
+                Begrüßung.
               </Text>
             </View>
-          </Button>
+          </View>
 
           <Button
-            variant="outline"
-            onPress={handleResetLocalSession}
-            className="w-full rounded-[22px] border"
-            style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.82)" }}
+            variant="destructive"
+            onPress={() => setResetDialogVisible(true)}
+            className="mt-4 w-full rounded-card bg-destructive-strong"
+            accessibilityRole="button"
+            accessibilityLabel="Alle Daten zurücksetzen"
           >
-            <View className="flex-row items-center gap-2">
-              <Shield size={18} color={palette.accentText} />
-              <Text className="text-base font-body-semibold" style={{ color: palette.accentText }}>
-                Lokale Sitzung beenden
-              </Text>
-            </View>
+            Zurücksetzen
           </Button>
         </View>
       </ScrollView>
+
+      <ConfirmDialog
+        visible={resetDialogVisible}
+        title="Alles zurücksetzen?"
+        description="Alle Daten und Fotos werden gelöscht. Kinder, Sterne, Routinen, Belohnungen und Sticker lassen sich danach nicht wiederherstellen."
+        confirmLabel="Zurücksetzen"
+        destructive
+        onConfirm={() => {
+          void handleConfirmReset();
+        }}
+        onCancel={() => setResetDialogVisible(false)}
+      />
     </ThemedScreenBackground>
   );
 }

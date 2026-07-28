@@ -1,17 +1,18 @@
 import React, { useMemo, useState } from "react";
-import { View, Text, ScrollView, Pressable } from "react-native";
-import { CalendarDays, ChevronLeft, ChevronRight, Sparkles } from "lucide-react-native";
+import { View, Text, ScrollView } from "react-native";
+import { CalendarDays, ChevronLeft, ChevronRight, Sparkles } from "@/lib/icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useChildren } from "@/hooks/use-children";
 import { useActivityLogs } from "@/hooks/use-activity-logs";
 import { MonthlyCompletionCalendar } from "@/components/profile/monthly-completion-calendar";
 import { Card } from "@/components/ui/card";
 import { AvatarImage } from "@/components/ui/avatar-image";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
 import { SettingsMetricCard } from "@/components/settings/settings-metric-card";
 import { getActivityInsights } from "@/lib/activity-insights";
-import { getThemePalette } from "@/lib/theme";
+import { getThemePalette, semanticColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 export default function ProgressSettings() {
@@ -56,20 +57,18 @@ export default function ProgressSettings() {
     >
       <ScrollView className="flex-1" contentContainerClassName="p-4 pb-8">
         {children.length > 1 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="mb-4"
-            contentContainerClassName="gap-2"
-          >
+          <View className="mb-4 flex-row flex-wrap gap-2">
             {children.map((child) => (
-              <Pressable
+              <PressableScale
                 key={child.id}
                 onPress={() => selectChild(child.id)}
                 className={cn(
-                  "flex-row items-center rounded-full border px-4 py-2",
+                  "min-h-11 flex-row items-center rounded-full border px-4 py-2",
                   selectedChildId === child.id ? "" : "border-border"
                 )}
+                accessibilityRole="button"
+                accessibilityLabel={`${child.name} auswählen`}
+                accessibilityState={{ selected: selectedChildId === child.id }}
                 style={
                   selectedChildId === child.id
                     ? {
@@ -89,14 +88,19 @@ export default function ProgressSettings() {
                 <Text
                   className="text-sm font-body-semibold"
                   style={{
-                    color: selectedChildId === child.id ? palette.accentText : "#1a1a2e",
+                    color:
+                      selectedChildId === child.id
+                        ? palette.accentText
+                        : semanticColors.foreground,
                   }}
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={1.3}
                 >
                   {child.name}
                 </Text>
-              </Pressable>
+              </PressableScale>
             ))}
-          </ScrollView>
+          </View>
         )}
 
         <Animated.View entering={FadeInDown.duration(300)}>
@@ -117,7 +121,7 @@ export default function ProgressSettings() {
             <View className="flex-row items-start justify-between gap-3">
               <View className="min-w-0 flex-1 flex-row items-center gap-3">
                 <View
-                  className="h-11 w-11 items-center justify-center rounded-[18px]"
+                  className="h-11 w-11 items-center justify-center rounded-tile"
                   style={{ backgroundColor: palette.heroSurface }}
                 >
                   <CalendarDays size={20} color={palette.accentStrong} />
@@ -139,6 +143,7 @@ export default function ProgressSettings() {
                   className="text-xs font-body-semibold"
                   style={{ color: palette.accentText }}
                   numberOfLines={1}
+                  maxFontSizeMultiplier={1.3}
                 >
                   {insights.monthlyCompletionRate}% Quote
                 </Text>
@@ -146,21 +151,33 @@ export default function ProgressSettings() {
             </View>
 
             <View className="mt-4 flex-row items-center justify-between">
-              <Pressable
+              <PressableScale
                 onPress={handlePreviousMonth}
-                className="h-10 w-10 items-center justify-center rounded-full"
+                className="h-11 w-11 items-center justify-center rounded-full"
                 style={{ backgroundColor: palette.heroSurface }}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Vorheriger Monat"
               >
                 <ChevronLeft size={20} color={palette.accentText} />
-              </Pressable>
-              <Text className="text-xl font-headline text-foreground">{insights.monthLabel}</Text>
-              <Pressable
+              </PressableScale>
+              <Text
+                className="text-xl font-headline text-foreground"
+                accessibilityRole="header"
+                maxFontSizeMultiplier={1.4}
+              >
+                {insights.monthLabel}
+              </Text>
+              <PressableScale
                 onPress={handleNextMonth}
-                className="h-10 w-10 items-center justify-center rounded-full"
+                className="h-11 w-11 items-center justify-center rounded-full"
                 style={{ backgroundColor: palette.heroSurface }}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Nächster Monat"
               >
                 <ChevronRight size={20} color={palette.accentText} />
-              </Pressable>
+              </PressableScale>
             </View>
           </Card>
         </Animated.View>
@@ -183,7 +200,7 @@ export default function ProgressSettings() {
             >
               <View className="flex-row items-center gap-3">
                 <View
-                  className="h-11 w-11 items-center justify-center rounded-[18px]"
+                  className="h-11 w-11 items-center justify-center rounded-tile"
                   style={{ backgroundColor: palette.heroSurface }}
                 >
                   <Sparkles size={20} color={palette.accentStrong} />

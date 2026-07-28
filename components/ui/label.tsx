@@ -10,7 +10,10 @@ export interface LabelProps extends TextProps {
 export function Label({ className, children, ...props }: LabelProps) {
   return (
     <Text
-      className={cn("text-sm font-body-semibold text-foreground", className)}
+      className={cn("text-base font-body-semibold leading-6 text-foreground", className)}
+      numberOfLines={1}
+      // Single-line by design — cap Dynamic Type so the label truncates late.
+      maxFontSizeMultiplier={1.4}
       {...props}
     >
       {children}

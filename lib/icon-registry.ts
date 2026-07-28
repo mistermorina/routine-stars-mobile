@@ -1,17 +1,17 @@
 import type { IconEntry, IconCategory } from "@/lib/types";
 
-export const iconCategories: { id: IconCategory; label: string; emoji: string }[] = [
-  { id: "hygiene", label: "Hygiene", emoji: "🛁" },
-  { id: "clothing", label: "Anziehen", emoji: "👕" },
-  { id: "meals", label: "Mahlzeiten", emoji: "🍳" },
-  { id: "school", label: "Schule", emoji: "🎒" },
-  { id: "household", label: "Haushalt", emoji: "🧹" },
-  { id: "leisure", label: "Freizeit", emoji: "🎮" },
-  { id: "sport", label: "Sport", emoji: "🏃" },
-  { id: "bedtime", label: "Schlafenszeit", emoji: "💤" },
-  { id: "time", label: "Zeit", emoji: "⏰" },
-  { id: "rewards", label: "Belohnungen", emoji: "🌟" },
-  { id: "general", label: "Allgemein", emoji: "📌" },
+export const iconCategories: { id: IconCategory; label: string; iconName: string }[] = [
+  { id: "hygiene", label: "Hygiene", iconName: "droplets" },
+  { id: "clothing", label: "Anziehen", iconName: "shirt" },
+  { id: "meals", label: "Mahlzeiten", iconName: "utensils-crossed" },
+  { id: "school", label: "Schule", iconName: "book-open" },
+  { id: "household", label: "Haushalt", iconName: "broom" },
+  { id: "leisure", label: "Freizeit", iconName: "gamepad-2" },
+  { id: "sport", label: "Sport", iconName: "dumbbell" },
+  { id: "bedtime", label: "Schlafenszeit", iconName: "moon" },
+  { id: "time", label: "Zeit", iconName: "clock" },
+  { id: "rewards", label: "Belohnungen", iconName: "gift" },
+  { id: "general", label: "Allgemein", iconName: "sparkles" },
 ];
 
 export const iconEntries: IconEntry[] = [

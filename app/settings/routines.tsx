@@ -1,6 +1,31 @@
 import React, { useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
+import DraggableFlatList, {
+  RenderItemParams,
+  ScaleDecorator,
+} from "react-native-draggable-flatlist";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { IconPicker } from "@/components/ui/icon-picker";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { PressableScale } from "@/components/ui/pressable-scale";
+import { SkeletonCard } from "@/components/ui/skeleton";
+import { TemplateSelector } from "@/components/routine-templates/template-selector";
 import {
+  ScheduleEditor,
+  createScheduleFromTime,
+  describeSchedule,
+  sanitizeReminders,
+  sanitizeSchedule,
+} from "@/components/routine-stars/schedule-editor";
+import { useChildren } from "@/hooks/use-children";
+import { useToast } from "@/hooks/use-toast";
+import { useRoutines } from "@/hooks/use-routines";
+import { getDefaultRoutineColor } from "@/lib/default-values";
+import {
+  CalendarDays,
   Check,
   ChevronDown,
   GripVertical,
@@ -8,27 +33,14 @@ import {
   Plus,
   Sparkles,
   Trash2,
-} from "lucide-react-native";
-import DraggableFlatList, {
-  RenderItemParams,
-  ScaleDecorator,
-} from "react-native-draggable-flatlist";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { IconPicker } from "@/components/ui/icon-picker";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { TemplateSelector } from "@/components/routine-templates/template-selector";
-import { ToastOverlay } from "@/components/ui/toast";
-import { useChildren } from "@/hooks/use-children";
-import { useToast } from "@/hooks/use-toast";
-import { useRoutines } from "@/hooks/use-routines";
-import { getDefaultRoutineColor } from "@/lib/default-values";
-import { getIcon } from "@/lib/icons";
-import { getThemePalette } from "@/lib/theme";
+  getIcon,
+} from "@/lib/icons";
+import { getThemePalette, semanticColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { Routine, RoutineTemplate, Task } from "@/lib/types";
 
+// Domain data, not design tokens: the six swatches a parent can pick from for a
+// routine. Mirrors getDefaultRoutineColor() in lib/default-values.ts.
 const ROUTINE_COLORS = [
   "#F59E0B",
   "#8B5CF6",
@@ -60,16 +72,20 @@ function createRoutine(): Routine {
 }
 
 export default function RoutinesSettingsScreen() {
+  const { width } = useWindowDimensions();
+  const isCompactWidth = width < 380;
   const { children } = useChildren();
   const { routines, addRoutine, updateRoutine, removeRoutine, isLoading } = useRoutines();
-  const { toasts, toast, dismiss } = useToast();
+  const { toast } = useToast();
   const familyTheme = children[0]?.theme ?? "sterne";
   const palette = getThemePalette(familyTheme);
   const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null);
   const [draftRoutine, setDraftRoutine] = useState<Routine | null>(null);
   const [showIconPickerForTaskId, setShowIconPickerForTaskId] = useState<string | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showScheduleSection, setShowScheduleSection] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>();
+  const [routinePendingDeletion, setRoutinePendingDeletion] = useState<Routine | null>(null);
 
   const activeTaskIcon = useMemo(
     () => draftRoutine?.tasks.find((task) => task.id === showIconPickerForTaskId)?.iconName ?? "circle-check",
@@ -83,6 +99,7 @@ export default function RoutinesSettingsScreen() {
       tasks: routine.tasks.map((task) => ({ ...task })),
     });
     setShowSuggestions(false);
+    setShowScheduleSection(false);
     setSelectedTemplateId(templateId);
   };
 
@@ -91,6 +108,7 @@ export default function RoutinesSettingsScreen() {
     setDraftRoutine(null);
     setShowIconPickerForTaskId(null);
     setShowSuggestions(false);
+    setShowScheduleSection(false);
     setSelectedTemplateId(undefined);
   };
 
@@ -109,6 +127,8 @@ export default function RoutinesSettingsScreen() {
       id: `routine-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       name: template.name,
       color: template.color,
+      // Vorlagen bringen eine Startzeit mit; ohne Wochentage gilt sie täglich.
+      schedule: createScheduleFromTime(template.suggestedTime),
       tasks: template.tasks.map((task, index) => ({
         id: `task-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
         title: task.title,
@@ -175,6 +195,11 @@ export default function RoutinesSettingsScreen() {
       }))
       .filter((task) => task.title.length > 0);
 
+    // Wochentage werden dedupliziert, auf Mo–So sortiert und validiert; die
+    // Uhrzeit muss dem HH:mm-Format entsprechen, sonst faellt sie weg.
+    const sanitizedSchedule = sanitizeSchedule(draftRoutine.schedule);
+    const sanitizedRemindersValue = sanitizeReminders(draftRoutine.reminders);
+
     if (!sanitizedName || sanitizedTasks.length === 0) {
       toast({
         title: "Routine noch unvollständig",
@@ -188,6 +213,8 @@ export default function RoutinesSettingsScreen() {
       ...draftRoutine,
       name: sanitizedName,
       tasks: sanitizedTasks,
+      schedule: sanitizedSchedule,
+      reminders: sanitizedRemindersValue,
     });
     toast({
       title: "Routine gespeichert",
@@ -196,28 +223,19 @@ export default function RoutinesSettingsScreen() {
     resetEditor();
   };
 
-  const confirmDeleteRoutine = (routine: Routine) => {
-    Alert.alert(
-      "Routine löschen",
-      `Möchtest du "${routine.name}" wirklich entfernen?`,
-      [
-        { text: "Abbrechen", style: "cancel" },
-        {
-          text: "Löschen",
-          style: "destructive",
-          onPress: async () => {
-            await removeRoutine(routine.id);
-            if (editingRoutineId === routine.id) {
-              resetEditor();
-            }
-            toast({
-              title: "Routine entfernt",
-              description: `${routine.name} wurde gelöscht.`,
-            });
-          },
-        },
-      ]
-    );
+  const handleConfirmDeleteRoutine = async () => {
+    const routine = routinePendingDeletion;
+    if (!routine) return;
+
+    setRoutinePendingDeletion(null);
+    await removeRoutine(routine.id);
+    if (editingRoutineId === routine.id) {
+      resetEditor();
+    }
+    toast({
+      title: "Routine entfernt",
+      description: `${routine.name} wurde gelöscht.`,
+    });
   };
 
   const renderTaskRow = ({ item, drag, isActive }: RenderItemParams<Task>) => {
@@ -227,17 +245,24 @@ export default function RoutinesSettingsScreen() {
       <ScaleDecorator>
         <View
           className={cn(
-            "mb-3 rounded-[20px] border px-3.5 py-3.5",
+            "mb-3 rounded-card border px-3.5 py-3.5",
             isActive && "opacity-80"
           )}
           style={{
-            backgroundColor: "#FFFFFF",
+            backgroundColor: semanticColors.card,
             borderColor: palette.accentBorder,
           }}
         >
           <View className="flex-row items-start gap-3">
-            <Pressable onLongPress={drag} hitSlop={8} className="pt-2.5">
-              <GripVertical size={18} color="#737373" />
+            <Pressable
+              onLongPress={drag}
+              className="h-11 w-11 items-center justify-center rounded-full active:opacity-70"
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Aufgabe verschieben"
+              accessibilityHint="Gedrückt halten und ziehen, um die Reihenfolge zu ändern"
+            >
+              <GripVertical size={18} color={semanticColors.mutedForeground} />
             </Pressable>
 
             <View className="flex-1 gap-2.5">
@@ -247,119 +272,161 @@ export default function RoutinesSettingsScreen() {
                   value={item.title}
                   onChangeText={(value) => updateDraftTask(item.id, { title: value })}
                   placeholder="Zähne putzen"
-                  className="h-11 px-3"
-                  style={{ fontSize: 14, lineHeight: 18 }}
+                  className="h-12 px-3"
+                  style={{ fontSize: 16, lineHeight: 20 }}
                 />
               </View>
 
-              <View className="flex-row gap-2.5">
+              <View className={isCompactWidth ? "gap-2.5" : "flex-row gap-2.5"}>
                 <View className="flex-1 gap-1.5">
                   <Label>Icon</Label>
-                  <Pressable
+                  <PressableScale
                     onPress={() => setShowIconPickerForTaskId(item.id)}
                     accessibilityRole="button"
                     accessibilityLabel="Icon ändern"
-                    className="h-11 flex-row items-center justify-between rounded-lg border border-input bg-card px-3"
+                    className="h-12 flex-row items-center justify-between rounded-tile border border-input bg-card px-3"
                   >
                     <Icon size={18} color={palette.accentStrong} />
-                    <Text className="text-xs font-body-semibold uppercase tracking-[0.4px] text-muted-foreground">
+                    <Text
+                      className="text-sm font-body-semibold uppercase tracking-[0.2px] text-muted-foreground"
+                      numberOfLines={1}
+                      maxFontSizeMultiplier={1.2}
+                    >
                       Ändern
                     </Text>
-                  </Pressable>
+                  </PressableScale>
                 </View>
 
-                <View className="w-[120px] gap-1.5">
+                <View className={isCompactWidth ? "gap-1.5" : "w-[120px] gap-1.5"}>
                   <Label>Sterne</Label>
-                  <View className="h-11 flex-row items-center justify-between rounded-lg border border-input bg-card px-3">
-                    <Pressable
+                  <View className="h-12 flex-row items-center justify-between rounded-tile border border-input bg-card px-1">
+                    <PressableScale
                       onPress={() => updateDraftTask(item.id, { stars: Math.max(1, item.stars - 1) })}
-                      hitSlop={8}
+                      className="h-11 w-11 items-center justify-center rounded-full"
+                      accessibilityRole="button"
+                      accessibilityLabel="Sternwert verringern"
                     >
-                      <Minus size={18} color="#737373" />
-                    </Pressable>
-                    <Text className="text-base font-body-semibold text-foreground">{item.stars}</Text>
-                    <Pressable
+                      <Minus size={18} color={semanticColors.mutedForeground} />
+                    </PressableScale>
+                    <Text
+                      className="text-base font-body-semibold text-foreground"
+                      maxFontSizeMultiplier={1.2}
+                    >
+                      {item.stars}
+                    </Text>
+                    <PressableScale
                       onPress={() => updateDraftTask(item.id, { stars: Math.min(5, item.stars + 1) })}
-                      hitSlop={8}
+                      className="h-11 w-11 items-center justify-center rounded-full"
+                      accessibilityRole="button"
+                      accessibilityLabel="Sternwert erhöhen"
                     >
                       <Plus size={18} color={palette.accentStrong} />
-                    </Pressable>
+                    </PressableScale>
                   </View>
                 </View>
               </View>
 
-              <View className="flex-row gap-2.5">
+              <View className={isCompactWidth ? "gap-2.5" : "flex-row gap-2.5"}>
                 <View className="flex-1 gap-1.5">
                   <Label>Timer (Min.)</Label>
-                  <View className="h-11 flex-row items-center justify-between rounded-lg border border-input bg-card px-3">
-                    <Pressable
+                  <View className="h-12 flex-row items-center justify-between rounded-tile border border-input bg-card px-1">
+                    <PressableScale
                       onPress={() =>
                         updateDraftTask(item.id, {
                           timerInMinutes: Math.max(0, (item.timerInMinutes ?? 0) - 1) || undefined,
                         })
                       }
-                      hitSlop={8}
+                      className="h-11 w-11 items-center justify-center rounded-full"
+                      accessibilityRole="button"
+                      accessibilityLabel="Timer verringern"
                     >
-                      <Minus size={18} color="#737373" />
-                    </Pressable>
+                      <Minus size={18} color={semanticColors.mutedForeground} />
+                    </PressableScale>
                     <View className="items-center">
-                      <Text className="text-base font-body-semibold text-foreground">
+                      <Text
+                        className="text-base font-body-semibold text-foreground"
+                        maxFontSizeMultiplier={1.2}
+                      >
                         {item.timerInMinutes ?? 0}
                       </Text>
-                      <Text className="text-[10px] font-body text-muted-foreground">
+                      <Text
+                        className="text-xs font-body text-muted-foreground"
+                        numberOfLines={1}
+                        maxFontSizeMultiplier={1.2}
+                      >
                         {item.timerInMinutes ? "aktiv" : "aus"}
                       </Text>
                     </View>
-                    <Pressable
+                    <PressableScale
                       onPress={() =>
                         updateDraftTask(item.id, {
                           timerInMinutes: Math.min(30, (item.timerInMinutes ?? 0) + 1),
                         })
                       }
-                      hitSlop={8}
+                      className="h-11 w-11 items-center justify-center rounded-full"
+                      accessibilityRole="button"
+                      accessibilityLabel="Timer erhöhen"
                     >
                       <Plus size={18} color={palette.accentStrong} />
-                    </Pressable>
+                    </PressableScale>
                   </View>
                 </View>
 
                 <View className="flex-1 gap-1.5">
                   <Label>Bonus</Label>
-                  <View className="h-11 flex-row items-center justify-between rounded-lg border border-input bg-card px-3">
-                    <Pressable
+                  <View className="h-12 flex-row items-center justify-between rounded-tile border border-input bg-card px-1">
+                    <PressableScale
                       onPress={() =>
                         updateDraftTask(item.id, {
                           bonusStars: Math.max(0, (item.bonusStars ?? 0) - 1) || undefined,
                         })
                       }
-                      hitSlop={8}
+                      className="h-11 w-11 items-center justify-center rounded-full"
+                      accessibilityRole="button"
+                      accessibilityLabel="Bonus verringern"
                     >
-                      <Minus size={18} color="#737373" />
-                    </Pressable>
+                      <Minus size={18} color={semanticColors.mutedForeground} />
+                    </PressableScale>
                     <View className="items-center">
-                      <Text className="text-base font-body-semibold text-foreground">
+                      <Text
+                        className="text-base font-body-semibold text-foreground"
+                        maxFontSizeMultiplier={1.2}
+                      >
                         {item.bonusStars ?? 0}
                       </Text>
-                      <Text className="text-[10px] font-body text-muted-foreground">extra</Text>
+                      <Text
+                        className="text-xs font-body text-muted-foreground"
+                        numberOfLines={1}
+                        maxFontSizeMultiplier={1.2}
+                      >
+                        extra
+                      </Text>
                     </View>
-                    <Pressable
+                    <PressableScale
                       onPress={() =>
                         updateDraftTask(item.id, {
                           bonusStars: Math.min(5, (item.bonusStars ?? 0) + 1),
                         })
                       }
-                      hitSlop={8}
+                      className="h-11 w-11 items-center justify-center rounded-full"
+                      accessibilityRole="button"
+                      accessibilityLabel="Bonus erhöhen"
                     >
                       <Plus size={18} color={palette.accentStrong} />
-                    </Pressable>
+                    </PressableScale>
                   </View>
                 </View>
               </View>
             </View>
 
-            <Pressable onPress={() => removeDraftTask(item.id)} hitSlop={8} className="pt-2.5">
-              <Trash2 size={18} color="#ef4444" />
-            </Pressable>
+            <PressableScale
+              onPress={() => removeDraftTask(item.id)}
+              className="h-11 w-11 items-center justify-center rounded-full"
+              accessibilityRole="button"
+              accessibilityLabel={`Aufgabe ${item.title || "ohne Titel"} entfernen`}
+            >
+              <Trash2 size={18} color={semanticColors.destructive} />
+            </PressableScale>
           </View>
         </View>
       </ScaleDecorator>
@@ -373,19 +440,25 @@ export default function RoutinesSettingsScreen() {
           <View className="rounded-[30px] bg-secondary/70 px-4 py-5">
             <View className="gap-3">
               <View className="flex-row flex-wrap items-center gap-2">
-                <Text className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground">
+                <Text
+                  className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground"
+                  maxFontSizeMultiplier={1.3}
+                >
                   Familienroutinen
                 </Text>
                 <View className="rounded-full bg-white/85 px-3 py-1.5">
-                  <Text className="text-[10px] font-body-semibold uppercase tracking-[0.7px] text-foreground">
-                    {isLoading ? "..." : `${routines.length} Routinen`}
+                  <Text
+                    className="text-xs font-body-semibold uppercase tracking-[0.7px] text-foreground"
+                    maxFontSizeMultiplier={1.3}
+                  >
+                    {isLoading ? "…" : `${routines.length} Routinen`}
                   </Text>
                 </View>
               </View>
               <Text className="text-[32px] font-headline leading-[38px] text-foreground">
                 Routinen wirklich pflegen
               </Text>
-              <Text className="text-sm font-body leading-6 text-muted-foreground">
+              <Text className="text-base font-body leading-6 text-muted-foreground">
                 Hier bearbeitest du Namen, Aufgaben, Sterne, Timer und Bonuswerte fuer alle
                 Kinder in eurer Familie.
               </Text>
@@ -399,19 +472,24 @@ export default function RoutinesSettingsScreen() {
           style={{ backgroundColor: palette.button }}
         >
           <View className="flex-row items-center gap-2">
-            <Plus size={18} color="#FFFFFF" />
-            <Text className="text-base font-body-semibold text-white">Neue Routine anlegen</Text>
+            <Plus size={18} color={semanticColors.accentForeground} />
+            <Text
+              className="text-base font-body-semibold text-white"
+              maxFontSizeMultiplier={1.3}
+            >
+              Neue Routine anlegen
+            </Text>
           </View>
         </Button>
 
         <Card
-          className="mt-5 rounded-[22px] border px-5 py-5"
+          className="mt-5 rounded-card border px-5 py-5"
           style={{ borderColor: palette.accentBorder, backgroundColor: palette.accentSoft }}
         >
           <View className="flex-row items-start gap-3">
             <View
               className="mt-0.5 h-10 w-10 items-center justify-center rounded-full"
-              style={{ backgroundColor: "#FFFFFF" }}
+              style={{ backgroundColor: semanticColors.card }}
             >
               <Sparkles size={18} color={palette.accentStrong} />
             </View>
@@ -437,17 +515,23 @@ export default function RoutinesSettingsScreen() {
           </View>
 
           <View
-            className="mt-5 rounded-[16px] px-3.5 py-3"
+            className="mt-5 rounded-tile px-3.5 py-3"
             style={{ backgroundColor: "rgba(255,255,255,0.68)" }}
           >
-            <Text className="text-xs font-body leading-5 text-muted-foreground">
+            <Text className="text-base font-body leading-6 text-muted-foreground">
               Tipp: Beim Antippen wird sofort eine neue Routine aus der Vorlage angelegt und
               unten im Editor geöffnet.
             </Text>
           </View>
         </Card>
 
-        {routines.length === 0 ? (
+        {isLoading ? (
+          <View className="mt-4 gap-3" accessibilityLabel="Routinen werden geladen">
+            <SkeletonCard lines={2} />
+            <SkeletonCard lines={2} />
+            <SkeletonCard lines={2} />
+          </View>
+        ) : routines.length === 0 ? (
           <Card className="mt-4 rounded-[28px] px-5 py-8">
             <Text className="text-center text-lg font-headline text-foreground">
               Noch keine Routinen vorhanden
@@ -468,25 +552,49 @@ export default function RoutinesSettingsScreen() {
                     <View
                       className="mt-1 h-4 w-4 rounded-full"
                       style={{ backgroundColor: routine.color || ROUTINE_COLORS[0] }}
+                      accessibilityElementsHidden
+                      importantForAccessibility="no-hide-descendants"
                     />
                     <View className="flex-1">
                       <Text className="text-lg font-headline text-foreground">{routine.name}</Text>
-                      <Text className="mt-1 text-sm font-body text-muted-foreground">
+                      <Text className="mt-1 text-base font-body leading-6 text-muted-foreground">
                         {routine.tasks.length} Aufgaben • familienweit aktiv
                       </Text>
+                      {routine.schedule || routine.reminders ? (
+                        <Text className="mt-1 text-sm font-body leading-5 text-muted-foreground">
+                          {describeSchedule(routine.schedule, routine.reminders)}
+                        </Text>
+                      ) : null}
                     </View>
-                    <Pressable
+                    <PressableScale
                       onPress={() => (isEditing ? resetEditor() : openEditor(routine))}
-                      className="rounded-full px-3 py-1.5"
-                      style={{ backgroundColor: isEditing ? "#FDECEC" : palette.tabActiveBg }}
+                      className="justify-center rounded-full px-3 py-1.5"
+                      style={{
+                        backgroundColor: isEditing
+                          ? semanticColors.destructiveSoft
+                          : palette.tabActiveBg,
+                      }}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        isEditing
+                          ? `${routine.name || "Routine"} bearbeiten schliessen`
+                          : `${routine.name || "Routine"} bearbeiten`
+                      }
+                      accessibilityState={{ expanded: isEditing }}
                     >
                       <Text
                         className="text-xs font-body-semibold uppercase tracking-[0.6px]"
-                        style={{ color: isEditing ? "#B91C1C" : palette.accentText }}
+                        style={{
+                          color: isEditing
+                            ? semanticColors.destructiveStrong
+                            : palette.accentText,
+                        }}
+                        maxFontSizeMultiplier={1.3}
                       >
                         {isEditing ? "Schliessen" : "Bearbeiten"}
                       </Text>
-                    </Pressable>
+                    </PressableScale>
                   </View>
 
                   {!isEditing ? (
@@ -494,19 +602,19 @@ export default function RoutinesSettingsScreen() {
                       {routine.tasks.slice(0, 4).map((task) => {
                         const Icon = getIcon(task.iconName);
                         return (
-                          <View key={task.id} className="flex-row items-center px-1 py-1.5">
+                          <View key={task.id} className="min-h-11 flex-row items-center px-1 py-1.5">
                             <Icon size={16} color={palette.accentStrong} />
-                            <Text className="ml-2 flex-1 text-sm font-body text-foreground">
+                            <Text className="ml-2 flex-1 text-base font-body leading-6 text-foreground">
                               {task.title}
                             </Text>
-                            <Text className="text-xs font-body text-muted-foreground">
+                            <Text className="text-sm font-body text-muted-foreground">
                               {task.stars} Sterne
                             </Text>
                           </View>
                         );
                       })}
                       {routine.tasks.length > 4 ? (
-                        <Text className="px-1 text-xs font-body text-muted-foreground">
+                        <Text className="px-1 text-sm font-body text-muted-foreground">
                           +{routine.tasks.length - 4} weitere Aufgaben
                         </Text>
                       ) : null}
@@ -528,7 +636,7 @@ export default function RoutinesSettingsScreen() {
                         <Label>Farbe</Label>
                         <View className="flex-row flex-wrap gap-3">
                           {ROUTINE_COLORS.map((color) => (
-                            <Pressable
+                            <PressableScale
                               key={color}
                               onPress={() =>
                                 setDraftRoutine((prev) => (prev ? { ...prev, color } : prev))
@@ -538,25 +646,32 @@ export default function RoutinesSettingsScreen() {
                                 routineDraft.color === color ? "border-foreground" : "border-transparent"
                               )}
                               style={{ backgroundColor: color }}
+                              hitSlop={8}
+                              accessibilityRole="button"
+                              accessibilityLabel="Routinenfarbe wählen"
+                              accessibilityState={{ selected: routineDraft.color === color }}
                             >
                               {routineDraft.color === color ? (
-                                <Check size={18} color="#FFFFFF" />
+                                <Check size={18} color={semanticColors.accentForeground} />
                               ) : null}
-                            </Pressable>
+                            </PressableScale>
                           ))}
                         </View>
                       </View>
 
-                      <View className="rounded-[24px] border px-4 py-4" style={{ borderColor: palette.accentBorder, backgroundColor: palette.accentSoft }}>
+                      <View className="rounded-card border px-4 py-4" style={{ borderColor: palette.accentBorder, backgroundColor: palette.accentSoft }}>
                         <Pressable
                           onPress={() => setShowSuggestions((prev) => !prev)}
-                          className="flex-row items-center justify-between"
+                          className="min-h-11 flex-row items-center justify-between active:opacity-80"
+                          accessibilityRole="button"
+                          accessibilityLabel="Kurzhinweise für gute Routinen"
+                          accessibilityState={{ expanded: showSuggestions }}
                         >
                           <View className="mr-3 flex-1">
                             <Text className="text-sm font-body-semibold" style={{ color: palette.accentText }}>
                               Kurzhinweise fuer gute Routinen
                             </Text>
-                            <Text className="mt-1 text-xs font-body text-muted-foreground">
+                            <Text className="mt-1 text-base font-body leading-6 text-muted-foreground">
                               4-6 Aufgaben, klare Titel, Timer nur dort, wo er spielerisch hilft.
                             </Text>
                           </View>
@@ -564,6 +679,8 @@ export default function RoutinesSettingsScreen() {
                             size={18}
                             color={palette.accentStrong}
                             style={{ transform: [{ rotate: showSuggestions ? "180deg" : "0deg" }] }}
+                            accessibilityElementsHidden
+                            importantForAccessibility="no-hide-descendants"
                           />
                         </Pressable>
                         {showSuggestions ? (
@@ -575,7 +692,7 @@ export default function RoutinesSettingsScreen() {
                             ].map((hint) => (
                               <View key={hint} className="flex-row items-start gap-2">
                                 <Sparkles size={14} color={palette.accentStrong} style={{ marginTop: 2 }} />
-                                <Text className="flex-1 text-xs font-body leading-5 text-muted-foreground">
+                                <Text className="flex-1 text-base font-body leading-6 text-muted-foreground">
                                   {hint}
                                 </Text>
                               </View>
@@ -587,15 +704,22 @@ export default function RoutinesSettingsScreen() {
                       <View className="gap-2">
                         <View className="flex-row items-center justify-between">
                           <Label>Aufgaben</Label>
-                          <Pressable
+                          <PressableScale
                             onPress={addDraftTask}
-                            className="rounded-full px-3 py-1.5"
+                            className="justify-center rounded-full px-3 py-1.5"
                             style={{ backgroundColor: palette.tabActiveBg }}
+                            hitSlop={8}
+                            accessibilityRole="button"
+                            accessibilityLabel="Aufgabe hinzufügen"
                           >
-                            <Text className="text-xs font-body-semibold uppercase tracking-[0.6px]" style={{ color: palette.accentText }}>
+                            <Text
+                              className="text-xs font-body-semibold uppercase tracking-[0.6px]"
+                              style={{ color: palette.accentText }}
+                              maxFontSizeMultiplier={1.3}
+                            >
                               Aufgabe hinzufügen
                             </Text>
-                          </Pressable>
+                          </PressableScale>
                         </View>
 
                         <DraggableFlatList
@@ -609,7 +733,71 @@ export default function RoutinesSettingsScreen() {
                         />
                       </View>
 
-                      <View className="flex-row gap-3">
+                      <View
+                        className="rounded-card border px-4 py-4"
+                        style={{
+                          borderColor: palette.accentBorder,
+                          backgroundColor: palette.accentSoft,
+                        }}
+                      >
+                        <Pressable
+                          onPress={() => setShowScheduleSection((prev) => !prev)}
+                          className="min-h-11 flex-row items-center justify-between active:opacity-80"
+                          accessibilityRole="button"
+                          accessibilityLabel="Zeitplan und Erinnerung"
+                          accessibilityState={{ expanded: showScheduleSection }}
+                        >
+                          <View className="mr-3 flex-1 flex-row items-start gap-2.5">
+                            <CalendarDays
+                              size={18}
+                              color={palette.accentStrong}
+                              style={{ marginTop: 2 }}
+                            />
+                            <View className="flex-1">
+                              <Text
+                                className="text-sm font-body-semibold"
+                                style={{ color: palette.accentText }}
+                              >
+                                Zeitplan & Erinnerung
+                              </Text>
+                              <Text className="mt-1 text-base font-body leading-6 text-muted-foreground">
+                                {describeSchedule(
+                                  routineDraft.schedule,
+                                  routineDraft.reminders
+                                )}
+                              </Text>
+                            </View>
+                          </View>
+                          <ChevronDown
+                            size={18}
+                            color={palette.accentStrong}
+                            style={{
+                              transform: [
+                                { rotate: showScheduleSection ? "180deg" : "0deg" },
+                              ],
+                            }}
+                            accessibilityElementsHidden
+                            importantForAccessibility="no-hide-descendants"
+                          />
+                        </Pressable>
+
+                        {showScheduleSection ? (
+                          <View className="mt-4">
+                            <ScheduleEditor
+                              schedule={routineDraft.schedule}
+                              reminders={routineDraft.reminders}
+                              palette={palette}
+                              onChange={(schedule, reminders) =>
+                                setDraftRoutine((prev) =>
+                                  prev ? { ...prev, schedule, reminders } : prev
+                                )
+                              }
+                            />
+                          </View>
+                        ) : null}
+                      </View>
+
+                      <View className={isCompactWidth ? "gap-3" : "flex-row gap-3"}>
                         <Button variant="outline" onPress={resetEditor} className="flex-1">
                           Abbrechen
                         </Button>
@@ -626,12 +814,17 @@ export default function RoutinesSettingsScreen() {
 
                       <Button
                         variant="destructive"
-                        onPress={() => confirmDeleteRoutine(routine)}
+                        onPress={() => setRoutinePendingDeletion(routine)}
                         className="w-full"
+                        accessibilityRole="button"
+                        accessibilityLabel={`${routine.name || "Routine"} löschen`}
                       >
                         <View className="flex-row items-center gap-2">
-                          <Trash2 size={18} color="#FFFFFF" />
-                          <Text className="text-base font-body-semibold text-white">
+                          <Trash2 size={18} color={semanticColors.destructiveForeground} />
+                          <Text
+                            className="text-base font-body-semibold text-white"
+                            maxFontSizeMultiplier={1.3}
+                          >
                             Routine löschen
                           </Text>
                         </View>
@@ -645,6 +838,18 @@ export default function RoutinesSettingsScreen() {
         )}
       </ScrollView>
 
+      <ConfirmDialog
+        visible={routinePendingDeletion !== null}
+        title="Routine löschen?"
+        description={`„${routinePendingDeletion?.name || "Diese Routine"}“ wird mit allen Aufgaben dauerhaft entfernt und kann nicht wiederhergestellt werden.`}
+        confirmLabel="Löschen"
+        destructive
+        onConfirm={() => {
+          void handleConfirmDeleteRoutine();
+        }}
+        onCancel={() => setRoutinePendingDeletion(null)}
+      />
+
       <IconPicker
         visible={!!showIconPickerForTaskId}
         value={activeTaskIcon}
@@ -655,8 +860,6 @@ export default function RoutinesSettingsScreen() {
         }}
         onClose={() => setShowIconPickerForTaskId(null)}
       />
-
-      <ToastOverlay toasts={toasts} onDismiss={dismiss} />
     </View>
   );
 }

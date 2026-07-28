@@ -45,6 +45,23 @@ export default {
         destructive: {
           DEFAULT: "#EF4444",
           foreground: "#FFFFFF",
+          soft: "#FDECEC",
+          // AA-safe surface for destructive CTAs (white text: 9.14:1).
+          strong: "#8A1F1F",
+        },
+        // Semantic status tokens — mirrored 1:1 in lib/theme.ts `semanticColors`.
+        // DEFAULT = fill/indicator only (never text), soft = tinted surface,
+        // foreground = text on soft surfaces, strong = AA-safe text on white.
+        success: {
+          DEFAULT: "#4FD17A",
+          soft: "#ECFDF5",
+          foreground: "#1F8A4C",
+          strong: "#18773F",
+        },
+        warning: {
+          DEFAULT: "#F7A313",
+          soft: "#FEF3C7",
+          foreground: "#92400E",
         },
         border: "#E5E5E5",
         input: "#E5E5E5",

@@ -8,14 +8,16 @@
     "scheme": "routinestars",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#F8E9D7"
+    "locales": {
+      "de": "./locales/de.json"
     },
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.routinestars.app"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.routinestars.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -29,12 +31,32 @@
       "expo-font",
       "expo-asset",
       [
-        "expo-image-picker",
+        "expo-splash-screen",
         {
-          "photosPermission": "Routine Stars benötigt Zugriff auf deine Fotomediathek, damit du ein eigenes Profilbild auswählen kannst."
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#F8E9D7",
+          "enableFullScreenImage_legacy": true
         }
       ],
-      "expo-audio"
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Routine Stars benötigt Zugriff auf deine Fotomediathek, damit du ein eigenes Profilbild auswählen kannst.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      "expo-audio",
+      "expo-notifications",
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true

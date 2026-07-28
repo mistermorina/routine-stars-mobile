@@ -24,26 +24,36 @@ export function SettingsMetricCard({
 }: SettingsMetricCardProps) {
   return (
     <Card
-      className={cn("min-h-[124px] flex-1 overflow-hidden rounded-[22px] px-4 py-4", className)}
+      className={cn("min-h-[124px] flex-1 overflow-hidden rounded-card px-4 py-4", className)}
       style={{ backgroundColor, borderColor }}
     >
       <View
         className="absolute right-[-10px] top-[-10px] h-16 w-16 rounded-full"
         style={{ backgroundColor: accentColor, opacity: 0.08 }}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
       />
       <Text
-        className="text-[11px] font-body-semibold uppercase tracking-[0.7px]"
+        className="text-xs font-body-semibold uppercase tracking-[0.7px]"
         style={{ color: accentColor }}
         numberOfLines={1}
         adjustsFontSizeToFit
         minimumFontScale={0.8}
+        maxFontSizeMultiplier={1.3}
       >
         {label}
       </Text>
-      <Text className="mt-2 text-[34px] font-headline leading-[38px] text-foreground">
+      <Text
+        className="mt-2 text-[34px] font-headline leading-[38px] text-foreground"
+        maxFontSizeMultiplier={1.3}
+      >
         {value}
       </Text>
-      <Text className="mt-2 text-sm font-body leading-5 text-muted-foreground" numberOfLines={2}>
+      <Text
+        className="mt-2 text-sm font-body leading-5 text-muted-foreground"
+        numberOfLines={2}
+        maxFontSizeMultiplier={1.3}
+      >
         {caption}
       </Text>
     </Card>

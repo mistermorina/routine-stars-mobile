@@ -106,13 +106,13 @@ export const STICKER_DEFINITIONS: StickerDefinition[] = [
   {
     id: "stars_25",
     title: "Sterneschatz",
-    description: "25 Sterne gleichzeitig gesammelt.",
+    description: "Insgesamt 25 Sterne gesammelt.",
     shortLabel: "25 Sterne",
   },
   {
     id: "stars_50",
     title: "Sternenregen",
-    description: "50 Sterne gleichzeitig gesammelt.",
+    description: "Insgesamt 50 Sterne gesammelt.",
     shortLabel: "50 Sterne",
   },
   {
@@ -168,6 +168,24 @@ function getMissionMeta(kind: DailyMissionKind) {
   }
 }
 
+/**
+ * Cumulative stars a child has ever *earned* — the source of truth for every
+ * star-count milestone.
+ *
+ * `child.stars` is the current **balance** and drops whenever a reward is
+ * redeemed, so reading it would push sticker progress backwards for something
+ * the child actually achieved. Cumulative earnings are the sum of the positive
+ * star deltas in the activity log, which redemption never touches.
+ *
+ * The current balance is only used as a floor: it covers legacy or seeded
+ * children whose stars predate activity logging. In normal operation the
+ * balance can never exceed what was logged, so the floor is inert.
+ */
+export function getCumulativeEarnedStars(logs: ActivityLog[], child?: Child) {
+  const earned = logs.reduce((sum, log) => sum + Math.max(0, log.stars), 0);
+  return Math.max(earned, child?.stars ?? 0);
+}
+
 function getMaxStreak(logs: ActivityLog[]) {
   const summaries = buildDailySummaries(logs);
 
@@ -197,14 +215,27 @@ function getMaxStreak(logs: ActivityLog[]) {
   return best;
 }
 
+// Undo entries carry negative stars; a task only counts as completed when its
+// net star sum for the day stays positive (manual adjustments log 0 and drop out).
+function getNetCompletedTaskIds(logs: ActivityLog[], date: string): Set<string> {
+  const netByTask = new Map<string, number>();
+  for (const log of logs) {
+    if (log.date !== date) continue;
+    netByTask.set(log.taskId, (netByTask.get(log.taskId) ?? 0) + log.stars);
+  }
+  const completed = new Set<string>();
+  for (const [taskId, net] of netByTask) {
+    if (net > 0) completed.add(taskId);
+  }
+  return completed;
+}
+
 function countCompletedRoutinesForDate(
   logs: ActivityLog[],
   routines: Routine[],
   date: string
 ) {
-  const completedTaskIds = new Set(
-    logs.filter((log) => log.date === date).map((log) => log.taskId)
-  );
+  const completedTaskIds = getNetCompletedTaskIds(logs, date);
 
   return routines.filter(
     (routine) =>
@@ -239,7 +270,7 @@ export function getMissionProgress(
 
   switch (mission.kind) {
     case "complete_3_tasks":
-      current = todayLogs.length;
+      current = getNetCompletedTaskIds(todayLogs, date).size;
       break;
     case "earn_5_stars":
       current = todayLogs.reduce((sum, log) => sum + log.stars, 0);
@@ -283,6 +314,7 @@ function getUnlockableStickerIds(
   const missionCount = progressState.claimedMissionDates.length;
   const maxStreak = getMaxStreak(logs);
   const activeDays = summaries.length;
+  const cumulativeStars = getCumulativeEarnedStars(logs, child);
   const hasCompletedRoutine = summaries.some(
     (summary) => countCompletedRoutinesForDate(logs, routines, summary.date) > 0
   );
@@ -295,8 +327,8 @@ function getUnlockableStickerIds(
   if (missionCount >= 3) unlockable.push("daily_mission_3");
   if (maxStreak >= 3) unlockable.push("streak_3");
   if (maxStreak >= 7) unlockable.push("streak_7");
-  if ((child?.stars ?? 0) >= 25) unlockable.push("stars_25");
-  if ((child?.stars ?? 0) >= 50) unlockable.push("stars_50");
+  if (cumulativeStars >= 25) unlockable.push("stars_25");
+  if (cumulativeStars >= 50) unlockable.push("stars_50");
   if (activeDays >= 10) unlockable.push("active_days_10");
 
   return unlockable.filter((stickerId) => !progressState.unlockedStickerIds.includes(stickerId));
@@ -313,6 +345,7 @@ function getGoalProgress(
   const activeDays = summaries.length;
   const missionCount = progressState.claimedMissionDates.length;
   const maxStreak = getMaxStreak(logs);
+  const cumulativeStars = getCumulativeEarnedStars(logs, child);
   const hasCompletedRoutine = summaries.some(
     (summary) => countCompletedRoutinesForDate(logs, routines, summary.date) > 0
   );
@@ -352,15 +385,15 @@ function getGoalProgress(
       };
     case "stars_25":
       return {
-        current: Math.min(child?.stars ?? 0, 25),
+        current: Math.min(cumulativeStars, 25),
         target: 25,
-        hint: "Sammle 25 Sterne gleichzeitig.",
+        hint: "Sammle insgesamt 25 Sterne.",
       };
     case "stars_50":
       return {
-        current: Math.min(child?.stars ?? 0, 50),
+        current: Math.min(cumulativeStars, 50),
         target: 50,
-        hint: "Sammle 50 Sterne gleichzeitig.",
+        hint: "Sammle insgesamt 50 Sterne.",
       };
     case "active_days_10":
       return {

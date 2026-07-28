@@ -1,13 +1,20 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { View, Text, FlatList, type ListRenderItemInfo } from "react-native";
 import { Image } from "expo-image";
-import Animated, { FadeInDown } from "react-native-reanimated";
-import { Check, Lock, Star } from "lucide-react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { PressableScale } from "@/components/ui/pressable-scale";
-import { getIcon } from "@/lib/icons";
-import { getThemePalette } from "@/lib/theme";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { Check, Lock, Star, getIcon } from "@/lib/icons";
+import { enterStagger, exitFade, springs, timings } from "@/lib/motion";
+import { getThemePalette, semanticColors } from "@/lib/theme";
 import type { ChildTheme, Reward } from "@/lib/types";
 import emptyRewardsImage from "@/assets/images/empty-rewards.png";
 
@@ -17,6 +24,8 @@ interface RewardsOverviewProps {
   childTheme?: ChildTheme;
   onRedeem: (reward: Reward) => void;
   recentlyRedeemedRewardId?: string | null;
+  /** Reward that just got redeemed — drives a one-shot celebration pulse. */
+  celebratingRewardId?: string | null;
 }
 
 function RewardItem({
@@ -26,6 +35,7 @@ function RewardItem({
   onRedeem,
   index,
   recentlyRedeemedRewardId,
+  celebratingRewardId,
 }: {
   reward: Reward;
   childStars: number;
@@ -33,6 +43,7 @@ function RewardItem({
   onRedeem: (reward: Reward) => void;
   index: number;
   recentlyRedeemedRewardId?: string | null;
+  celebratingRewardId?: string | null;
 }) {
   const canAfford = childStars >= reward.cost;
   const missingStars = Math.max(reward.cost - childStars, 0);
@@ -40,23 +51,57 @@ function RewardItem({
   // "Close" rewards show a progress bar, distant ones a calm "Bald frei" badge.
   const isClose = !canAfford && progressPct >= 50;
   const isRecentlyRedeemed = recentlyRedeemedRewardId === reward.id;
+  const isCelebrating = celebratingRewardId === reward.id;
   const IconComponent = getIcon(reward.iconName);
   const palette = getThemePalette(childTheme);
+  const reduceMotion = useReducedMotion();
+
+  const celebrationScale = useSharedValue(1);
+  const celebrationTint = useSharedValue(0);
+
+  // Decorative one-shot pulse — haptics/sound stay with the caller.
+  useEffect(() => {
+    if (!isCelebrating || reduceMotion) return;
+
+    celebrationScale.value = withSequence(
+      withSpring(1.06, springs.bouncy),
+      withSpring(1, springs.playful)
+    );
+    celebrationTint.value = withSequence(
+      withTiming(1, timings.fast),
+      withTiming(0, timings.slow)
+    );
+  }, [celebrationScale, celebrationTint, isCelebrating, reduceMotion]);
+
+  const celebrationStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: celebrationScale.value }],
+  }));
+
+  const celebrationTintStyle = useAnimatedStyle(() => ({
+    opacity: celebrationTint.value,
+  }));
 
   return (
     <Animated.View
-      entering={FadeInDown.delay(Math.min(index, 6) * 60).duration(320)}
+      entering={enterStagger(index)}
+      exiting={exitFade()}
       className="flex-1"
-      style={{ maxWidth: "48.8%" }}
+      style={[{ maxWidth: "48.8%" }, celebrationStyle]}
     >
       <Card
         className="overflow-hidden rounded-card px-3.5 py-4"
         style={{
-          backgroundColor: isRecentlyRedeemed ? "#EAF8EF" : palette.cardTint,
-          borderColor: isRecentlyRedeemed ? "#BFE8CD" : palette.accentBorder,
+          backgroundColor: isRecentlyRedeemed ? semanticColors.successSoft : palette.cardTint,
+          borderColor: isRecentlyRedeemed ? semanticColors.success : palette.accentBorder,
           minHeight: 172,
         }}
       >
+        <Animated.View
+          pointerEvents="none"
+          className="absolute inset-0"
+          style={[{ backgroundColor: semanticColors.successSoft }, celebrationTintStyle]}
+        />
+
         <View
           className="absolute right-[-16px] top-[-14px] h-20 w-20 rounded-full"
           style={{ backgroundColor: palette.motifSecondary, opacity: canAfford ? 0.22 : 0.1 }}
@@ -73,7 +118,11 @@ function RewardItem({
           >
             <IconComponent
               size={26}
-              color={canAfford || isRecentlyRedeemed ? palette.accentStrong : "#9AA5B1"}
+              color={
+                canAfford || isRecentlyRedeemed
+                  ? palette.accentStrong
+                  : semanticColors.mutedForeground
+              }
             />
           </View>
           {/* Cost is always visible — kids need the target number */}
@@ -86,16 +135,22 @@ function RewardItem({
           >
             <Text
               className="text-xs font-body-bold leading-4"
-              style={{ color: canAfford ? "#B97E0B" : "#71808E" }}
+              maxFontSizeMultiplier={1.2}
+              style={{ color: canAfford ? semanticColors.goldText : semanticColors.mutedForeground }}
             >
               {reward.cost}
             </Text>
-            <Star size={12} color="#F7C948" fill={canAfford ? "#F7C948" : "transparent"} />
+            <Star
+              size={12}
+              color={semanticColors.gold}
+              fill={canAfford ? semanticColors.gold : "transparent"}
+            />
           </View>
         </View>
 
         <Text
           className="mt-2.5 text-[15px] font-headline leading-5 text-foreground"
+          maxFontSizeMultiplier={1.4}
           numberOfLines={2}
         >
           {reward.title}
@@ -106,11 +161,15 @@ function RewardItem({
             <View className="flex-row items-center gap-1.5">
               <View
                 className="h-6 w-6 items-center justify-center rounded-full"
-                style={{ backgroundColor: "#4FD17A" }}
+                style={{ backgroundColor: semanticColors.success }}
               >
-                <Check size={14} color="#FFFFFF" strokeWidth={3} />
+                <Check size={14} color={semanticColors.card} strokeWidth={3} />
               </View>
-              <Text className="text-xs font-body-semibold" style={{ color: "#1F8A4C" }}>
+              <Text
+                className="text-xs font-body-semibold"
+                maxFontSizeMultiplier={1.3}
+                style={{ color: semanticColors.successStrong }}
+              >
                 Freigeschaltet
               </Text>
             </View>
@@ -124,7 +183,12 @@ function RewardItem({
               className="flex-row items-center gap-1.5 rounded-full px-4 py-2"
               style={{ backgroundColor: palette.button }}
             >
-              <Text className="text-sm font-body-semibold text-white">Einlösen</Text>
+              <Text
+                className="text-sm font-body-semibold text-white"
+                maxFontSizeMultiplier={1.3}
+              >
+                Einlösen
+              </Text>
             </PressableScale>
           ) : isClose ? (
             <View>
@@ -132,9 +196,13 @@ function RewardItem({
                 value={progressPct}
                 className="h-2"
                 indicatorColor={palette.chartPrimary}
-                trackStyle={{ backgroundColor: "#EAF1F7" }}
+                trackStyle={{ backgroundColor: semanticColors.muted }}
               />
-              <Text className="mt-1.5 text-xs font-body-semibold" style={{ color: palette.accentText }}>
+              <Text
+                className="mt-1.5 text-xs font-body-semibold"
+                maxFontSizeMultiplier={1.3}
+                style={{ color: palette.accentText }}
+              >
                 Nur {missingStars} {missingStars === 1 ? "Stern" : "Sterne"} entfernt
               </Text>
             </View>
@@ -143,8 +211,11 @@ function RewardItem({
               className="self-start flex-row items-center gap-1 rounded-full px-2.5 py-1"
               style={{ backgroundColor: "rgba(255,255,255,0.85)" }}
             >
-              <Lock size={11} color="#9AA5B1" />
-              <Text className="text-[11px] font-body-semibold leading-4 text-muted-foreground">
+              <Lock size={12} color={semanticColors.mutedForeground} />
+              <Text
+                className="text-xs font-body-semibold leading-4 text-muted-foreground"
+                maxFontSizeMultiplier={1.2}
+              >
                 Bald frei
               </Text>
             </View>
@@ -161,6 +232,7 @@ export function RewardsOverview({
   childTheme,
   onRedeem,
   recentlyRedeemedRewardId,
+  celebratingRewardId,
 }: RewardsOverviewProps) {
   const renderItem = useCallback(
     ({ item, index }: ListRenderItemInfo<Reward>) => (
@@ -171,9 +243,10 @@ export function RewardsOverview({
         onRedeem={onRedeem}
         index={index}
         recentlyRedeemedRewardId={recentlyRedeemedRewardId}
+        celebratingRewardId={celebratingRewardId}
       />
     ),
-    [childStars, childTheme, onRedeem, recentlyRedeemedRewardId]
+    [celebratingRewardId, childStars, childTheme, onRedeem, recentlyRedeemedRewardId]
   );
 
   const keyExtractor = useCallback((item: Reward) => item.id, []);

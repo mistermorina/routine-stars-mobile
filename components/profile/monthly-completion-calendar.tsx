@@ -1,13 +1,16 @@
 import React from "react";
 import { View, Text } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { Star } from "lucide-react-native";
+import { Star } from "@/lib/icons";
 import { Card } from "@/components/ui/card";
 import type { CalendarCell, WeeklyActivityItem } from "@/lib/activity-insights";
-import type { ThemePalette } from "@/lib/theme";
+import { semanticColors, type ThemePalette } from "@/lib/theme";
 
 const WEEKDAY_LABELS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const CALENDAR_CELL_WIDTH = `${100 / 7}%`;
+// Future days are deliberately quieter than `mutedForeground`; they are a
+// disabled affordance, not readable copy. No semantic token covers this tint.
+const FUTURE_DAY_COLOR = "#b9b9b9";
 
 interface MonthlyCompletionCalendarProps {
   monthLabel: string;
@@ -30,12 +33,14 @@ export function MonthlyCompletionCalendar({
 
   return (
     <Card
-      className="overflow-hidden rounded-[24px] px-4 py-4"
+      className="overflow-hidden rounded-card px-4 py-4"
       style={{ backgroundColor: palette.cardTint, borderColor: palette.accentBorder }}
     >
       <View
         className="absolute left-[-10px] top-10 h-20 w-20 rounded-full"
         style={{ backgroundColor: palette.motifPrimary, opacity: 0.16 }}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
       />
       <View className="flex-row items-start justify-between gap-3">
         <View className="min-w-0 flex-1">
@@ -57,36 +62,45 @@ export function MonthlyCompletionCalendar({
       <View className="mt-4 flex-row gap-3">
         {weeklyItems ? (
           <View
-            className="flex-1 rounded-[16px] px-4 py-3"
+            className="flex-1 rounded-tile px-4 py-3"
             style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
           >
-            <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+            <Text
+              className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground"
+              maxFontSizeMultiplier={1.3}
+            >
               Diese Woche
             </Text>
-            <Text className="mt-2 text-2xl font-headline text-foreground">
+            <Text className="mt-2 text-2xl font-headline text-foreground" maxFontSizeMultiplier={1.3}>
               {weeklyActiveDays}/7
             </Text>
           </View>
         ) : null}
         <View
-          className="flex-1 rounded-[16px] px-4 py-3"
+          className="flex-1 rounded-tile px-4 py-3"
           style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
         >
-          <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+          <Text
+            className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground"
+            maxFontSizeMultiplier={1.3}
+          >
             Aktive Tage
           </Text>
-          <Text className="mt-2 text-2xl font-headline text-foreground">
+          <Text className="mt-2 text-2xl font-headline text-foreground" maxFontSizeMultiplier={1.3}>
             {monthlyActiveDays}
           </Text>
         </View>
         <View
-          className="flex-1 rounded-[16px] px-4 py-3"
+          className="flex-1 rounded-tile px-4 py-3"
           style={{ backgroundColor: "rgba(255,255,255,0.76)" }}
         >
-          <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+          <Text
+            className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground"
+            maxFontSizeMultiplier={1.3}
+          >
             Monatssterne
           </Text>
-          <Text className="mt-2 text-2xl font-headline text-foreground">
+          <Text className="mt-2 text-2xl font-headline text-foreground" maxFontSizeMultiplier={1.3}>
             {monthlyStars}
           </Text>
         </View>
@@ -94,14 +108,21 @@ export function MonthlyCompletionCalendar({
 
       {weeklyItems ? (
         <View
-          className="mt-4 rounded-[18px] border px-3 py-3"
+          className="mt-4 rounded-tile border px-3 py-3"
           style={{ borderColor: palette.accentBorder, backgroundColor: "rgba(255,255,255,0.58)" }}
         >
           <View className="mb-3 flex-row items-center justify-between">
-            <Text className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground">
+            <Text
+              className="text-xs font-body-semibold uppercase tracking-[0.7px] text-muted-foreground"
+              maxFontSizeMultiplier={1.3}
+            >
               Wochenrhythmus
             </Text>
-            <Text className="text-xs font-body-semibold" style={{ color: palette.accentText }}>
+            <Text
+              className="text-xs font-body-semibold"
+              style={{ color: palette.accentText }}
+              maxFontSizeMultiplier={1.3}
+            >
               {weeklyActiveDays} aktive Tage
             </Text>
           </View>
@@ -114,18 +135,19 @@ export function MonthlyCompletionCalendar({
                 style={{ width: CALENDAR_CELL_WIDTH }}
               >
                 <Text
-                  className="text-[11px] font-body-semibold"
-                  style={{ color: item.isToday ? palette.accentText : "#737373" }}
+                  className="text-xs font-body-semibold"
+                  style={{ color: item.isToday ? palette.accentText : semanticColors.mutedForeground }}
+                  maxFontSizeMultiplier={1.2}
                 >
                   {item.label}
                 </Text>
                 <View
-                  className="mt-2 items-center justify-center rounded-[14px] border"
+                  className="mt-2 items-center justify-center rounded-chip border"
                   style={{
                     width: "92%",
                     maxWidth: 40,
                     aspectRatio: 1,
-                    backgroundColor: item.isActive ? palette.heroSurface : "#FFFFFF",
+                    backgroundColor: item.isActive ? palette.heroSurface : semanticColors.card,
                     borderColor: item.isToday
                       ? palette.accent
                       : item.isActive
@@ -140,15 +162,19 @@ export function MonthlyCompletionCalendar({
                       fill={palette.chartPrimary}
                     />
                   ) : (
-                    <Text className="text-xs font-body-semibold text-muted-foreground">
+                    <Text
+                      className="text-xs font-body-semibold text-muted-foreground"
+                      maxFontSizeMultiplier={1.2}
+                    >
                       {item.dateLabel}
                     </Text>
                   )}
                 </View>
                 <Text
-                  className="mt-1 h-4 self-stretch text-center text-[10px] font-body-semibold"
-                  style={{ color: item.isActive ? palette.accentText : "#A3A3A3" }}
+                  className="mt-1 h-4 self-stretch text-center text-xs font-body-semibold"
+                  style={{ color: item.isActive ? palette.accentText : semanticColors.mutedForeground }}
                   numberOfLines={1}
+                  maxFontSizeMultiplier={1.2}
                 >
                   {item.isActive ? `${item.stars}` : ""}
                 </Text>
@@ -163,7 +189,12 @@ export function MonthlyCompletionCalendar({
       <View className="mt-5 flex-row self-stretch">
         {WEEKDAY_LABELS.map((label) => (
           <View key={label} className="items-center" style={{ width: CALENDAR_CELL_WIDTH }}>
-            <Text className="text-xs font-body-semibold text-muted-foreground">{label}</Text>
+            <Text
+              className="text-xs font-body-semibold text-muted-foreground"
+              maxFontSizeMultiplier={1.2}
+            >
+              {label}
+            </Text>
           </View>
         ))}
       </View>
@@ -193,7 +224,7 @@ export function MonthlyCompletionCalendar({
                   style={{ width: CALENDAR_CELL_WIDTH }}
                 >
                   <View
-                    className="items-center justify-center rounded-[15px] border"
+                    className="items-center justify-center rounded-chip border"
                     style={{
                       width: "92%",
                       maxWidth: 44,
@@ -217,7 +248,8 @@ export function MonthlyCompletionCalendar({
                     ) : (
                       <Text
                         className="text-sm font-body-semibold"
-                        style={{ color: cell.isFuture ? "#b9b9b9" : "#1a1a2e" }}
+                        style={{ color: cell.isFuture ? FUTURE_DAY_COLOR : semanticColors.foreground }}
+                        maxFontSizeMultiplier={1.2}
                       >
                         {cell.day}
                       </Text>
@@ -225,9 +257,10 @@ export function MonthlyCompletionCalendar({
                   </View>
                   {cell.isActive ? (
                     <Text
-                      className="mt-1 h-4 self-stretch text-center text-[10px] font-body-semibold"
+                      className="mt-1 h-4 self-stretch text-center text-xs font-body-semibold"
                       style={{ color: palette.accentText }}
                       numberOfLines={1}
+                      maxFontSizeMultiplier={1.2}
                     >
                       {cell.stars} ★
                     </Text>
