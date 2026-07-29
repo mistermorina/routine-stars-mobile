@@ -7,16 +7,22 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AvatarImage } from "@/components/ui/avatar-image";
+import { AvatarPicker } from "@/components/settings/avatar-picker";
+import { SkinPicker } from "@/components/settings/skin-picker";
 import {
-  areAvatarValuesEqual,
-  avatarCategories,
   DEFAULT_AVATAR_VALUE,
 } from "@/lib/avatars";
 import { pickAvatarPhotoAsync } from "@/lib/avatar-photo-picker";
 import { useToast } from "@/hooks/use-toast";
 import { triggerFeedback } from "@/lib/feedback";
 import { getThemePalette, semanticColors } from "@/lib/theme";
-import type { AgeGroup, AvatarValue, ChildProfile, ChildTheme } from "@/lib/types";
+import type {
+  AgeGroup,
+  AvatarValue,
+  BackgroundSkinId,
+  ChildProfile,
+  ChildTheme,
+} from "@/lib/types";
 import onboardingHeroImage from "@/assets/images/onboarding-hero.png";
 
 interface ChildSetupProps {
@@ -57,7 +63,6 @@ const ageGroupOptions: { id: AgeGroup; label: string; hint: string }[] = [
   { id: "9-12", label: "9–12 Jahre", hint: "Mehr Eigenständigkeit und Verantwortung" },
 ];
 
-const avatarCategoryNames = Object.keys(avatarCategories) as (keyof typeof avatarCategories)[];
 
 function ThemePreview({
   themeId,
@@ -99,14 +104,8 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
   const [selectedAgeGroup, setSelectedAgeGroup] = useState<AgeGroup>(
     formData.children[0]?.ageGroup ?? "6-8"
   );
-  const [selectedAvatarCategory, setSelectedAvatarCategory] =
-    useState<keyof typeof avatarCategories>("Tiere");
-
+  const [selectedSkin, setSelectedSkin] = useState<BackgroundSkinId>("none");
   const palette = getThemePalette(selectedTheme);
-  const avatarOptions = useMemo(
-    () => avatarCategories[selectedAvatarCategory],
-    [selectedAvatarCategory]
-  );
   const isFirstChildFlow = childProfiles.length === 0;
 
   const resetForm = () => {
@@ -114,7 +113,7 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
     setSelectedAvatar(DEFAULT_AVATAR_VALUE);
     setSelectedTheme("sterne");
     setSelectedAgeGroup("6-8");
-    setSelectedAvatarCategory("Tiere");
+    setSelectedSkin("none");
   };
 
   const handlePickAvatarPhoto = async () => {
@@ -145,6 +144,7 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
         name: trimmed,
         avatar: selectedAvatar,
         theme: selectedTheme,
+      backgroundSkin: selectedSkin,
         ageGroup: selectedAgeGroup,
       },
     ]);
@@ -164,6 +164,7 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
         name: trimmed,
         avatar: selectedAvatar,
         theme: selectedTheme,
+      backgroundSkin: selectedSkin,
         ageGroup: selectedAgeGroup,
       });
     }
@@ -424,78 +425,23 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
               </View>
             </View>
 
+            <View className="gap-3">
+              <Label>Hintergrund</Label>
+              <SkinPicker
+                value={selectedSkin}
+                onChange={setSelectedSkin}
+                theme={selectedTheme}
+              />
+            </View>
+
             {/* Avatar selection */}
             <View className="gap-3">
               <Label>Avatar auswählen</Label>
-              <View className="flex-row flex-wrap gap-2">
-                {avatarCategoryNames.map((category) => {
-                  const isSelected = category === selectedAvatarCategory;
-                  return (
-                    <Pressable
-                      key={category}
-                      onPress={() => setSelectedAvatarCategory(category)}
-                      className="min-h-11 rounded-full border px-3 py-2.5 active:opacity-80"
-                      accessibilityRole="button"
-                      accessibilityLabel={`Avatar-Kategorie ${category}`}
-                      accessibilityState={{ selected: isSelected }}
-                      hitSlop={8}
-                      style={
-                        isSelected
-                          ? {
-                              backgroundColor: palette.tabActiveBg,
-                              borderColor: palette.accent,
-                            }
-                          : {
-                              backgroundColor: "rgba(255,255,255,0.74)",
-                              borderColor: "rgba(255,255,255,0.2)",
-                            }
-                      }
-                    >
-                      <Text
-                        className="text-xs font-body-semibold"
-                        style={isSelected ? { color: palette.accentText } : undefined}
-                        maxFontSizeMultiplier={1.3}
-                      >
-                        {category}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-
-              <View className="flex-row flex-wrap justify-between gap-y-3">
-                {avatarOptions.map((avatar) => (
-                  <Pressable
-                    key={avatar.id}
-                    onPress={() => setSelectedAvatar(avatar.value)}
-                    className="h-14 w-14 items-center justify-center rounded-full border-2 active:opacity-80"
-                    accessibilityRole="button"
-                    accessibilityLabel={`Avatar ${avatar.label} auswählen`}
-                    accessibilityState={{
-                      selected: areAvatarValuesEqual(selectedAvatar, avatar.value),
-                    }}
-                    style={
-                      areAvatarValuesEqual(selectedAvatar, avatar.value)
-                        ? {
-                            borderColor: palette.accent,
-                            backgroundColor: palette.accentSoft,
-                          }
-                        : {
-                            borderColor: "rgba(255,255,255,0.2)",
-                            backgroundColor: "rgba(255,255,255,0.72)",
-                        }
-                    }
-                  >
-                    <AvatarImage
-                      avatar={avatar.value}
-                      size={48}
-                      borderRadius={24}
-                      backgroundColor="transparent"
-                      accessibilityLabel={avatar.label}
-                    />
-                  </Pressable>
-                ))}
-              </View>
+              <AvatarPicker
+                value={selectedAvatar}
+                onChange={setSelectedAvatar}
+                theme={selectedTheme}
+              />
 
               <Pressable
                 onPress={handlePickAvatarPhoto}

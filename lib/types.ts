@@ -39,6 +39,8 @@ export interface ChildProfile {
   avatar: AvatarValue;
   theme: ChildTheme;
   ageGroup: AgeGroup;
+  /** Optional: onboarding may preselect a background; older drafts omit it. */
+  backgroundSkin?: BackgroundSkinId;
 }
 
 export interface Task {
