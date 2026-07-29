@@ -135,11 +135,11 @@ export function Header({
             intensity={chrome.blurIntensity}
             tint="light"
             pointerEvents="none"
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
           />
           <View
             pointerEvents="none"
-            style={[StyleSheet.absoluteFillObject, { backgroundColor: chrome.backgroundColor }]}
+            style={[StyleSheet.absoluteFill, { backgroundColor: chrome.backgroundColor }]}
           />
         </>
       ) : null}

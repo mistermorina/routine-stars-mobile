@@ -153,7 +153,7 @@ export function StickerRewardSheet({
         <Animated.View
           pointerEvents="none"
           style={[
-            StyleSheet.absoluteFillObject,
+            StyleSheet.absoluteFill,
             { backgroundColor: BACKDROP_COLOR },
             backdropStyle,
           ]}
@@ -177,12 +177,12 @@ export function StickerRewardSheet({
                   intensity={modalTokens.blurIntensity}
                   tint="light"
                   pointerEvents="none"
-                  style={StyleSheet.absoluteFillObject}
+                  style={StyleSheet.absoluteFill}
                 />
                 <View
                   pointerEvents="none"
                   style={[
-                    StyleSheet.absoluteFillObject,
+                    StyleSheet.absoluteFill,
                     { backgroundColor: modalTokens.backgroundColor },
                   ]}
                 />

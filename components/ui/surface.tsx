@@ -58,12 +58,12 @@ export function Surface({
             intensity={tokens.blurIntensity}
             tint="light"
             pointerEvents="none"
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
           />
           <View
             pointerEvents="none"
             style={[
-              StyleSheet.absoluteFillObject,
+              StyleSheet.absoluteFill,
               { backgroundColor: tokens.backgroundColor },
             ]}
           />

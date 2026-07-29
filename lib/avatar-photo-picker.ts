@@ -44,7 +44,7 @@ export async function pickAvatarPhotoAsync(): Promise<PickAvatarPhotoResult> {
 
   return {
     status: "selected",
-    avatar: { type: "photo", uri: persistAvatarPhoto(uri) },
+    avatar: { type: "photo", uri: await persistAvatarPhoto(uri) },
   };
 }
 
@@ -110,7 +110,7 @@ export async function deleteAvatarPhoto(stored: string | null | undefined): Prom
   }
 }
 
-function persistAvatarPhoto(sourceUri: string) {
+async function persistAvatarPhoto(sourceUri: string) {
   const fileName = `avatar-${Date.now()}.${getFileExtension(sourceUri)}`;
 
   try {
@@ -123,7 +123,7 @@ function persistAvatarPhoto(sourceUri: string) {
       destination.delete();
     }
 
-    new File(sourceUri).copy(destination);
+    await new File(sourceUri).copy(destination);
 
     return `${AVATAR_PHOTO_DIRECTORY}/${fileName}`;
   } catch {

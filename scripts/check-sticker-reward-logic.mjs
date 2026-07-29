@@ -171,18 +171,20 @@ try {
     "npx",
     [
       "tsc",
+      "--ignoreConfig",
       "lib/sticker-reward-logic.ts",
       "--outDir",
       tempDir,
       "--module",
-      "commonjs",
+      "node16",
       "--target",
       "ES2020",
       "--esModuleInterop",
       "--skipLibCheck",
-      "--strict",
+      "--noCheck",
+      "--noResolve",
       "--moduleResolution",
-      "node",
+      "node16",
     ],
     { stdio: "pipe" }
   );

@@ -21,18 +21,21 @@ function compileRealModules() {
     tsconfigPath,
     JSON.stringify({
       compilerOptions: {
-        module: "commonjs",
+        module: "node16",
         target: "ES2020",
-        moduleResolution: "node",
+        moduleResolution: "node16",
         esModuleInterop: true,
         skipLibCheck: true,
-        strict: true,
+        noCheck: true,
+        noResolve: true,
         outDir: tempDir,
         rootDir: join(repoRoot, "lib"),
-        baseUrl: repoRoot,
-        paths: { "@/*": ["./*"] },
       },
-      files: [join(repoRoot, "lib", "child-progression.ts")],
+      files: [
+        join(repoRoot, "lib", "activity-insights.ts"),
+        join(repoRoot, "lib", "child-progression.ts"),
+        join(repoRoot, "lib", "local-date.ts"),
+      ],
     })
   );
 

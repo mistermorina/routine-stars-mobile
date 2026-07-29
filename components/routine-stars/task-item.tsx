@@ -448,7 +448,7 @@ export function TaskItem({
                   <View
                     pointerEvents="none"
                     style={[
-                      StyleSheet.absoluteFillObject,
+                      StyleSheet.absoluteFill,
                       { backgroundColor: taskSurface },
                     ]}
                   />

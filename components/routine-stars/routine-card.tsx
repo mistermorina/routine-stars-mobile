@@ -49,7 +49,7 @@ export function RoutineCard({
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         pointerEvents="none"
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
       <View
         className="absolute left-[-40px] top-14 h-28 w-28 rounded-full"

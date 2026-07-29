@@ -43,11 +43,11 @@ export function ModalSurface({ children, className, style, radius = 24 }: ModalS
             intensity={tokens.blurIntensity}
             tint="light"
             pointerEvents="none"
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
           />
           <View
             pointerEvents="none"
-            style={[StyleSheet.absoluteFillObject, { backgroundColor: tokens.backgroundColor }]}
+            style={[StyleSheet.absoluteFill, { backgroundColor: tokens.backgroundColor }]}
           />
           {tokens.highlightColor ? (
             <View

@@ -16,6 +16,18 @@ module.exports = defineConfig([
     ],
   },
   {
+    rules: {
+      // eslint-config-expo 56 enables React Compiler compatibility rules.
+      // This project does not use the compiler, and these checks report false
+      // positives for Reanimated SharedValues and stable icon registries.
+      "react-hooks/immutability": "off",
+      "react-hooks/preserve-manual-memoization": "off",
+      "react-hooks/refs": "off",
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/static-components": "off",
+    },
+  },
+  {
     // Node-only maintenance scripts (smoke checks, asset generation).
     files: ["scripts/**/*.mjs"],
     languageOptions: {

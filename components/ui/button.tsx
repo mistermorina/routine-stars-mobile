@@ -158,7 +158,7 @@ export function Button({
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
           pointerEvents="none"
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
       ) : null}
       {typeof children === "string" ? (

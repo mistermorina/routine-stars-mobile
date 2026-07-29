@@ -308,7 +308,7 @@ export function RoutineCompleteDialog({
         >
           <Image
             source={routineCompleteBackground}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
             contentFit="cover"
             transition={160}
             accessibilityElementsHidden
@@ -316,7 +316,7 @@ export function RoutineCompleteDialog({
           />
           <View
             style={[
-              StyleSheet.absoluteFillObject,
+              StyleSheet.absoluteFill,
               { backgroundColor: "rgba(255,255,255,0.08)" },
             ]}
           />

@@ -69,11 +69,11 @@ export function GlassTile({
             intensity={tokens.tileBlurIntensity}
             tint="light"
             pointerEvents="none"
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
           />
           <View
             pointerEvents="none"
-            style={[StyleSheet.absoluteFillObject, { backgroundColor: fill }]}
+            style={[StyleSheet.absoluteFill, { backgroundColor: fill }]}
           />
           {tokens.tileHighlight ? (
             <View

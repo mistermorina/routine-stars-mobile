@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import type { BottomTabBarProps } from "expo-router/js-tabs";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -180,11 +180,11 @@ export function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps)
             intensity={chrome.blurIntensity}
             tint="light"
             pointerEvents="none"
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
           />
           <View
             pointerEvents="none"
-            style={[StyleSheet.absoluteFillObject, { backgroundColor: chrome.backgroundColor }]}
+            style={[StyleSheet.absoluteFill, { backgroundColor: chrome.backgroundColor }]}
           />
         </>
       ) : null}

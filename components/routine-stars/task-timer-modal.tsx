@@ -481,7 +481,7 @@ export function TaskTimerModal({
         <Animated.View
           pointerEvents="none"
           style={[
-            StyleSheet.absoluteFillObject,
+            StyleSheet.absoluteFill,
             { backgroundColor: MODAL_BACKDROP },
             backdropAnimatedStyle,
           ]}
@@ -521,12 +521,12 @@ export function TaskTimerModal({
                     intensity={timerModalTokens.blurIntensity}
                     tint="light"
                     pointerEvents="none"
-                    style={StyleSheet.absoluteFillObject}
+                    style={StyleSheet.absoluteFill}
                   />
                   <View
                     pointerEvents="none"
                     style={[
-                      StyleSheet.absoluteFillObject,
+                      StyleSheet.absoluteFill,
                       { backgroundColor: timerModalTokens.backgroundColor },
                     ]}
                   />
@@ -535,7 +535,7 @@ export function TaskTimerModal({
                 <>
                   <Image
                     source={cardBackgroundImage}
-                    style={StyleSheet.absoluteFillObject}
+                    style={StyleSheet.absoluteFill}
                     contentFit="cover"
                     transition={160}
                     accessibilityElementsHidden
@@ -543,7 +543,7 @@ export function TaskTimerModal({
                   />
                   <View
                     style={[
-                      StyleSheet.absoluteFillObject,
+                      StyleSheet.absoluteFill,
                       { backgroundColor: "rgba(255,255,255,0.12)" },
                     ]}
                   />

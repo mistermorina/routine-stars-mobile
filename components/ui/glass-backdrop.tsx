@@ -22,7 +22,7 @@ export function GlassBackdrop({ level = "flat" }: { level?: SurfaceLevel }) {
     return (
       <View
         pointerEvents="none"
-        style={[StyleSheet.absoluteFillObject, { backgroundColor: semanticColors.card }]}
+        style={[StyleSheet.absoluteFill, { backgroundColor: semanticColors.card }]}
       />
     );
   }
@@ -33,11 +33,11 @@ export function GlassBackdrop({ level = "flat" }: { level?: SurfaceLevel }) {
         intensity={tokens.blurIntensity}
         tint="light"
         pointerEvents="none"
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
       <View
         pointerEvents="none"
-        style={[StyleSheet.absoluteFillObject, { backgroundColor: tokens.backgroundColor }]}
+        style={[StyleSheet.absoluteFill, { backgroundColor: tokens.backgroundColor }]}
       />
     </>
   );

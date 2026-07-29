@@ -213,7 +213,7 @@ export function ThemedScreenBackground({
             start={{ x: 0.5, y: 0 }}
             end={{ x: 0.5, y: 1 }}
             pointerEvents="none"
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
           />
           {/* An illustrated skin brings its own art and its own measured
               legibility (scripts/check-background-skins.mjs samples it against
@@ -244,7 +244,7 @@ export function ThemedScreenBackground({
             contentFit="cover"
             pointerEvents="none"
             style={[
-              StyleSheet.absoluteFillObject,
+              StyleSheet.absoluteFill,
               {
                 opacity: skin.imageOpacity,
               },
@@ -254,7 +254,7 @@ export function ThemedScreenBackground({
           <View
             pointerEvents="none"
             style={[
-              StyleSheet.absoluteFillObject,
+              StyleSheet.absoluteFill,
               {
                 backgroundColor: palette.backgroundBase,
                 opacity: 0.08,

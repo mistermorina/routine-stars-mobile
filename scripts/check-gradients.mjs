@@ -269,7 +269,7 @@ assert.match(
 );
 assert.match(
   routineCardSource,
-  /style=\{StyleSheet\.absoluteFillObject\}/,
+  /style=\{StyleSheet\.absoluteFill\}/,
   "routine card gradient must cover the full card instead of ending in a hard header edge"
 );
 assert.match(

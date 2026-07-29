@@ -23,7 +23,7 @@ export function RadialBlob({ hue }: { hue: HueId }) {
     <Svg
       width={width}
       height={height}
-      style={StyleSheet.absoluteFillObject}
+      style={StyleSheet.absoluteFill}
       pointerEvents="none"
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"

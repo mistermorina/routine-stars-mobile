@@ -1,5 +1,5 @@
 import React from "react";
-import { Tabs } from "expo-router";
+import { Tabs } from "expo-router/js-tabs";
 import { Home, Trophy, Star } from "@/lib/icons";
 import { AppTabBar } from "@/components/routine-stars/tab-bar";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
@@ -15,9 +15,8 @@ export default function TabsLayout() {
       tabBar={(props) => <AppTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        // expo-router 6 forwards screenOptions straight to
-        // @react-navigation/bottom-tabs 7, which supports 'none' | 'fade' |
-        // 'shift'. 'shift' cross-fades and nudges the scenes sideways so a tab
+        // Expo Router's JavaScript tabs support 'none' | 'fade' | 'shift'.
+        // 'shift' cross-fades and nudges the scenes sideways so a tab
         // switch reads as a move instead of a hard cut; under Reduce Motion we
         // drop the travel and keep the cross-fade, the way iOS does.
         animation: reduceMotion ? "fade" : "shift",
