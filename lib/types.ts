@@ -1,4 +1,10 @@
-export type AvatarAssetId =
+import type { IllustratedAvatarId } from "@/lib/avatar-catalog";
+
+/**
+ * Superhero ids predate the illustrated set and are kept so existing children
+ * do not lose their avatar; the picker only offers the illustrated ones.
+ */
+export type LegacyAvatarAssetId =
   | "superheld_junge_blau"
   | "superheld_junge_gruen"
   | "superheld_junge_rot"
@@ -9,6 +15,8 @@ export type AvatarAssetId =
   | "superheld_maedchen_gelb"
   | "superheld_maedchen_blau"
   | "superheld_maedchen_lila";
+
+export type AvatarAssetId = IllustratedAvatarId | LegacyAvatarAssetId;
 
 export type AvatarValue =
   | string

@@ -1,4 +1,10 @@
 import type { AvatarAssetId, AvatarValue } from "@/lib/types";
+import {
+  ANIMAL_AVATARS,
+  HERO_AVATARS,
+  JOB_AVATARS,
+  KID_AVATARS,
+} from "@/lib/avatar-catalog";
 import superheroBoyBlue from "@/assets/avatars/superheroes/superheld_junge_blau.png";
 import superheroBoyGreen from "@/assets/avatars/superheroes/superheld_junge_gruen.png";
 import superheroBoyRed from "@/assets/avatars/superheroes/superheld_junge_rot.png";
@@ -22,10 +28,18 @@ export interface AvatarAssetEntry {
   asset: number;
 }
 
-export const DEFAULT_AVATAR_VALUE: Extract<AvatarValue, { type: "emoji" }> = {
-  type: "emoji",
-  emoji: "🦁",
+export const DEFAULT_AVATAR_VALUE: Extract<AvatarValue, { type: "asset" }> = {
+  type: "asset",
+  id: "avatar_07_lion",
 };
+
+function toOptions(entries: AvatarAssetEntry[]): AvatarOption[] {
+  return entries.map((entry) => ({
+    id: entry.id,
+    label: entry.label,
+    value: { type: "asset", id: entry.id },
+  }));
+}
 
 export const SUPERHERO_AVATARS: AvatarAssetEntry[] = [
   { id: "superheld_junge_blau", label: "Held Blau", asset: superheroBoyBlue },
@@ -40,30 +54,16 @@ export const SUPERHERO_AVATARS: AvatarAssetEntry[] = [
   { id: "superheld_maedchen_lila", label: "Heldin Lila", asset: superheroGirlPurple },
 ];
 
+/**
+ * Picker contents. The emoji groups that used to live here were replaced by the
+ * illustrated set — emoji rendered inconsistently across iOS versions and read
+ * as placeholder art next to the rest of the app.
+ */
 export const avatarCategories = {
-  Tiere: [
-    { id: "a1", label: "Löwe", value: { type: "emoji", emoji: "🦁" } },
-    { id: "a2", label: "Hase", value: { type: "emoji", emoji: "🐰" } },
-    { id: "a3", label: "Bär", value: { type: "emoji", emoji: "🐻" } },
-    { id: "a4", label: "Fuchs", value: { type: "emoji", emoji: "🦊" } },
-  ],
-  Plüschis: [
-    { id: "a5", label: "Teddy", value: { type: "emoji", emoji: "🧸" } },
-    { id: "a6", label: "Einhorn", value: { type: "emoji", emoji: "🦄" } },
-    { id: "a7", label: "Dino", value: { type: "emoji", emoji: "🦕" } },
-    { id: "a8", label: "Ente", value: { type: "emoji", emoji: "🐥" } },
-  ],
-  Stars: [
-    { id: "a9", label: "Stern", value: { type: "emoji", emoji: "⭐" } },
-    { id: "a10", label: "Rakete", value: { type: "emoji", emoji: "🚀" } },
-    { id: "a11", label: "Regenbogen", value: { type: "emoji", emoji: "🌈" } },
-    { id: "a12", label: "Sonne", value: { type: "emoji", emoji: "☀️" } },
-  ],
-  Superhelden: SUPERHERO_AVATARS.map((avatar) => ({
-    id: avatar.id,
-    label: avatar.label,
-    value: { type: "asset", id: avatar.id },
-  })),
+  Tiere: toOptions(ANIMAL_AVATARS),
+  Helden: toOptions(HERO_AVATARS),
+  Berufe: toOptions(JOB_AVATARS),
+  Kinder: toOptions(KID_AVATARS),
 } satisfies Record<string, AvatarOption[]>;
 
 export type AvatarCategoryName = keyof typeof avatarCategories;
@@ -92,8 +92,16 @@ export function normalizeAvatarValue(value?: AvatarValue | null): Exclude<Avatar
   return DEFAULT_AVATAR_VALUE;
 }
 
+const ALL_AVATAR_ENTRIES: AvatarAssetEntry[] = [
+  ...ANIMAL_AVATARS,
+  ...HERO_AVATARS,
+  ...JOB_AVATARS,
+  ...KID_AVATARS,
+  ...SUPERHERO_AVATARS,
+];
+
 export function getAvatarAsset(id: AvatarAssetId) {
-  return SUPERHERO_AVATARS.find((avatar) => avatar.id === id)?.asset;
+  return ALL_AVATAR_ENTRIES.find((avatar) => avatar.id === id)?.asset;
 }
 
 export function getAvatarKey(value?: AvatarValue | null) {

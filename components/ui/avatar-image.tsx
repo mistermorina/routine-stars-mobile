@@ -82,10 +82,16 @@ export function AvatarImage({
         );
       }
 
+      // The default avatar is an illustration now, so a failed photo with no
+      // initial falls back to that image rather than an emoji glyph.
       return (
-        <Text style={emojiTextStyle} maxFontSizeMultiplier={1.2}>
-          {DEFAULT_AVATAR_VALUE.emoji}
-        </Text>
+        <Image
+          source={getAvatarAsset(DEFAULT_AVATAR_VALUE.id)}
+          style={{ width: size, height: size }}
+          contentFit="cover"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        />
       );
     }
 

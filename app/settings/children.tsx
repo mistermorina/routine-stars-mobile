@@ -19,6 +19,8 @@ import { useChildren } from "@/hooks/use-children";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
+import { AvatarPicker } from "@/components/settings/avatar-picker";
+import { SkinPicker } from "@/components/settings/skin-picker";
 import { useDesignMode } from "@/contexts/design-mode-context";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -51,7 +53,7 @@ import {
 } from "@/lib/icons";
 import { getThemePalette, semanticColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import type { AgeGroup, AvatarValue, Child, ChildTheme } from "@/lib/types";
+import type { AgeGroup, AvatarValue, BackgroundSkinId, Child, ChildTheme } from "@/lib/types";
 
 const THEME_OPTIONS: { value: ChildTheme; label: string; iconName: string }[] = [
   { value: "sterne", label: "Sterne", iconName: "star" },
@@ -118,6 +120,7 @@ export default function ChildrenSettings() {
   const [newChildName, setNewChildName] = useState("");
   const [newChildAvatar, setNewChildAvatar] = useState<AvatarValue>(DEFAULT_AVATAR_VALUE);
   const [newChildTheme, setNewChildTheme] = useState<ChildTheme>("sterne");
+  const [newChildSkin, setNewChildSkin] = useState<BackgroundSkinId>("none");
   const [newChildAgeGroup, setNewChildAgeGroup] = useState<AgeGroup>("6-8");
   // Only one child card is expanded at a time, so a single draft is enough —
   // it is reset whenever the expanded card changes.
@@ -283,13 +286,14 @@ export default function ChildrenSettings() {
       avatar: newChildAvatar,
       stars: 0,
       theme: newChildTheme,
-      backgroundSkin: "none",
+      backgroundSkin: newChildSkin,
       ageGroup: newChildAgeGroup,
     };
     await addChild(newChild);
     toast({ title: `${newChild.name} wurde hinzugefügt` });
     setNewChildName("");
     setNewChildAvatar(DEFAULT_AVATAR_VALUE);
+    setNewChildSkin("none");
     setNewChildTheme("sterne");
     setNewChildAgeGroup("6-8");
     setShowAddForm(false);
@@ -1354,6 +1358,21 @@ export default function ChildrenSettings() {
                   accessibilityRole="header"
                   maxFontSizeMultiplier={1.3}
                 >
+                  Hintergrund
+                </Text>
+                <SkinPicker
+                  value={newChildSkin}
+                  onChange={setNewChildSkin}
+                  theme={newChildTheme}
+                />
+              </View>
+
+              <View>
+                <Text
+                  className="text-sm font-body-semibold text-muted-foreground mb-2"
+                  accessibilityRole="header"
+                  maxFontSizeMultiplier={1.3}
+                >
                   Altersgruppe
                 </Text>
                 <View className="flex-row flex-wrap gap-2">
@@ -1396,51 +1415,11 @@ export default function ChildrenSettings() {
                 >
                   Avatar wählen
                 </Text>
-                <ScrollView
-                  nestedScrollEnabled
-                  showsVerticalScrollIndicator={false}
-                  className="max-h-[260px] rounded-card"
-                  contentContainerClassName="gap-3 pb-1"
-                  keyboardShouldPersistTaps="handled"
-                >
-                  {allAvatars.map(([category, avatars]) => (
-                    <View key={category}>
-                      <Text
-                        className="mb-1.5 text-xs font-body-semibold text-muted-foreground"
-                        maxFontSizeMultiplier={1.3}
-                      >
-                        {category}
-                      </Text>
-                      <View className="flex-row flex-wrap gap-2">
-                        {avatars.map((avatar) => (
-                          <PressableScale
-                            key={avatar.id}
-                            onPress={() => setNewChildAvatar(avatar.value)}
-                            className={cn(
-                              "h-12 w-12 items-center justify-center rounded-chip",
-                              areAvatarValuesEqual(newChildAvatar, avatar.value)
-                                ? "bg-primary/40 border-2 border-primary"
-                                : "bg-secondary"
-                            )}
-                            accessibilityRole="button"
-                            accessibilityLabel={`Avatar ${avatar.label} auswählen`}
-                            accessibilityState={{
-                              selected: areAvatarValuesEqual(newChildAvatar, avatar.value),
-                            }}
-                          >
-                            <AvatarImage
-                              avatar={avatar.value}
-                              size={44}
-                              borderRadius={14}
-                              backgroundColor="transparent"
-                              accessibilityElementsHidden
-                            />
-                          </PressableScale>
-                        ))}
-                      </View>
-                    </View>
-                  ))}
-                </ScrollView>
+                <AvatarPicker
+                  value={newChildAvatar}
+                  onChange={setNewChildAvatar}
+                  theme={newChildTheme}
+                />
                 <PressableScale
                   onPress={pickNewChildPhoto}
                   containerClassName="mt-3"
