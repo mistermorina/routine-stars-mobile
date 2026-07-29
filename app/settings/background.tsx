@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { Check, Palette, Sparkles } from "@/lib/icons";
 import { useChildren } from "@/hooks/use-children";
 import { AvatarImage } from "@/components/ui/avatar-image";
@@ -8,17 +9,24 @@ import { Card } from "@/components/ui/card";
 import { PressableScale } from "@/components/ui/pressable-scale";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { SettingsHeroCard } from "@/components/settings/settings-hero-card";
+import { useDesignMode } from "@/contexts/design-mode-context";
+import { getAccentTokens } from "@/lib/design-mode";
 import {
-  BACKGROUND_SKINS,
+  BACKGROUND_SKIN_CATEGORIES,
+  getBackgroundSkinCategory,
+  getBackgroundSkinOption,
+  getBackgroundSkinPickerId,
+  getBackgroundSkinRamp,
+  getBackgroundSkinsByCategory,
   normalizeBackgroundSkin,
+  type BackgroundSkinCategory,
   type BackgroundSkinOption,
 } from "@/lib/background-skins";
 import { getThemePalette, semanticColors } from "@/lib/theme";
-import { cn } from "@/lib/utils";
 import type { BackgroundSkinId } from "@/lib/types";
 
 function SkinPreview({ skin }: { skin: BackgroundSkinOption }) {
-  const hasImage = Boolean(skin.image);
+  const ramp = getBackgroundSkinRamp(skin);
 
   return (
     <View
@@ -27,11 +35,19 @@ function SkinPreview({ skin }: { skin: BackgroundSkinOption }) {
       // ThemedScreenBackground does it — otherwise a scrimmed skin like
       // Weltraum would preview far darker than it ever renders.
       style={{
-        backgroundColor: hasImage ? semanticColors.background : skin.previewBackground,
+        backgroundColor: ramp.colors[0],
       }}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
+      <LinearGradient
+        colors={ramp.colors}
+        locations={ramp.locations}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        pointerEvents="none"
+        style={StyleSheet.absoluteFillObject}
+      />
       {skin.image ? (
         <Image
           source={skin.image}
@@ -39,18 +55,7 @@ function SkinPreview({ skin }: { skin: BackgroundSkinOption }) {
           pointerEvents="none"
           style={[StyleSheet.absoluteFillObject, { opacity: skin.imageOpacity }]}
         />
-      ) : (
-        <>
-          <View
-            className="absolute left-[-12px] top-[-10px] h-20 w-20 rounded-full"
-            style={{ backgroundColor: skin.previewAccent, opacity: 0.7 }}
-          />
-          <View
-            className="absolute bottom-[-14px] right-[-12px] h-24 w-24 rounded-full"
-            style={{ backgroundColor: skin.previewSoft, opacity: 0.82 }}
-          />
-        </>
-      )}
+      ) : null}
 
       <View
         className="absolute left-3 top-3 h-7 w-24 rounded-chip"
@@ -67,7 +72,23 @@ function SkinPreview({ skin }: { skin: BackgroundSkinOption }) {
 export default function BackgroundSettingsScreen() {
   const { children, selectedChild, selectedChildId, selectChild, updateChild } = useChildren();
   const palette = getThemePalette(selectedChild?.theme);
+  const { designMode } = useDesignMode();
+  const accents = getAccentTokens(designMode, palette);
   const selectedSkinId = normalizeBackgroundSkin(selectedChild?.backgroundSkin);
+  const selectedPickerId = getBackgroundSkinPickerId(selectedSkinId);
+  const selectedSkin = getBackgroundSkinOption(selectedPickerId);
+  const selectedCategory = getBackgroundSkinCategory(selectedSkin);
+  const [category, setCategory] = useState<BackgroundSkinCategory>(
+    selectedCategory
+  );
+  const visibleSkins = useMemo(
+    () => getBackgroundSkinsByCategory(category),
+    [category]
+  );
+
+  useEffect(() => {
+    setCategory(selectedCategory);
+  }, [selectedCategory]);
 
   async function handleSelectSkin(skinId: BackgroundSkinId) {
     if (!selectedChild) return;
@@ -132,7 +153,7 @@ export default function BackgroundSettingsScreen() {
           description="Freie Flächen bekommen einen ruhigen Skin, Cards bleiben klar."
           badges={[
             { label: selectedChild?.name ?? "Profil" },
-            { label: BACKGROUND_SKINS.find((skin) => skin.id === selectedSkinId)?.label ?? "Kein Skin" },
+            { label: selectedSkin.label },
           ]}
           palette={palette}
         />
@@ -160,66 +181,111 @@ export default function BackgroundSettingsScreen() {
             </View>
           </Card>
         ) : (
-          <View className="mt-4 flex-row flex-wrap justify-between" style={{ rowGap: 12 }}>
-            {BACKGROUND_SKINS.map((skin) => {
-              const isSelected = selectedSkinId === skin.id;
+          <>
+            <View
+              className="mt-4 flex-row gap-2"
+              accessibilityRole="tablist"
+              accessibilityLabel="Hintergrund-Kategorien"
+            >
+              {BACKGROUND_SKIN_CATEGORIES.map((entry) => {
+                const isActive = entry.id === category;
 
-              return (
-                <PressableScale
-                  key={skin.id}
-                  onPress={() => handleSelectSkin(skin.id)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Hintergrund ${skin.label} wählen`}
-                  accessibilityHint={skin.description}
-                  accessibilityState={{ selected: isSelected }}
-                  containerStyle={{ width: "48%" }}
-                  className={cn("rounded-[26px] border p-2")}
-                  style={{
-                    backgroundColor: "rgba(255,255,255,0.84)",
-                    borderColor: isSelected ? palette.accent : "rgba(157,184,216,0.34)",
-                    borderWidth: isSelected ? 2 : 1,
-                  }}
-                >
-                  <SkinPreview skin={skin} />
-
-                  <View className="mt-3 flex-row items-center gap-2 px-1 pb-1">
-                    <View className="min-w-0 flex-1">
-                      <Text
-                        className="text-sm font-body-semibold text-foreground"
-                        numberOfLines={1}
-                        adjustsFontSizeToFit
-                        minimumFontScale={0.86}
-                        maxFontSizeMultiplier={1.3}
-                      >
-                        {skin.label}
-                      </Text>
-                      <Text
-                        className="mt-0.5 text-sm font-body text-muted-foreground"
-                        numberOfLines={1}
-                        maxFontSizeMultiplier={1.3}
-                      >
-                        {skin.description}
-                      </Text>
-                    </View>
-                    <View
-                      className="h-8 w-8 items-center justify-center rounded-full"
+                return (
+                  <PressableScale
+                    key={entry.id}
+                    onPress={() => setCategory(entry.id)}
+                    className="min-h-11 justify-center rounded-full px-4"
+                    style={{
+                      backgroundColor: isActive ? accents.pillFill : semanticColors.card,
+                      borderColor: accents.pillBorder ?? undefined,
+                      borderWidth: accents.pillBorder ? 1 : 0,
+                    }}
+                    accessibilityRole="tab"
+                    accessibilityLabel={`Kategorie ${entry.label}`}
+                    accessibilityState={{ selected: isActive }}
+                  >
+                    <Text
+                      className="text-sm font-body-semibold"
                       style={{
-                        // Neutral rather than the skin colour: dark artwork
-                        // like Weltraum would put a dark glyph on a dark disc.
-                        backgroundColor: isSelected ? palette.tabActiveBg : semanticColors.muted,
+                        color: isActive
+                          ? accents.accent
+                          : semanticColors.mutedForeground,
                       }}
+                      maxFontSizeMultiplier={1.3}
                     >
-                      {isSelected ? (
-                        <Check size={17} color={palette.accentText} strokeWidth={2.4} />
-                      ) : (
-                        <Palette size={16} color={palette.accentText} strokeWidth={1.9} />
-                      )}
+                      {entry.label}
+                    </Text>
+                  </PressableScale>
+                );
+              })}
+            </View>
+
+            <View
+              className="mt-4 flex-row flex-wrap justify-between"
+              style={{ rowGap: 12 }}
+            >
+              {visibleSkins.map((skin) => {
+                const isSelected = selectedPickerId === skin.id;
+
+                return (
+                  <PressableScale
+                    key={skin.id}
+                    onPress={() => handleSelectSkin(skin.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Hintergrund ${skin.label} wählen`}
+                    accessibilityHint={skin.description}
+                    accessibilityState={{ selected: isSelected }}
+                    containerStyle={{ width: "48%" }}
+                    className="rounded-[26px] border p-2"
+                    style={{
+                      backgroundColor: "rgba(255,255,255,0.84)",
+                      borderColor: isSelected ? palette.accent : "rgba(157,184,216,0.34)",
+                      borderWidth: isSelected ? 2 : 1,
+                    }}
+                  >
+                    <SkinPreview skin={skin} />
+
+                    <View className="mt-3 flex-row items-center gap-2 px-1 pb-1">
+                      <View className="min-w-0 flex-1">
+                        <Text
+                          className="text-sm font-body-semibold text-foreground"
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.86}
+                          maxFontSizeMultiplier={1.3}
+                        >
+                          {skin.label}
+                        </Text>
+                        <Text
+                          className="mt-0.5 text-sm font-body text-muted-foreground"
+                          numberOfLines={1}
+                          maxFontSizeMultiplier={1.3}
+                        >
+                          {skin.description}
+                        </Text>
+                      </View>
+                      <View
+                        className="h-8 w-8 items-center justify-center rounded-full"
+                        style={{
+                          // Neutral rather than the skin colour: dark artwork
+                          // like Weltraum would put a dark glyph on a dark disc.
+                          backgroundColor: isSelected
+                            ? palette.tabActiveBg
+                            : semanticColors.muted,
+                        }}
+                      >
+                        {isSelected ? (
+                          <Check size={17} color={palette.accentText} strokeWidth={2.4} />
+                        ) : (
+                          <Palette size={16} color={palette.accentText} strokeWidth={1.9} />
+                        )}
+                      </View>
                     </View>
-                  </View>
-                </PressableScale>
-              );
-            })}
-          </View>
+                  </PressableScale>
+                );
+              })}
+            </View>
+          </>
         )}
       </ScrollView>
     </ThemedScreenBackground>

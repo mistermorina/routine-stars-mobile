@@ -40,6 +40,16 @@ const expectedSkinIds = [
   "sternennacht",
   "weltraum",
 ];
+const expectedGradientSkinIds = [
+  "verlauf-blau",
+  "verlauf-tuerkis",
+  "verlauf-limette",
+  "verlauf-gruen",
+  "verlauf-bernstein",
+  "verlauf-koralle",
+  "verlauf-magenta",
+  "verlauf-violett",
+];
 
 for (const skinId of expectedSkinIds) {
   assert.match(
@@ -50,9 +60,33 @@ for (const skinId of expectedSkinIds) {
 }
 
 assert.equal(
-  (registrySource.match(/id: "/g) ?? []).length,
-  expectedSkinIds.length,
-  `registry should contain exactly ${expectedSkinIds.length} skin choices`
+  (registrySource.match(/kind: "image"/g) ?? []).length,
+  expectedSkinIds.length - 1,
+  `registry should contain exactly ${expectedSkinIds.length - 1} illustrated skins plus the default`
+);
+assert.equal(
+  (registrySource.match(/kind: "none"/g) ?? []).length,
+  1,
+  "registry should contain exactly one default background"
+);
+
+for (const skinId of expectedGradientSkinIds) {
+  assert.match(
+    registrySource,
+    new RegExp(`\\["${skinId}",\\s*"\\w+"\\]`),
+    `${skinId} is missing from GRADIENT_SKINS`
+  );
+  assert.match(
+    typesSource,
+    new RegExp(`\\| "${skinId}"`),
+    `${skinId} is missing from GradientSkinId`
+  );
+}
+
+assert.equal(
+  (registrySource.match(/\["verlauf-/g) ?? []).length,
+  expectedGradientSkinIds.length,
+  `registry should contain exactly ${expectedGradientSkinIds.length} gradient choices`
 );
 
 assert.match(typesSource, /export type BackgroundSkinId/, "BackgroundSkinId type is missing");
@@ -76,6 +110,11 @@ assert.match(
   backgroundSource,
   /backgroundSkin\?: BackgroundSkinId/,
   "ThemedScreenBackground does not accept backgroundSkin"
+);
+assert.match(
+  backgroundSource,
+  /getBackgroundSkinRamp\(skin\)/,
+  "ThemedScreenBackground is not using the shared neutral-or-hued ramp"
 );
 
 // --- artwork + contrast -----------------------------------------------------
@@ -140,9 +179,11 @@ function readBmpRows(path) {
   });
 }
 
-const skinEntries = [...registrySource.matchAll(/id: "([^"]+)"[\s\S]*?imageOpacity: ([\d.]+)/g)].map(
-  ([, id, opacity]) => ({ id, opacity: Number(opacity) })
-);
+const skinEntries = [
+  ...registrySource.matchAll(
+    /\{\s*id: "([^"]+)",\s*kind: "(?:none|image)"[\s\S]*?imageOpacity: ([\d.]+)/g
+  ),
+].map(([, id, opacity]) => ({ id, opacity: Number(opacity) }));
 
 assert.equal(
   skinEntries.length,
@@ -216,4 +257,7 @@ try {
   rmSync(workDir, { recursive: true, force: true });
 }
 
-console.log(`Background skin checks passed (${skinEntries.length - 1} skins, contrast verified)`);
+console.log(
+  `Background skin checks passed (${skinEntries.length - 1} illustrated skins, ` +
+    `${expectedGradientSkinIds.length} gradients, contrast verified)`
+);

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect } from "react";
 import { View, Text, FlatList, type ListRenderItemInfo } from "react-native";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -9,11 +10,13 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Card } from "@/components/ui/card";
+import { GradientFill } from "@/components/ui/gradient-fill";
 import { Progress } from "@/components/ui/progress";
 import { PressableScale } from "@/components/ui/pressable-scale";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { Check, Lock, Star, getIcon } from "@/lib/icons";
 import { enterStagger, exitFade, springs, timings } from "@/lib/motion";
+import { getRewardVisual } from "@/lib/reward-visuals";
 import { getThemePalette, semanticColors } from "@/lib/theme";
 import type { ChildTheme, Reward } from "@/lib/types";
 import emptyRewardsImage from "@/assets/images/empty-rewards.png";
@@ -53,6 +56,7 @@ function RewardItem({
   const isRecentlyRedeemed = recentlyRedeemedRewardId === reward.id;
   const isCelebrating = celebratingRewardId === reward.id;
   const IconComponent = getIcon(reward.iconName);
+  const visual = getRewardVisual(reward);
   const palette = getThemePalette(childTheme);
   const reduceMotion = useReducedMotion();
 
@@ -96,6 +100,28 @@ function RewardItem({
           minHeight: 172,
         }}
       >
+        {isRecentlyRedeemed ? (
+          <View
+            pointerEvents="none"
+            className="absolute inset-0"
+            style={{ backgroundColor: semanticColors.successSoft }}
+          />
+        ) : (
+          <LinearGradient
+            colors={visual.cardGradient.colors}
+            locations={visual.cardGradient.locations}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            pointerEvents="none"
+            style={[
+              {
+                position: "absolute",
+                inset: 0,
+              },
+              !canAfford ? { opacity: 0.68 } : undefined,
+            ]}
+          />
+        )}
         <Animated.View
           pointerEvents="none"
           className="absolute inset-0"
@@ -104,7 +130,10 @@ function RewardItem({
 
         <View
           className="absolute right-[-16px] top-[-14px] h-20 w-20 rounded-full"
-          style={{ backgroundColor: palette.motifSecondary, opacity: canAfford ? 0.22 : 0.1 }}
+          style={{
+            backgroundColor: visual.accentStrong,
+            opacity: canAfford ? 0.12 : 0.06,
+          }}
         />
 
         <View className="flex-row items-start justify-between">
@@ -120,17 +149,16 @@ function RewardItem({
               size={26}
               color={
                 canAfford || isRecentlyRedeemed
-                  ? palette.accentStrong
+                  ? visual.accent
                   : semanticColors.mutedForeground
               }
             />
           </View>
           {/* Cost is always visible — kids need the target number */}
           <View
-            className="flex-row items-center gap-1 rounded-full border px-2.5 py-1"
+            className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
             style={{
               backgroundColor: "rgba(255,255,255,0.9)",
-              borderColor: palette.accentBorder,
             }}
           >
             <Text
@@ -149,7 +177,8 @@ function RewardItem({
         </View>
 
         <Text
-          className="mt-2.5 text-[15px] font-headline leading-5 text-foreground"
+          className="mt-2.5 text-[15px] font-headline leading-5"
+          style={{ color: visual.onCard }}
           maxFontSizeMultiplier={1.4}
           numberOfLines={2}
         >
@@ -180,9 +209,10 @@ function RewardItem({
               accessibilityLabel={`${reward.title} für ${reward.cost} Sterne einlösen`}
               accessibilityHint="Löst die Belohnung ein und zieht die Sterne vom Konto ab."
               containerClassName="self-start"
-              className="flex-row items-center gap-1.5 rounded-full px-4 py-2"
+              className="flex-row items-center gap-1.5 overflow-hidden rounded-full px-4 py-2"
               style={{ backgroundColor: palette.button }}
             >
+              <GradientFill hue={visual.hue} />
               <Text
                 className="text-sm font-body-semibold text-white"
                 maxFontSizeMultiplier={1.3}
@@ -195,13 +225,13 @@ function RewardItem({
               <Progress
                 value={progressPct}
                 className="h-2"
-                indicatorColor={palette.chartPrimary}
+                indicatorColor={visual.accent}
                 trackStyle={{ backgroundColor: semanticColors.muted }}
               />
               <Text
                 className="mt-1.5 text-xs font-body-semibold"
                 maxFontSizeMultiplier={1.3}
-                style={{ color: palette.accentText }}
+                style={{ color: visual.accent }}
               >
                 Nur {missingStars} {missingStars === 1 ? "Stern" : "Sterne"} entfernt
               </Text>

@@ -26,6 +26,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useRoutines } from "@/hooks/use-routines";
 import { getDefaultRoutineColor } from "@/lib/default-values";
 import {
+  getCtaGradient,
+  getSolid,
+  HUE_IDS,
+  HUE_LABELS,
+  resolveHue,
+} from "@/lib/gradients";
+import {
   CalendarDays,
   Check,
   ChevronDown,
@@ -40,16 +47,10 @@ import { getThemePalette, semanticColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { Routine, RoutineTemplate, Task } from "@/lib/types";
 
-// Domain data, not design tokens: the six swatches a parent can pick from for a
-// routine. Mirrors getDefaultRoutineColor() in lib/default-values.ts.
-const ROUTINE_COLORS = [
-  "#F59E0B",
-  "#8B5CF6",
-  "#3B82F6",
-  "#14B8A6",
-  "#F97316",
-  "#EF4444",
-] as const;
+const ROUTINE_COLORS = HUE_IDS.map((hue) => ({
+  hue,
+  color: getSolid(hue),
+}));
 
 function createTask(title = ""): Task {
   return {
@@ -552,7 +553,9 @@ export default function RoutinesSettingsScreen() {
                   <View className="flex-row items-start gap-3">
                     <View
                       className="mt-1 h-4 w-4 rounded-full"
-                      style={{ backgroundColor: routine.color || ROUTINE_COLORS[0] }}
+                      style={{
+                        backgroundColor: getSolid(resolveHue(routine.color)),
+                      }}
                       accessibilityElementsHidden
                       importantForAccessibility="no-hide-descendants"
                     />
@@ -636,27 +639,45 @@ export default function RoutinesSettingsScreen() {
                       <View className="gap-2">
                         <Label>Farbe</Label>
                         <View className="flex-row flex-wrap gap-3">
-                          {ROUTINE_COLORS.map((color) => (
-                            <PressableScale
-                              key={color}
-                              onPress={() =>
-                                setDraftRoutine((prev) => (prev ? { ...prev, color } : prev))
-                              }
-                              className={cn(
-                                "h-10 w-10 items-center justify-center rounded-full border-2",
-                                routineDraft.color === color ? "border-foreground" : "border-transparent"
-                              )}
-                              style={{ backgroundColor: color }}
-                              hitSlop={8}
-                              accessibilityRole="button"
-                              accessibilityLabel="Routinenfarbe wählen"
-                              accessibilityState={{ selected: routineDraft.color === color }}
-                            >
-                              {routineDraft.color === color ? (
-                                <Check size={18} color={semanticColors.accentForeground} />
-                              ) : null}
-                            </PressableScale>
-                          ))}
+                          {ROUTINE_COLORS.map(({ hue, color }) => {
+                            const isSelected =
+                              resolveHue(routineDraft.color) === hue;
+
+                            return (
+                              <PressableScale
+                                key={hue}
+                                onPress={() =>
+                                  setDraftRoutine((prev) =>
+                                    prev ? { ...prev, color } : prev
+                                  )
+                                }
+                                className={cn(
+                                  "h-10 w-10 items-center justify-center rounded-full border-2",
+                                  isSelected
+                                    ? "border-foreground"
+                                    : "border-transparent"
+                                )}
+                                style={{ backgroundColor: color }}
+                                hitSlop={8}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Routinenfarbe ${HUE_LABELS[hue]} wählen`}
+                                accessibilityState={{ selected: isSelected }}
+                              >
+                                {isSelected ? (
+                                  <View
+                                    className="h-6 w-6 items-center justify-center rounded-full"
+                                    style={{ backgroundColor: semanticColors.card }}
+                                  >
+                                    <Check
+                                      size={16}
+                                      color={getCtaGradient(hue).from}
+                                      strokeWidth={2.6}
+                                    />
+                                  </View>
+                                ) : null}
+                              </PressableScale>
+                            );
+                          })}
                         </View>
                       </View>
 

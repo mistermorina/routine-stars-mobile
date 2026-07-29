@@ -1,15 +1,16 @@
 import type { TimeOfDay } from "@/lib/types";
+import { getSolid } from "@/lib/gradients";
 
 export function getDefaultRoutineColor(timeOfDay: TimeOfDay): string {
   switch (timeOfDay) {
     case "morning":
-      return "hsl(38, 92%, 50%)";
+      return getSolid("amber");
     case "afternoon":
-      return "hsl(180, 60%, 45%)";
+      return getSolid("cyan");
     case "evening":
-      return "hsl(255, 82%, 60%)";
+      return getSolid("violet");
     case "flexible":
-      return "hsl(150, 60%, 45%)";
+      return getSolid("green");
   }
 }
 

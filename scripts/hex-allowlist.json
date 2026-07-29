@@ -16,16 +16,8 @@
     "app",
     "components"
   ],
-  "totalAllowedOccurrences": 21,
+  "totalAllowedOccurrences": 15,
   "allowed": {
-    "app/settings/routines.tsx": {
-      "#14B8A6": 1,
-      "#3B82F6": 1,
-      "#8B5CF6": 1,
-      "#EF4444": 1,
-      "#F59E0B": 1,
-      "#F97316": 1
-    },
     "components/profile/milestone-badges.tsx": {
       "#ADB7C2": 1
     },

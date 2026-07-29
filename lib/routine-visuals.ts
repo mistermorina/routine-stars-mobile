@@ -11,6 +11,14 @@ import routineHygieneImage from "@/assets/images/routine-hygiene-soft.png";
 import routineWeekendImage from "@/assets/images/routine-weekend-soft.png";
 import routineMealsImage from "@/assets/images/routine-meals-soft.png";
 import routineSpecialImage from "@/assets/images/routine-special-soft.png";
+import {
+  getCardGradient,
+  getCtaGradient,
+  getOnCardColor,
+  resolveHue,
+  type HueId,
+  type ScreenRamp,
+} from "@/lib/gradients";
 
 export type RoutineVisualKey =
   | "morning"
@@ -25,90 +33,93 @@ export type RoutineVisualKey =
   | "generic";
 
 export interface RoutineVisual {
+  hue: HueId;
+  /** AA-safe functional accent for icons, progress and small labels. */
   accent: string;
+  accentStrong: string;
   accentSoft: string;
+  cardGradient: ScreenRamp;
+  onCard: string;
   art: ImageSourcePropType;
   completionArt: ImageSourcePropType;
   completionTitle: string;
   completionText: string;
 }
 
-const ROUTINE_VISUALS: Record<RoutineVisualKey, RoutineVisual> = {
+interface RoutineVisualDefinition {
+  hue: HueId;
+  art: ImageSourcePropType;
+  completionArt: ImageSourcePropType;
+  completionTitle: string;
+  completionText: string;
+}
+
+const ROUTINE_VISUALS: Record<RoutineVisualKey, RoutineVisualDefinition> = {
   morning: {
-    accent: "#F7941D",
-    accentSoft: "#FFF4DD",
+    hue: "amber",
     art: routineMorningSunImage,
     completionArt: routineTrophyImage,
     completionTitle: "Fantastisch!",
     completionText: "Du hast deine Morgenroutine abgeschlossen!",
   },
   evening: {
-    accent: "#7C55E7",
-    accentSoft: "#F3EEFF",
+    hue: "violet",
     art: routineEveningMoonImage,
     completionArt: rewardStarGiftImage,
     completionTitle: "Gut gemacht!",
     completionText: "Schlaf schön und träum was Wunderbares!",
   },
   school: {
-    accent: "#2F6FDC",
-    accentSoft: "#EAF3FF",
+    hue: "blue",
     art: routineHomeworkImage,
     completionArt: routineTrophyImage,
     completionTitle: "Stark gelernt!",
     completionText: "Deine Schulaufgaben sind geschafft.",
   },
   sport: {
-    accent: "#E35D5B",
-    accentSoft: "#FFF0EF",
+    hue: "coral",
     art: routineSportImage,
     completionArt: routineTrophyImage,
     completionTitle: "Stark bewegt!",
     completionText: "Training und Vorbereitung sind erledigt.",
   },
   cleanup: {
-    accent: "#2F8E73",
-    accentSoft: "#EAF8F0",
+    hue: "green",
     art: routineCleanupImage,
     completionArt: rewardStarGiftImage,
     completionTitle: "Ordnung geschafft!",
     completionText: "Alles ist wieder an seinem Platz.",
   },
   hygiene: {
-    accent: "#4C9CB9",
-    accentSoft: "#EAF8FF",
+    hue: "cyan",
     art: routineHygieneImage,
     completionArt: routineTrophyImage,
     completionTitle: "Frisch gemacht!",
     completionText: "Waschen, Zähne und Pflege sind erledigt.",
   },
   meals: {
-    accent: "#E8893A",
-    accentSoft: "#FFF0E4",
+    hue: "amber",
     art: routineMealsImage,
     completionArt: rewardStarGiftImage,
     completionTitle: "Fein geholfen!",
     completionText: "Rund ums Essen ist alles geschafft.",
   },
   weekend: {
-    accent: "#2E9AA3",
-    accentSoft: "#E8F8F8",
+    hue: "lime",
     art: routineWeekendImage,
     completionArt: rewardStarGiftImage,
     completionTitle: "Schöner Tag!",
     completionText: "Deine Wochenend-Aufgaben sind erledigt.",
   },
   special: {
-    accent: "#D867A8",
-    accentSoft: "#FFF0F8",
+    hue: "magenta",
     art: routineSpecialImage,
     completionArt: rewardStarGiftImage,
     completionTitle: "Besonders gut!",
     completionText: "Diese Extra-Routine ist abgeschlossen.",
   },
   generic: {
-    accent: "#245A74",
-    accentSoft: "#F6FAFF",
+    hue: "blue",
     art: rewardStarGiftImage,
     completionArt: rewardStarGiftImage,
     completionTitle: "Stark gemacht!",
@@ -228,21 +239,24 @@ export function getRoutineCategory(routine: Routine): RoutineVisualKey {
 
 export function getRoutineVisual(routine: Routine, fallbackAccent: string): RoutineVisual {
   const key = classifyRoutine(routine);
-  const visual = ROUTINE_VISUALS[key];
+  const definition = ROUTINE_VISUALS[key];
+  // Classified routines keep their semantic colour (morning = amber, evening
+  // = violet, ...). Only a generic routine consults the parent's stored swatch.
+  // Old hex and HSL values are mapped at read time; storage is never rewritten.
+  const hue =
+    key === "generic"
+      ? resolveHue(routine.color ?? fallbackAccent)
+      : definition.hue;
+  const cta = getCtaGradient(hue);
+  const cardGradient = getCardGradient(hue);
 
-  if (key === "generic" && routine.color) {
-    return {
-      ...visual,
-      accent: routine.color,
-    };
-  }
-
-  if (key === "generic") {
-    return {
-      ...visual,
-      accent: fallbackAccent,
-    };
-  }
-
-  return visual;
+  return {
+    ...definition,
+    hue,
+    accent: cta.from,
+    accentStrong: cta.to,
+    accentSoft: cardGradient.colors[2],
+    cardGradient,
+    onCard: getOnCardColor(),
+  };
 }

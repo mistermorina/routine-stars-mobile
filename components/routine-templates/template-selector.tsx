@@ -2,7 +2,9 @@ import React, { useState, useMemo } from "react";
 import { View, Text, Pressable } from "react-native";
 import { routineTemplates } from "@/lib/routine-templates";
 import { TemplateCard } from "./template-card";
-import { getThemePalette } from "@/lib/theme";
+import { useDesignMode } from "@/contexts/design-mode-context";
+import { getAccentTokens } from "@/lib/design-mode";
+import { getThemePalette, semanticColors } from "@/lib/theme";
 import type { ChildTheme, RoutineTemplate, RoutineCategory } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +33,8 @@ export function TemplateSelector({
 }: TemplateSelectorProps) {
   const [category, setCategory] = useState<RoutineCategory | "all">("all");
   const palette = getThemePalette(theme);
+  const { designMode } = useDesignMode();
+  const accents = getAccentTokens(designMode, palette);
 
   const filtered = useMemo(() => {
     if (category === "all") return routineTemplates;
@@ -45,24 +49,17 @@ export function TemplateSelector({
           <Pressable
             key={f.id}
             onPress={() => setCategory(f.id)}
-            className={cn(
-              "min-h-11 rounded-full border px-4 py-2.5",
-              category === f.id ? "" : "border-transparent"
-            )}
-            style={
-              category === f.id
-                ? {
-                    backgroundColor: palette.tabActiveBg,
-                    borderColor: palette.accent,
-                  }
-                : {
-                    backgroundColor: "rgba(255,255,255,0.74)",
-                  }
-            }
+            className="min-h-11 rounded-full px-4 py-2.5"
+            style={{
+              backgroundColor:
+                category === f.id ? accents.pillFill : semanticColors.card,
+              borderColor: accents.pillBorder ?? undefined,
+              borderWidth: accents.pillBorder ? 1 : 0,
+            }}
           >
             <Text
               className={cn("text-sm font-body-semibold", category === f.id ? "" : "text-muted-foreground")}
-              style={category === f.id ? { color: palette.accentText } : undefined}
+              style={category === f.id ? { color: accents.accent } : undefined}
               numberOfLines={1}
             >
               {f.label}

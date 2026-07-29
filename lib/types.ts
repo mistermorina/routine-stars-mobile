@@ -324,7 +324,19 @@ export type AgeGroup = '3-5' | '6-8' | '9-12';
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'flexible';
 export type RoutineCategory = 'hygiene' | 'school' | 'household' | 'meals' | 'sport' | 'evening' | 'weekend' | 'special';
 export type ChildTheme = 'sterne' | 'tiere' | 'galaxy';
+/** Gradient backgrounds — one per palette hue, see lib/gradients.ts. */
+export type GradientSkinId =
+  | "verlauf-blau"
+  | "verlauf-tuerkis"
+  | "verlauf-limette"
+  | "verlauf-gruen"
+  | "verlauf-bernstein"
+  | "verlauf-koralle"
+  | "verlauf-magenta"
+  | "verlauf-violett";
+
 export type BackgroundSkinId =
+  | GradientSkinId
   | "none"
   | "wolken"
   | "sonnenaufgang"

@@ -1,4 +1,4 @@
-# Design Direction — „Soft Glass + Kawaii" (freigegeben 2026-06-11, abgeglichen mit Code 2026-07-28)
+# Design Direction — „Soft Glass + Kawaii" (freigegeben 2026-06-11, abgeglichen mit Code 2026-07-29)
 
 Nordstern: Mockup-Serie des Users (warmes Glas-UI mit Kawaii-3D-Stern-Maskottchen).
 Referenz-Look im Repo: `assets/review/reference-style-v1/contact-sheets/*` und die
@@ -46,6 +46,13 @@ den Build. Der eingefrorene Alt-Bestand an Hex-Werten steht als Schuldenposten i
    Pastell-Pill hinter Icon + Akzent-Label, Bounce beim Fokuswechsel, Haptik (`tab_focus` existiert).
 
 ## Farben & Themes
+- `lib/gradients.ts` ist die Quelle für die acht Verlaufstöne und ihre getrennten
+  Rollen: Screen-Ramp, CTA, Karten-Wash und Blob. Screen- und Kartenverläufe tragen
+  dunklen Text; CTA-Verläufe tragen weißen Text. `npm run test:gradients` sichert
+  diese Kombinationen mit WCAG-AA-Kontrastwerten ab.
+- Der gespeicherte Hintergrundwert `none` bleibt aus Kompatibilitätsgründen bestehen,
+  rendert im Glas-Modus aber den blauen Routine-Stars-Standardverlauf. Illustrationen
+  und Farbverläufe schließen sich aus; Bild-Skins liegen immer auf dem neutralen Ramp.
 - Warm (Marken-Default) = Mockup-Warmvariante. Die kühle Lavendel/Blau-Variante der Mockups
   entsteht über Kind-Themes `sterne`/`galaxy` — KEINE zweite Designwelt bauen, themePalettes nutzen
   (screenGradient, heroSurface, cardTint, tabActiveBg, motif*, celebrationColors sind vorhanden).
@@ -110,7 +117,10 @@ bewusste Ausnahmen (Hero-Blobs ab 28px), keine Nachlässigkeit.
   `shadowCard` (Karten/Rows), `shadowFloating` (Dialoge/Sheets/Toasts).
 - `shadowOpacity ≤ 0.08`, Farbe aus `shadowColors` (`ambient #9DB8D8`, `deep #2E3A68`),
   jedes Preset bringt `elevation` für Android mit.
-- Keine `shadow-lg`/`shadow-md`-Utilities, keine Ad-hoc-Shadow-Objekte, kein echter Blur (GPU).
+- Keine `shadow-lg`/`shadow-md`-Utilities und keine Ad-hoc-Shadow-Objekte.
+- Echter Blur ist ausschließlich in den gemeinsamen Glas-Primitives und im Chrome
+  erlaubt (`Card`, `Surface`, `GlassTile`, Header, Tab-Bar, Modal-Flächen). Wiederholte
+  List-Zeilen bekommen keine eigene Blur-Ebene; sie nutzen den Material-Fill der Elternkarte.
 
 ## Motion (Tokens verbindlich, `lib/motion.ts`)
 - **springs:** playful d12/s250 · bouncy d9/s220 · gentle d20/s180 · press d15/s300 ·
@@ -126,5 +136,5 @@ bewusste Ausnahmen (Hero-Blobs ab 28px), keine Nachlässigkeit.
 ## Explizite No-Gos
 Mail/Inbox-Icon · 5 Tabs (Home/Fortschritt-Tabs) · Task-Sterne als Rating-Reihe ·
 Subtask-Zähler („3/4") ohne Datenbasis · neue Features (Ziele, Familie & Betreuung, Wunschliste
-nur falls Datenmodell sie schon trägt) · echte Blur-Layer · Ersetzen vorhandener Assets ·
+nur falls Datenmodell sie schon trägt) · Ad-hoc-Blur außerhalb der Glas-Primitives · Ersetzen vorhandener Assets ·
 `Alert.alert` (stattdessen `components/ui/confirm-dialog.tsx`) · horizontale ScrollViews.

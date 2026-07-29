@@ -19,7 +19,7 @@
     "test:onboarding": "node scripts/check-onboarding-flow.mjs",
     "test:stickers": "node scripts/check-sticker-reward-logic.mjs",
     "test:streak": "node scripts/check-streak-logic.mjs",
-    "test:all": "npm run typecheck && npm run lint && node scripts/check-ui-quality.mjs && node scripts/check-color-contrast.mjs && node scripts/check-background-skins.mjs && node scripts/check-task-timer-modal-order.mjs && node scripts/check-local-day-progress.mjs && node scripts/check-onboarding-flow.mjs",
+    "test:all": "npm run typecheck && npm run lint && node scripts/check-ui-quality.mjs && node scripts/check-color-contrast.mjs && node scripts/check-background-skins.mjs && node scripts/check-gradients.mjs && node scripts/check-task-timer-modal-order.mjs && node scripts/check-local-day-progress.mjs && node scripts/check-onboarding-flow.mjs",
     "guardrails:hex-allowlist": "node scripts/check-ui-quality.mjs --write-allowlist"
   },
   "dependencies": {

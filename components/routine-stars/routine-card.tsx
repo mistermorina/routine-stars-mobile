@@ -1,6 +1,7 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { StyleSheet, View, Text } from "react-native";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { Star } from "@/lib/icons";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -42,9 +43,13 @@ export function RoutineCard({
         ...shadowPresets.shadowCard,
       }}
     >
-      <View
-        className="absolute inset-x-0 top-0 h-32"
-        style={{ backgroundColor: visual.accentSoft, opacity: 0.82 }}
+      <LinearGradient
+        colors={visual.cardGradient.colors}
+        locations={visual.cardGradient.locations}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        pointerEvents="none"
+        style={StyleSheet.absoluteFillObject}
       />
       <View
         className="absolute left-[-40px] top-14 h-28 w-28 rounded-full"
@@ -52,7 +57,7 @@ export function RoutineCard({
       />
       <View
         className="absolute right-[-34px] top-[-36px] h-40 w-40 rounded-full"
-        style={{ backgroundColor: `${visual.accent}14` }}
+        style={{ backgroundColor: `${visual.accentStrong}14` }}
       />
       {visual.art ? (
         <Image
@@ -76,7 +81,7 @@ export function RoutineCard({
         <View className="min-h-[76px] pr-[74px]">
           <Text
             className="text-lg font-headline leading-6"
-            style={{ color: visual.accent }}
+            style={{ color: visual.onCard }}
             numberOfLines={1}
             maxFontSizeMultiplier={1.3}
             adjustsFontSizeToFit
@@ -116,6 +121,7 @@ export function RoutineCard({
               <TaskItem
                 task={task}
                 routineColor={visual.accent}
+                routineHue={visual.hue}
                 childTheme={childTheme}
                 isSuggested={highlightTaskId === task.id}
                 onComplete={(bonus) => onTaskComplete(task.id, bonus)}

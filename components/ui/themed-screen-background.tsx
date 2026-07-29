@@ -12,11 +12,14 @@ import Animated, {
 } from "react-native-reanimated";
 import { PawPrint, Sparkles, Star } from "@/lib/icons";
 import { cn } from "@/lib/utils";
-import { getBackgroundSkinOption } from "@/lib/background-skins";
+import {
+  getBackgroundSkinOption,
+  getBackgroundSkinRamp,
+} from "@/lib/background-skins";
 import { getThemePalette } from "@/lib/theme";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useDesignMode } from "@/contexts/design-mode-context";
-import { DEFAULT_HUE, getScreenRamp } from "@/lib/gradients";
+import { DEFAULT_HUE } from "@/lib/gradients";
 import { RadialBlob } from "@/components/ui/radial-blob";
 import type { BackgroundSkinId, ChildTheme } from "@/lib/types";
 
@@ -97,12 +100,16 @@ export function ThemedScreenBackground({
   const palette = getThemePalette(theme);
   const { designMode } = useDesignMode();
   const isGlass = designMode === "glass";
-  // A skin carries the look on its own, so the ramp stays neutral underneath
-  // it; otherwise the screen wears the app's brand hue.
-  const rampHue = DEFAULT_HUE;
-  const screenRamp = getScreenRamp(rampHue);
   const skin = getBackgroundSkinOption(backgroundSkin);
-  const hasSkin = skin.id !== "none" && Boolean(skin.image);
+  // An illustration carries the look on its own, so the ramp stays neutral
+  // underneath it. A gradient background IS the ramp; anything else wears the
+  // brand hue.
+  const rampHue = skin.kind === "gradient" && skin.hue ? skin.hue : DEFAULT_HUE;
+  const screenRamp = getBackgroundSkinRamp(skin);
+  const hasSkin = skin.kind === "image" && Boolean(skin.image);
+  // Explicit selections keep their faithful ramp in soft mode too. Only
+  // `none` preserves the old soft backdrop for design-mode comparison.
+  const rendersRamp = isGlass || skin.kind !== "none";
 
   const renderMotif = () => {
     if (theme === "tiere") {
@@ -193,7 +200,7 @@ export function ThemedScreenBackground({
 
   return (
     <View className={cn("flex-1 overflow-hidden", className)} style={{ backgroundColor: palette.backgroundBase }}>
-      {isGlass ? (
+      {rendersRamp ? (
         // Frosted panes need something to refract; a flat fill gives them
         // nothing. The ramp is vertical and holds white through the top
         // quarter, so headlines and the header always sit on a clean field
@@ -255,7 +262,7 @@ export function ThemedScreenBackground({
             ]}
           />
         </>
-      ) : isGlass ? null : (
+      ) : rendersRamp ? null : (
         renderMotif()
       )}
       <View className="flex-1">{children}</View>

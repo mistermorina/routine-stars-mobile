@@ -1,8 +1,39 @@
 import type { ImageProps } from "expo-image";
-import type { BackgroundSkinId } from "@/lib/types";
+import type { BackgroundSkinId, GradientSkinId } from "@/lib/types";
+import {
+  DEFAULT_HUE,
+  getNeutralRamp,
+  getScreenRamp,
+  HUE_LABELS,
+  type HueId,
+  type ScreenRamp,
+} from "@/lib/gradients";
+
+/**
+ * A background is either a gradient ramp or an illustration — never both.
+ *
+ * They stay mutually exclusive on purpose: scripts/check-background-skins.mjs
+ * measures each illustration against a flat pale base, and the partly
+ * transparent ones (Weltraum runs at 0.55) let that base show through. A
+ * saturated ramp underneath would silently invalidate the measurement for
+ * exactly the skins that need it most.
+ */
+export type BackgroundSkinKind = "none" | "image" | "gradient";
+export type BackgroundSkinCategory = "gradient" | "image";
+
+export const BACKGROUND_SKIN_CATEGORIES = [
+  { id: "gradient", label: "Verläufe" },
+  { id: "image", label: "Illustrationen" },
+] as const satisfies readonly {
+  id: BackgroundSkinCategory;
+  label: string;
+}[];
 
 export interface BackgroundSkinOption {
   id: BackgroundSkinId;
+  kind: BackgroundSkinKind;
+  /** Set on gradient entries; picks the ramp out of lib/gradients.ts. */
+  hue?: HueId;
   label: string;
   description: string;
   previewBackground: string;
@@ -23,18 +54,53 @@ export interface BackgroundSkinOption {
 
 export const DEFAULT_BACKGROUND_SKIN: BackgroundSkinId = "none";
 
+/**
+ * Gradient backgrounds. One per palette hue; the ramp itself and its contrast
+ * guarantees live in lib/gradients.ts and are asserted by
+ * scripts/check-gradients.mjs.
+ */
+const GRADIENT_SKINS: BackgroundSkinOption[] = (
+  [
+    ["verlauf-blau", "blue"],
+    ["verlauf-tuerkis", "cyan"],
+    ["verlauf-limette", "lime"],
+    ["verlauf-gruen", "green"],
+    ["verlauf-bernstein", "amber"],
+    ["verlauf-koralle", "coral"],
+    ["verlauf-magenta", "magenta"],
+    ["verlauf-violett", "violet"],
+  ] satisfies [GradientSkinId, HueId][]
+).map(([id, hue]) => {
+  const ramp = getScreenRamp(hue);
+  return {
+    id,
+    kind: "gradient" as const,
+    hue,
+    label: HUE_LABELS[hue],
+    description: "Farbverlauf",
+    // Preview swatches mirror the ramp so the picker shows the real thing.
+    previewBackground: ramp.colors[1],
+    previewAccent: ramp.colors[2],
+    previewSoft: ramp.colors[3],
+    imageOpacity: 0,
+  };
+});
+
 export const BACKGROUND_SKINS: BackgroundSkinOption[] = [
   {
     id: "none",
-    label: "Kein Skin",
-    description: "Standard",
-    previewBackground: "#F6FAFF",
-    previewAccent: "#DCEAF7",
-    previewSoft: "#FFF7E6",
+    kind: "none",
+    hue: DEFAULT_HUE,
+    label: "Standard",
+    description: "Routine Stars Blau",
+    previewBackground: getScreenRamp(DEFAULT_HUE).colors[1],
+    previewAccent: getScreenRamp(DEFAULT_HUE).colors[2],
+    previewSoft: getScreenRamp(DEFAULT_HUE).colors[3],
     imageOpacity: 0,
   },
   {
     id: "wolken",
+    kind: "image",
     label: "Wolken",
     description: "Zum Träumen",
     previewBackground: "#D1F0FD",
@@ -45,6 +111,7 @@ export const BACKGROUND_SKINS: BackgroundSkinOption[] = [
   },
   {
     id: "sonnenaufgang",
+    kind: "image",
     label: "Sonnenaufgang",
     description: "Morgenlicht",
     previewBackground: "#FEF0D6",
@@ -55,6 +122,7 @@ export const BACKGROUND_SKINS: BackgroundSkinOption[] = [
   },
   {
     id: "regenbogen",
+    kind: "image",
     label: "Regenbogen",
     description: "Sanfte Farbbögen",
     previewBackground: "#FEF8EB",
@@ -65,6 +133,7 @@ export const BACKGROUND_SKINS: BackgroundSkinOption[] = [
   },
   {
     id: "konfetti",
+    kind: "image",
     label: "Konfetti",
     description: "Kleine Schnipsel",
     previewBackground: "#FEFAF2",
@@ -75,6 +144,7 @@ export const BACKGROUND_SKINS: BackgroundSkinOption[] = [
   },
   {
     id: "sportplatz",
+    kind: "image",
     label: "Sportplatz",
     description: "Platz für Bewegung",
     previewBackground: "#EAF4C5",
@@ -85,6 +155,7 @@ export const BACKGROUND_SKINS: BackgroundSkinOption[] = [
   },
   {
     id: "ozean",
+    kind: "image",
     label: "Ozean",
     description: "Unter Wasser",
     previewBackground: "#C7F5F6",
@@ -95,6 +166,7 @@ export const BACKGROUND_SKINS: BackgroundSkinOption[] = [
   },
   {
     id: "minzwald",
+    kind: "image",
     label: "Minzwald",
     description: "Frisches Grün",
     previewBackground: "#DDEFD9",
@@ -105,6 +177,7 @@ export const BACKGROUND_SKINS: BackgroundSkinOption[] = [
   },
   {
     id: "dschungel",
+    kind: "image",
     label: "Dschungel",
     description: "Blätter und Pfoten",
     previewBackground: "#F0F6D6",
@@ -115,6 +188,7 @@ export const BACKGROUND_SKINS: BackgroundSkinOption[] = [
   },
   {
     id: "schatzkarte",
+    kind: "image",
     label: "Schatzkarte",
     description: "Auf Schatzsuche",
     previewBackground: "#FDEDC4",
@@ -125,6 +199,7 @@ export const BACKGROUND_SKINS: BackgroundSkinOption[] = [
   },
   {
     id: "schneewelt",
+    kind: "image",
     label: "Schneewelt",
     description: "Stille und Flocken",
     previewBackground: "#F8FAFE",
@@ -135,6 +210,7 @@ export const BACKGROUND_SKINS: BackgroundSkinOption[] = [
   },
   {
     id: "sternennacht",
+    kind: "image",
     label: "Sternennacht",
     description: "Mond und Sterne",
     previewBackground: "#B5A9EE",
@@ -146,6 +222,7 @@ export const BACKGROUND_SKINS: BackgroundSkinOption[] = [
   },
   {
     id: "weltraum",
+    kind: "image",
     label: "Weltraum",
     description: "Ferne Planeten",
     previewBackground: "#353BAB",
@@ -157,6 +234,7 @@ export const BACKGROUND_SKINS: BackgroundSkinOption[] = [
     // keeps its 4.5:1.
     imageOpacity: 0.55,
   },
+  ...GRADIENT_SKINS,
 ];
 
 export const BACKGROUND_SKIN_IDS = BACKGROUND_SKINS.map((skin) => skin.id);
@@ -185,4 +263,46 @@ export function normalizeBackgroundSkin(value?: string | null): BackgroundSkinId
 export function getBackgroundSkinOption(value?: string | null): BackgroundSkinOption {
   const skinId = normalizeBackgroundSkin(value);
   return BACKGROUND_SKINS.find((skin) => skin.id === skinId) ?? BACKGROUND_SKINS[0];
+}
+
+/** `none` is the branded default ramp, so it belongs with the gradients. */
+export function getBackgroundSkinCategory(
+  skin: BackgroundSkinOption
+): BackgroundSkinCategory {
+  return skin.kind === "image" ? "image" : "gradient";
+}
+
+export function getBackgroundSkinsByCategory(
+  category: BackgroundSkinCategory
+): BackgroundSkinOption[] {
+  return BACKGROUND_SKINS.filter((skin) => {
+    if (getBackgroundSkinCategory(skin) !== category) return false;
+    // `none` already renders the blue brand ramp. Keeping the explicit blue
+    // alias beside it would show two identical choices in every picker.
+    return !(
+      skin.kind === "gradient" &&
+      skin.hue === DEFAULT_HUE
+    );
+  });
+}
+
+/** Collapses the explicit blue alias onto the visually identical default. */
+export function getBackgroundSkinPickerId(
+  value?: string | null
+): BackgroundSkinId {
+  const skin = getBackgroundSkinOption(value);
+  return skin.kind === "gradient" && skin.hue === DEFAULT_HUE
+    ? DEFAULT_BACKGROUND_SKIN
+    : skin.id;
+}
+
+/**
+ * Exact underlay used by both the full-screen renderer and every preview.
+ * Illustrated skins always sit on the neutral ramp; gradients (including the
+ * default `none` id) carry their own hue.
+ */
+export function getBackgroundSkinRamp(skin: BackgroundSkinOption): ScreenRamp {
+  return skin.kind === "image"
+    ? getNeutralRamp()
+    : getScreenRamp(skin.hue ?? DEFAULT_HUE);
 }

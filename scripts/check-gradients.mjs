@@ -13,11 +13,19 @@ import { existsSync, readFileSync } from "node:fs";
 
 const gradientsPath = "lib/gradients.ts";
 const designModePath = "lib/design-mode.ts";
+const routineVisualsPath = "lib/routine-visuals.ts";
+const routineCardPath = "components/routine-stars/routine-card.tsx";
+const rewardsOverviewPath = "components/routine-stars/rewards-overview.tsx";
+const taskItemPath = "components/routine-stars/task-item.tsx";
 
 assert.equal(existsSync(gradientsPath), true, "lib/gradients.ts is missing");
 
 const gradientsSource = readFileSync(gradientsPath, "utf8");
 const designModeSource = readFileSync(designModePath, "utf8");
+const routineVisualsSource = readFileSync(routineVisualsPath, "utf8");
+const routineCardSource = readFileSync(routineCardPath, "utf8");
+const rewardsOverviewSource = readFileSync(rewardsOverviewPath, "utf8");
+const taskItemSource = readFileSync(taskItemPath, "utf8");
 
 // --- colour maths (identical to check-background-skins.mjs) ------------------
 
@@ -209,10 +217,12 @@ for (const hue of hues) {
       `(needs ${MIN_CONTRAST}:1). Lower BLOB_MAX_ALPHA for this hue.`
   );
 
-  // 5. Routine card: dark text over the card wash (both stops).
+  // 5. Routine card: dark text over its softer, independent card wash.
+  const cardRamp = screenRamps[hue];
   const titleOnWash = Math.min(
-    ratio(FOREGROUND, parseHex(mid)),
-    ratio(FOREGROUND, parseHex(foot))
+    ratio(FOREGROUND, WHITE),
+    ratio(FOREGROUND, parseHex(cardRamp[0])),
+    ratio(FOREGROUND, parseHex(cardRamp[1]))
   );
   assert.ok(
     titleOnWash >= MIN_CONTRAST,
@@ -233,6 +243,64 @@ const accentRatio = ratio(WHITE, parseHex(ctaPairs[accentMatch[1]].from));
 assert.ok(
   accentRatio >= MIN_CONTRAST,
   `glass accent is ${accentRatio.toFixed(2)}:1 against white text (needs ${MIN_CONTRAST}:1).`
+);
+
+// 7. Wiring: the analytical guarantees only matter if the visible components
+//    consume the guarded roles instead of falling back to old ad-hoc colours.
+assert.match(
+  routineVisualsSource,
+  /resolveHue\(routine\.color \?\? fallbackAccent\)/,
+  "generic routines do not map stored hex/HSL colours through resolveHue"
+);
+assert.match(
+  routineVisualsSource,
+  /const cardGradient = getCardGradient\(hue\);/,
+  "routine visuals do not expose the guarded card gradient"
+);
+assert.match(
+  routineCardSource,
+  /colors=\{visual\.cardGradient\.colors\}/,
+  "routine cards do not render the guarded card gradient"
+);
+assert.match(
+  routineCardSource,
+  /locations=\{visual\.cardGradient\.locations\}/,
+  "routine cards do not use the reference gradient curve"
+);
+assert.match(
+  routineCardSource,
+  /style=\{StyleSheet\.absoluteFillObject\}/,
+  "routine card gradient must cover the full card instead of ending in a hard header edge"
+);
+assert.match(
+  routineCardSource,
+  /style=\{\{ color: visual\.onCard \}\}/,
+  "routine card titles do not use the guarded on-card text colour"
+);
+assert.match(
+  rewardsOverviewSource,
+  /colors=\{visual\.cardGradient\.colors\}/,
+  "reward cards do not render the guarded card gradient"
+);
+assert.doesNotMatch(
+  taskItemSource,
+  /<(?:BlurView|GlassTile)\b/,
+  "task rows must not mount per-item blur surfaces; the parent card already blurs"
+);
+assert.match(
+  taskItemSource,
+  /const swipeBackdropAnimatedStyle = useAnimatedStyle/,
+  "task swipe action must stay hidden until the row moves"
+);
+assert.match(
+  taskItemSource,
+  /backgroundColor: semanticColors\.successStrong/,
+  "task swipe action must keep an accessible soft-mode fallback"
+);
+assert.match(
+  taskItemSource,
+  /<GradientFill hue="green" \/>/,
+  "task swipe action must render the green CTA gradient under the glass row"
 );
 
 console.log(`Gradient checks passed (${hues.length} hues, contrast verified)`);

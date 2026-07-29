@@ -32,7 +32,7 @@ in the diff.
 |---|---|---|
 | `background` / `foreground` | `#F8E9D7` / `#1a1a2e` | App background, primary text |
 | `card` / `cardForeground` | `#FFFFFF` / `#1a1a2e` | Surfaces + text on them |
-| `muted` / `mutedForeground` | `#F5F5F5` / `#737373` | Inactive fills, secondary text |
+| `muted` / `mutedForeground` | `#F5F5F5` / `#4A4A4A` | Inactive fills, secondary text |
 | `border` | `#E5E5E5` | Hairlines |
 | `primary` / `primaryForeground` | `#F3E5AB` / `#1a1a2e` | Brand CTA |
 | `accent` / `accentForeground` | `#245A74` / `#FFFFFF` | Secondary CTA, links |
@@ -76,9 +76,19 @@ import { shadowPresets } from "@/lib/theme";
 <View className="rounded-card bg-card p-4" style={shadowPresets.shadowCard} />
 ```
 
-No `shadow-lg`/`shadow-md` utilities, no ad-hoc shadow objects, no real blur.
+No `shadow-lg`/`shadow-md` utilities and no ad-hoc shadow objects. Real blur is
+owned by the shared glass primitives (`Card`, `Surface`, `GlassTile`,
+`GlassBackdrop`, modal surfaces) and chrome only. Repeated list rows never add
+their own `BlurView`; use the parent material fill.
 
-### 1.4 Type scale
+### 1.4 Gradients
+
+`lib/gradients.ts` owns all eight hues and the separate screen, CTA, card and
+blob roles. Use `getScreenRamp`, `getCtaGradient`, `getCardGradient` and
+`getOnCardColor`; never substitute one role for another. `npm run
+test:gradients` verifies white CTA labels and dark screen/card copy analytically.
+
+### 1.5 Type scale
 
 Instrument Serif: `font-headline` (400) for headings.
 Inter: `font-body` (400) · `font-body-semibold` (600) · `font-body-bold` (700)
@@ -266,7 +276,8 @@ Pass `{ disableSound: true }` for quiet contexts (parent area, settings, gates).
 - No raw `Pressable` for primary actions — `PressableScale` or `Button`.
   `Button` already carries haptic + scale: never wrap it in `PressableScale`
   and never open its `onPress` with a generic `triggerFeedback` press tick.
-- No `shadow-lg`/`shadow-md`, no ad-hoc shadow objects, no blur layers.
+- No `shadow-lg`/`shadow-md` or ad-hoc shadow objects. Do not mount blur outside
+  the shared glass primitives/chrome, and never mount one BlurView per list row.
   Inline `shadowOpacity` above 0.08 fails the build.
 - No `animationType="fade"` on `Modal` — dialogs animate via Reanimated
   (`components/ui/dialog.tsx` defaults to `"none"`); RN's fade double-animates

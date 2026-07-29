@@ -9,7 +9,6 @@ import { avatarCategories, areAvatarValuesEqual, type AvatarCategoryName } from 
 import { enterFade } from "@/lib/motion";
 import { getThemePalette, semanticColors, shadowPresets } from "@/lib/theme";
 import { triggerFeedback } from "@/lib/feedback";
-import { cn } from "@/lib/utils";
 import type { AvatarValue, ChildTheme } from "@/lib/types";
 
 const CATEGORY_NAMES = Object.keys(avatarCategories) as AvatarCategoryName[];
@@ -60,15 +59,12 @@ export function AvatarPicker({ value, onChange, theme }: AvatarPickerProps) {
             <PressableScale
               key={name}
               onPress={() => handleCategory(name)}
-              className={cn(
-                "min-h-11 justify-center rounded-full border px-4",
-                isActive ? "" : "border-border"
-              )}
-              style={
-                isActive
-                  ? { backgroundColor: accents.pillFill, borderColor: accents.accent }
-                  : { backgroundColor: semanticColors.card }
-              }
+              className="min-h-11 justify-center rounded-full px-4"
+              style={{
+                backgroundColor: isActive ? accents.pillFill : semanticColors.card,
+                borderColor: accents.pillBorder ?? undefined,
+                borderWidth: accents.pillBorder ? 1 : 0,
+              }}
               accessibilityRole="tab"
               accessibilityLabel={`Kategorie ${name}`}
               accessibilityState={{ selected: isActive }}

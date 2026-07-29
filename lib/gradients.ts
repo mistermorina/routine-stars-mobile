@@ -34,16 +34,16 @@ export const HUE_IDS: HueId[] = [
   "green",
 ];
 
-/** The saturated end of each swatch, as supplied. Everything else derives. */
+/** Saturated endpoints sampled from the approved eight-panel colour reference. */
 const BRAND_HUES: Record<HueId, string> = {
-  lime: "#C4F000",
-  cyan: "#00D5F2",
-  blue: "#1B7FE9",
-  violet: "#9B3DE8",
-  magenta: "#F5179C",
-  coral: "#F5544A",
-  amber: "#F9A825",
-  green: "#22C55E",
+  lime: "#B8F505",
+  cyan: "#08EBFE",
+  blue: "#108BFD",
+  violet: "#9C3BFD",
+  magenta: "#FD2594",
+  coral: "#FE5551",
+  amber: "#FDAE05",
+  green: "#16DE6D",
 };
 
 /** German labels for the picker. */
@@ -79,20 +79,20 @@ export interface BlobTokens {
 }
 
 /**
- * Screen ramp stops. 0% and 26% are white so headlines and the collapsed
- * header always sit on a clean field; 72% is a 30% mix toward the hue (the
- * bottom of the content band); 100% is a 62% mix and lives behind the
- * floating tab bar and the scroll inset.
+ * Screen ramp stops sampled from the approved reference. 0% and 26% remain
+ * white so headlines sit on a clean field; the later stops reproduce the
+ * luminous middle and lower colour bands without putting the raw saturated
+ * endpoint behind ordinary screen text.
  */
 const SCREEN_RAMPS: Record<HueId, [string, string]> = {
-  lime: ["#EDFBB3", "#DAF661"],
-  cyan: ["#B3F2FB", "#61E5F7"],
-  blue: ["#BBD9F8", "#72B0F1"],
-  violet: ["#E1C5F8", "#C187F1"],
-  magenta: ["#FCB9E1", "#F96FC2"],
-  coral: ["#FCCCC9", "#F9958F"],
-  amber: ["#FDE5BE", "#FBC978"],
-  green: ["#BDEECF", "#76DB9B"],
+  lime: ["#F4FDC7", "#DCFB5E"],
+  cyan: ["#D1F9FD", "#75F1FE"],
+  blue: ["#CCE2FC", "#76B6FD"],
+  violet: ["#E9D5FC", "#C68DFD"],
+  magenta: ["#FECFE5", "#FE80BE"],
+  coral: ["#FED5D4", "#FE9392"],
+  amber: ["#FEEBC4", "#FECE62"],
+  green: ["#D4F8DA", "#82ECA6"],
 };
 
 /**
@@ -135,6 +135,22 @@ const BLOB_MAX_ALPHA: Record<HueId, number> = {
 /** Uniform first-pass alpha — safe on every hue, and the reference blob is diffuse. */
 export const BLOB_ALPHA = 0.18;
 
+/**
+ * The pale ramp used under an illustrated skin.
+ *
+ * check-background-skins.mjs measures every illustration against a flat pale
+ * base, and the partly transparent ones let it show through. Keeping this
+ * neutral is what makes those measurements stay true — a saturated ramp
+ * underneath Weltraum (0.55 opacity) would quietly break the one skin the
+ * check flags as most at risk.
+ */
+export function getNeutralRamp(): ScreenRamp {
+  return {
+    colors: ["#FFFFFF", "#FFFFFF", "#F2F6FD", "#DCEBF7"],
+    locations: [0, 0.26, 0.72, 1],
+  };
+}
+
 export function getScreenRamp(hue: HueId = DEFAULT_HUE): ScreenRamp {
   const [mid, foot] = SCREEN_RAMPS[hue];
   return {
@@ -155,21 +171,24 @@ export function getBlob(hue: HueId = DEFAULT_HUE): BlobTokens {
 }
 
 /**
- * Card wash — the screen ramp's own mid/foot pair, so a routine card reads as
- * a denser patch of its own background rather than a foreign colour. Dark text
- * sits on this, which is why it is not the CTA pair.
+ * Card wash — the reference's white plateau and long luminous transition,
+ * scaled across the complete card. Dark text sits on this, which is why the
+ * dark CTA pair is never used as a card surface.
  */
-export function getCardGradient(hue: HueId = DEFAULT_HUE): GradientPair {
-  const [mid, foot] = SCREEN_RAMPS[hue];
-  return { from: mid, to: foot };
+export function getCardGradient(hue: HueId = DEFAULT_HUE): ScreenRamp {
+  const [mid, end] = SCREEN_RAMPS[hue];
+  return {
+    colors: ["#FFFFFF", "#FFFFFF", mid, end],
+    locations: [0, 0.24, 0.52, 1],
+  };
 }
 
 /**
  * Text colour on a card wash.
  *
- * Deliberately the plain foreground, not a tinted shade of the hue: the wash
- * is a light tint, so a mid-dark hue on it lands around 3.5:1 (the CTA's deep
- * stop measures 3.55:1 on blue). Near-black clears 7:1 on every hue's wash.
+ * Deliberately the plain foreground, not a tinted shade of the hue: the CTA's
+ * dark amber and violet shades are functional button colours, not large-area
+ * typography colours. Near-black clears AA on every sampled card stop;
  * scripts/check-gradients.mjs asserts this.
  */
 export function getOnCardColor(): string {

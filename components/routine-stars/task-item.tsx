@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { StyleSheet, View, Text, Pressable } from "react-native";
 import Animated, {
+  Extrapolation,
+  interpolate,
   useSharedValue,
   useAnimatedStyle,
   withSpring,
@@ -18,10 +20,10 @@ import { getThemePalette, semanticColors, shadowPresets } from "@/lib/theme";
 import { durations, easings, springs, timings } from "@/lib/motion";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useStarFlightLauncher, type StarFlightLauncher } from "./star-flight";
-import { GlassTile } from "@/components/ui/glass-tile";
-import { BlurView } from "expo-blur";
+import { GradientFill } from "@/components/ui/gradient-fill";
 import { useDesignMode } from "@/contexts/design-mode-context";
-import { getSurfaceTokens } from "@/lib/design-mode";
+import { getAccentTokens, getSurfaceTokens } from "@/lib/design-mode";
+import type { HueId } from "@/lib/gradients";
 import type { ChildTheme, Task } from "@/lib/types";
 
 const SWIPE_THRESHOLD = -80;
@@ -40,6 +42,7 @@ const SETTLE_WATCHDOG_MS = durations.celebration + 200;
 interface TaskItemProps {
   task: Task;
   routineColor?: string;
+  routineHue?: HueId;
   childTheme?: ChildTheme;
   isSuggested?: boolean;
   onComplete: (bonusStars?: number) => void;
@@ -58,6 +61,7 @@ interface TaskItemProps {
 export function TaskItem({
   task,
   routineColor,
+  routineHue,
   childTheme,
   isSuggested = false,
   onComplete,
@@ -284,6 +288,18 @@ export function TaskItem({
     transform: [{ translateX: translateX.value }],
   }));
 
+  const swipeBackdropAnimatedStyle = useAnimatedStyle(() => ({
+    // The action colour must be fully absent at rest. Without this, the
+    // translucent material row lets the hidden action bleed through as a hard
+    // vertical colour block.
+    opacity: interpolate(
+      -translateX.value,
+      [0, 18],
+      [0, 1],
+      Extrapolation.CLAMP
+    ),
+  }));
+
   const Icon = getIcon(task.iconName);
   const hasTimer = task.timerInMinutes && task.timerInMinutes > 0;
   const hasBonus = task.bonusStars && task.bonusStars > 0;
@@ -291,7 +307,17 @@ export function TaskItem({
   const starColor = routineColor || semanticColors.mutedForeground;
   const { designMode } = useDesignMode();
   const surfaceTokens = getSurfaceTokens(designMode, palette, "flat");
+  const accentTokens = getAccentTokens(designMode, palette);
   const isGlassRow = surfaceTokens.blurIntensity > 0;
+  const isAccentTile = isCompleted || isSuggested;
+  const iconTileFill = isAccentTile
+    ? accentTokens.pillFill
+    : designMode === "glass"
+      ? accentTokens.tileFill
+      : palette.surface;
+  const iconTileBorder = isAccentTile
+    ? accentTokens.pillBorder
+    : accentTokens.tileBorder;
   const taskSurface = isGlassRow
     ? surfaceTokens.backgroundColor
     : isCompleted
@@ -347,20 +373,24 @@ export function TaskItem({
       >
         {/* "Erledigt" backdrop revealed on swipe (only for incomplete tasks) */}
         {!isCompleted && (
-          <View
+          <Animated.View
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
-            style={{
-              position: "absolute",
-              right: 0,
-              top: 0,
-              bottom: 0,
-              width: 120,
-              backgroundColor: routineColor || semanticColors.success,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
+            style={[
+              {
+                position: "absolute",
+                right: 0,
+                top: 0,
+                bottom: 0,
+                width: 120,
+                backgroundColor: semanticColors.successStrong,
+                justifyContent: "center",
+                alignItems: "center",
+              },
+              swipeBackdropAnimatedStyle,
+            ]}
           >
+            <GradientFill hue="green" />
             <Check size={24} color={semanticColors.card} />
             <Text
               className="mt-0.5 text-xs font-body-semibold"
@@ -370,7 +400,7 @@ export function TaskItem({
             >
               Erledigt
             </Text>
-          </View>
+          </Animated.View>
         )}
 
         {/* Swipeable + tappable row */}
@@ -387,7 +417,7 @@ export function TaskItem({
               accessibilityState={{ disabled: isAnimating, checked: isCompleted }}
             >
               <Animated.View
-            style={[
+                style={[
                   rowAnimatedStyle,
                   {
                     alignSelf: "stretch",
@@ -412,35 +442,48 @@ export function TaskItem({
                 ]}
               >
                 {isGlassRow ? (
-                  <>
-                    <BlurView
-                      intensity={surfaceTokens.blurIntensity}
-                      tint="light"
-                      pointerEvents="none"
-                      style={StyleSheet.absoluteFillObject}
-                    />
-                    <View
-                      pointerEvents="none"
-                      style={[
-                        StyleSheet.absoluteFillObject,
-                        { backgroundColor: taskSurface },
-                      ]}
-                    />
-                  </>
+                  // A routine can mount many rows at once. The parent card
+                  // already provides real blur, so repeating it on every row
+                  // only multiplies GPU work without adding depth.
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      StyleSheet.absoluteFillObject,
+                      { backgroundColor: taskSurface },
+                    ]}
+                  />
                 ) : null}
                 {/* Icon squircle */}
-                <GlassTile
-                  theme={childTheme}
-                  variant={isCompleted || isSuggested ? "pill" : "tile"}
-                  softFill={isCompleted || isSuggested ? palette.tabActiveBg : palette.surface}
-                  radius={18}
+                <View
                   className="mr-3 h-[52px] w-[52px]"
+                  style={{
+                    alignItems: "center",
+                    justifyContent: "center",
+                    overflow: "hidden",
+                    borderRadius: 18,
+                    backgroundColor: iconTileFill,
+                    borderColor: iconTileBorder ?? undefined,
+                    borderWidth: iconTileBorder ? 1 : 0,
+                  }}
                 >
+                  {designMode === "glass" && accentTokens.tileHighlight ? (
+                    <View
+                      pointerEvents="none"
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 8,
+                        right: 8,
+                        height: 1,
+                        backgroundColor: accentTokens.tileHighlight,
+                      }}
+                    />
+                  ) : null}
                   <Icon
                     size={26}
                     color={isCompleted ? starColor : routineColor || semanticColors.mutedForeground}
                   />
-                </GlassTile>
+                </View>
 
                 {/* Title + reward chip */}
                 <View className="flex-1 min-w-0 pr-3">
@@ -496,12 +539,13 @@ export function TaskItem({
                       onStartTimer(task);
                     }}
                     containerClassName="shrink-0"
-                    className="h-11 w-11 items-center justify-center rounded-full"
+                    className="h-11 w-11 items-center justify-center overflow-hidden rounded-full"
                     style={{ backgroundColor: palette.button }}
                     hitSlop={8}
                     accessibilityRole="button"
                     accessibilityLabel={`Timer für ${task.title} starten`}
                   >
+                    <GradientFill hue={routineHue} />
                     <Play size={18} color={semanticColors.card} fill={semanticColors.card} />
                   </PressableScale>
                 ) : (
