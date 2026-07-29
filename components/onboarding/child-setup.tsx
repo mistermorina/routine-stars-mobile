@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
 import { Image } from "expo-image";
-import { ImagePlus, Star, PawPrint, Rocket, Trash2 } from "@/lib/icons";
+import { ImagePlus, Trash2 } from "@/lib/icons";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,6 @@ import {
 } from "@/lib/avatars";
 import { pickAvatarPhotoAsync } from "@/lib/avatar-photo-picker";
 import { useToast } from "@/hooks/use-toast";
-import { triggerFeedback } from "@/lib/feedback";
 import { getThemePalette, semanticColors } from "@/lib/theme";
 import type {
   AgeGroup,
@@ -33,30 +32,6 @@ interface ChildSetupProps {
   };
 }
 
-const themes = [
-  {
-    id: "sterne",
-    name: "Sterne",
-    description: "Freundlich, hell und klassisch verspielt.",
-    badge: "Warm",
-    IconComponent: Star,
-  },
-  {
-    id: "tiere",
-    name: "Tiere",
-    description: "Natürlich, warm und ruhig motivierend.",
-    badge: "Natur",
-    IconComponent: PawPrint,
-  },
-  {
-    id: "galaxy",
-    name: "Galaxy",
-    description: "Etwas mutiger mit kühlen Weltraum-Akzenten.",
-    badge: "Weltraum",
-    IconComponent: Rocket,
-  },
-] as const;
-
 const ageGroupOptions: { id: AgeGroup; label: string; hint: string }[] = [
   { id: "3-5", label: "3–5 Jahre", hint: "Kurze, spielerische Schritte" },
   { id: "6-8", label: "6–8 Jahre", hint: "Gute Starter-Routinen für den Alltag" },
@@ -64,34 +39,6 @@ const ageGroupOptions: { id: AgeGroup; label: string; hint: string }[] = [
 ];
 
 
-function ThemePreview({
-  themeId,
-}: {
-  themeId: ChildTheme;
-}) {
-  const previewPalette = getThemePalette(themeId);
-
-  return (
-    <View
-      className="mt-3 flex-row gap-1.5"
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-    >
-      <View
-        className="h-8 flex-1 rounded-full"
-        style={{ backgroundColor: previewPalette.screenGradient[0] }}
-      />
-      <View
-        className="h-8 w-8 rounded-full"
-        style={{ backgroundColor: previewPalette.motifPrimary }}
-      />
-      <View
-        className="h-8 w-12 rounded-full"
-        style={{ backgroundColor: previewPalette.motifSecondary }}
-      />
-    </View>
-  );
-}
 
 export function ChildSetup({ onNext, formData }: ChildSetupProps) {
   const { toast } = useToast();
@@ -266,7 +213,7 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                   {profile.name}
                 </Text>
                 <Text className="text-xs font-body text-muted-foreground" maxFontSizeMultiplier={1.4}>
-                  {profile.ageGroup} • {profile.theme}
+                  {profile.ageGroup}
                 </Text>
               </View>
               <Pressable
@@ -357,74 +304,6 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
               </View>
             </View>
 
-            {/* Theme selection */}
-            <View className="gap-3">
-              <Label>Look & Feel</Label>
-              <Text className="text-sm font-body text-muted-foreground">
-                Die Welt färbt die App später warm und kindgerecht ein.
-              </Text>
-              <View className="flex-row gap-2">
-                {themes.map((theme) => {
-                  const isSelected = selectedTheme === theme.id;
-                  const themePalette = getThemePalette(theme.id);
-
-                  return (
-                    <Pressable
-                      key={theme.id}
-                      onPress={() => {
-                        setSelectedTheme(theme.id);
-                        void triggerFeedback("theme_preview");
-                      }}
-                      className="flex-1 rounded-card border px-3 py-3 active:opacity-80"
-                      accessibilityRole="button"
-                      accessibilityLabel={`Welt ${theme.name}. ${theme.description}`}
-                      accessibilityState={{ selected: isSelected }}
-                      style={
-                        isSelected
-                          ? {
-                              borderColor: themePalette.accent,
-                              backgroundColor: themePalette.accentSoft,
-                            }
-                          : {
-                              borderColor: "rgba(255,255,255,0.2)",
-                              backgroundColor: "rgba(255,255,255,0.72)",
-                            }
-                      }
-                    >
-                      <View className="items-center">
-                        <View
-                          className="h-11 w-11 items-center justify-center rounded-full"
-                          style={{ backgroundColor: themePalette.surface }}
-                        >
-                          <theme.IconComponent size={20} color={themePalette.accentStrong} />
-                        </View>
-                        <Text
-                          className="mt-2 text-center text-sm font-body-bold text-foreground"
-                          maxFontSizeMultiplier={1.3}
-                        >
-                          {theme.name}
-                        </Text>
-                        <View
-                          className="mt-1 rounded-full px-2 py-0.5"
-                          style={{ backgroundColor: "rgba(255,255,255,0.74)" }}
-                        >
-                          <Text
-                            className="text-xs font-body-semibold uppercase"
-                            style={{ color: themePalette.accentText }}
-                            numberOfLines={1}
-                            maxFontSizeMultiplier={1.2}
-                          >
-                            {theme.badge}
-                          </Text>
-                        </View>
-                        <ThemePreview themeId={theme.id} />
-                      </View>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-
             <View className="gap-3">
               <Label>Hintergrund</Label>
               <SkinPicker
@@ -495,7 +374,7 @@ export function ChildSetup({ onNext, formData }: ChildSetupProps) {
                   {childName.trim() || "Dein Kind"}
                 </Text>
                 <Text className="text-sm font-body" style={{ color: palette.accentText }}>
-                  {selectedAgeGroup} • {themes.find((theme) => theme.id === selectedTheme)?.name}
+                  {selectedAgeGroup}
                 </Text>
               </View>
             </View>

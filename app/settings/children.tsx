@@ -55,12 +55,6 @@ import { getThemePalette, semanticColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { AgeGroup, AvatarValue, BackgroundSkinId, Child, ChildTheme } from "@/lib/types";
 
-const THEME_OPTIONS: { value: ChildTheme; label: string; iconName: string }[] = [
-  { value: "sterne", label: "Sterne", iconName: "star" },
-  { value: "tiere", label: "Tiere", iconName: "paw-print" },
-  { value: "galaxy", label: "Galaxy", iconName: "rocket" },
-];
-
 const AGE_GROUP_OPTIONS: { value: AgeGroup; label: string }[] = [
   { value: "3-5", label: "3-5" },
   { value: "6-8", label: "6-8" },
@@ -169,12 +163,6 @@ export default function ChildrenSettings() {
 
     return () => clearTimeout(timeout);
   }, [showAddForm]);
-
-  function getThemeLabel(theme: Child["theme"]) {
-    if (theme === "tiere") return "Tiere";
-    if (theme === "galaxy") return "Galaxy";
-    return "Sterne";
-  }
 
   function toggleExpanded(childId: string) {
     setExpandedChildId((prev) => (prev === childId ? null : childId));
@@ -341,11 +329,6 @@ export default function ChildrenSettings() {
     }
   }
 
-  async function selectTheme(childId: string, theme: ChildTheme) {
-    await updateChild(childId, { theme });
-    toast({ title: "Theme aktualisiert" });
-  }
-
   async function selectAgeGroup(childId: string, ageGroup: AgeGroup) {
     await updateChild(childId, { ageGroup });
     toast({ title: "Altersgruppe aktualisiert" });
@@ -449,18 +432,6 @@ export default function ChildrenSettings() {
                   {child.name}
                 </Text>
                 <View className="mt-1 flex-row flex-wrap items-center gap-2">
-                  <View
-                    className="rounded-full px-2.5 py-1"
-                    style={{ backgroundColor: "rgba(255,255,255,0.85)" }}
-                  >
-                    <Text
-                      className="text-xs font-body-semibold uppercase tracking-[0.6px]"
-                      style={{ color: childPalette.accentText }}
-                      maxFontSizeMultiplier={1.3}
-                    >
-                      {getThemeLabel(child.theme)}
-                    </Text>
-                  </View>
                   {child.ageGroup ? (
                     <View
                       className="rounded-full px-2.5 py-1"
@@ -719,48 +690,6 @@ export default function ChildrenSettings() {
                       </Text>
                     </View>
 
-                    <Text
-                      className="text-xs font-body-semibold uppercase tracking-[0.6px] text-muted-foreground"
-                      maxFontSizeMultiplier={1.3}
-                    >
-                      Theme
-                    </Text>
-                    <View className="mt-2 flex-row flex-wrap gap-2">
-                      {THEME_OPTIONS.map((option) => {
-                        const optionPalette = getThemePalette(option.value);
-                        const isActive = child.theme === option.value;
-                        const OptionIcon = getIcon(option.iconName);
-
-                        return (
-                          <PressableScale
-                            key={option.value}
-                            onPress={() => selectTheme(child.id, option.value)}
-                            className="min-h-11 flex-row items-center gap-2 rounded-tile border px-3 py-2"
-                            accessibilityRole="button"
-                            accessibilityState={{ selected: isActive }}
-                            accessibilityLabel={`${option.label} Theme auswählen`}
-                            style={{
-                              backgroundColor: isActive ? optionPalette.heroSurface : "rgba(255,255,255,0.76)",
-                              borderColor: isActive ? optionPalette.accent : childPalette.accentBorder,
-                            }}
-                          >
-                            <OptionIcon
-                              size={16}
-                              color={isActive ? optionPalette.accentText : semanticColors.foreground}
-                            />
-                            <Text
-                              className="text-sm font-body-semibold"
-                              style={{
-                                color: isActive ? optionPalette.accentText : semanticColors.foreground,
-                              }}
-                              maxFontSizeMultiplier={1.3}
-                            >
-                              {option.label}
-                            </Text>
-                          </PressableScale>
-                        );
-                      })}
-                    </View>
 
                     <Text
                       className="mt-4 text-xs font-body-semibold uppercase tracking-[0.6px] text-muted-foreground"
@@ -1278,7 +1207,7 @@ export default function ChildrenSettings() {
                       style={{ color: newChildPalette.accentText }}
                       maxFontSizeMultiplier={1.3}
                     >
-                      {getThemeLabel(newChildTheme)} · {newChildAgeGroup}
+                      {newChildAgeGroup}
                     </Text>
                   </View>
                 </View>
@@ -1304,52 +1233,6 @@ export default function ChildrenSettings() {
                     returnKeyType="done"
                   />
                 </Pressable>
-              </View>
-
-              <View>
-                <Text
-                  className="text-sm font-body-semibold text-muted-foreground mb-2"
-                  accessibilityRole="header"
-                  maxFontSizeMultiplier={1.3}
-                >
-                  Theme
-                </Text>
-                <View className="flex-row flex-wrap gap-2">
-                      {THEME_OPTIONS.map((option) => {
-                        const optionPalette = getThemePalette(option.value);
-                        const isActive = newChildTheme === option.value;
-                        const OptionIcon = getIcon(option.iconName);
-
-                        return (
-                          <PressableScale
-                            key={option.value}
-                            onPress={() => setNewChildTheme(option.value)}
-                            className="min-h-11 flex-row items-center gap-2 rounded-tile border px-3 py-2"
-                            accessibilityRole="button"
-                            accessibilityState={{ selected: isActive }}
-                            accessibilityLabel={`${option.label} Theme auswählen`}
-                            style={{
-                              backgroundColor: isActive ? optionPalette.heroSurface : "rgba(255,255,255,0.76)",
-                              borderColor: isActive ? optionPalette.accent : semanticColors.border,
-                            }}
-                          >
-                            <OptionIcon
-                              size={16}
-                              color={isActive ? optionPalette.accentText : semanticColors.foreground}
-                            />
-                            <Text
-                              className="text-sm font-body-semibold"
-                              style={{
-                                color: isActive ? optionPalette.accentText : semanticColors.foreground,
-                              }}
-                              maxFontSizeMultiplier={1.3}
-                            >
-                              {option.label}
-                            </Text>
-                          </PressableScale>
-                    );
-                  })}
-                </View>
               </View>
 
               <View>
