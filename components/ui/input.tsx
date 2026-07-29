@@ -23,7 +23,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
       maxFontSizeMultiplier={1.3}
       style={[
         {
-          fontFamily: "Poppins_400Regular",
+          fontFamily: "Inter_400Regular",
           fontSize: 16,
           color: semanticColors.foreground,
           letterSpacing: 0,

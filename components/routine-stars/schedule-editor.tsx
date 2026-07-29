@@ -407,7 +407,7 @@ export function ScheduleEditor({
               accessibilityLabel="Eigene Erinnerungsnachricht"
               className="min-h-12 rounded-tile border border-input bg-card px-4 py-3"
               style={{
-                fontFamily: "Poppins_400Regular",
+                fontFamily: "Inter_400Regular",
                 fontSize: 16,
                 lineHeight: 20,
                 color: semanticColors.foreground,

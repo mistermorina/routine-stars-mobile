@@ -80,8 +80,9 @@ No `shadow-lg`/`shadow-md` utilities, no ad-hoc shadow objects, no real blur.
 
 ### 1.4 Type scale
 
-Poppins only: `font-body` (400) · `font-body-semibold` (600) ·
-`font-body-bold` = `font-headline` (700).
+Instrument Serif: `font-headline` (400) for headings.
+Inter: `font-body` (400) · `font-body-semibold` (600) · `font-body-bold` (700)
+for body copy and UI labels.
 
 | Class | px | Use |
 |---|---|---|

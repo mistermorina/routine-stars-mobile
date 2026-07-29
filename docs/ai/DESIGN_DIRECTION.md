@@ -24,7 +24,7 @@ den Build. Der eingefrorene Alt-Bestand an Hex-Werten steht als Schuldenposten i
   Weißraum, dünne Progress-Elemente, keine Maskottchen. Seriös, nicht steril.
 
 ## Layout-Sprache Kind-Screens (aus Mockups abgeleitet)
-1. **Screen-Header:** große Headline (`text-2xl`–`text-3xl`, 24–30px Poppins Bold) +
+1. **Screen-Header:** große Headline (`text-2xl`–`text-3xl`, 24–30px Instrument Serif) +
    einzeilige Subline mit ✨; rechts Stern-Pill (Zähler). KEIN Mail/Inbox-Icon (Feature existiert nicht).
 2. **Segmented Chips** unter dem Header (z. B. Heute/Morgen/Abend/Alle bzw.
    Verfügbar/Freigeschaltet): Pill-Leiste auf Karte, aktives Segment weiß mit Schatten + Akzenttext.
@@ -88,7 +88,8 @@ bewusste Ausnahmen (Hero-Blobs ab 28px), keine Nachlässigkeit.
 - 4-pt-Grid. **Screen-Padding ist `px-4` / `mx-4`** (76× im Code vs. 12× `px-5`) —
   `px-5` ist Altbestand, nicht kopieren. Karten-Innenabstand `p-4`, großzügige Hero-Karten `p-5`.
 - Kartenabstand `gap-3` (kompakt) / `gap-4` (Sektionen).
-- Type-Scale (Poppins, `font-body` 400 · `font-body-semibold` 600 · `font-body-bold`/`font-headline` 700):
+- Type-Scale (Instrument Serif `font-headline` 400 für Überschriften; Inter
+  `font-body` 400 · `font-body-semibold` 600 · `font-body-bold` 700 für Fließtext und UI):
 
 | Klasse | px | Verwendung |
 |--------|----|------------|

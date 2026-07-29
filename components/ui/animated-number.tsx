@@ -33,7 +33,7 @@ type OdometerTextProps = TextInputProps & { text?: string };
 export interface AnimatedNumberProps {
   /** Target value. Changes count up/down from the previous value. */
   value: number;
-  /** Poppins, size and color classes, e.g. "font-body-bold text-base text-foreground". */
+  /** Inter weight, size and color classes, e.g. "font-body-bold text-base text-foreground". */
   textClassName?: string;
   /** Caps Dynamic Type growth so pills/badges keep their layout. */
   maxFontSizeMultiplier?: number;

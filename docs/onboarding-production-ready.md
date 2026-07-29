@@ -42,7 +42,9 @@ Routine Stars startet mit einer warmen 7-Screen-Erklärung vor dem Login. Eltern
 
 ## Designentscheidungen
 
-- Bestehende Designsprache bleibt erhalten: Poppins, warme helle Flächen, runde Formen, weiche Theme-Farben und vorhandene Routine-Stars-Assets.
+- Bestehende Designsprache bleibt erhalten: Instrument Serif für Überschriften,
+  Inter für Fließtext und UI, warme helle Flächen, runde Formen, weiche
+  Theme-Farben und vorhandene Routine-Stars-Assets.
 - Der Welcome-Flow ist ruhig und fokussiert: ein Hauptgedanke pro Screen, zwei kurze Highlights, ein klarer Primary CTA.
 - Kleine Screens zeigen weniger Prinzip-Chips, größere mobile Screens zeigen alle fünf Kernprinzipien.
 - Setup-Screens erklären direkt den Zweck des jeweiligen Schritts, ohne den eigentlichen Formularfluss zu blockieren.

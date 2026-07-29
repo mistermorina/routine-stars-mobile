@@ -58,7 +58,7 @@ const textVariants = {
   link: "text-primary font-body-semibold text-base underline",
 } as const;
 
-// Roomier line height centers Poppins glyphs inside the fixed-height button
+// Roomier line height centers Inter glyphs inside the fixed-height button
 // (tight line boxes make the ascender-heavy font sit visibly high).
 const textSizes = {
   default: "text-base leading-[22px]",

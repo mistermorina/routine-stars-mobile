@@ -45,7 +45,7 @@ export default function SettingsLayout() {
         headerStyle: { backgroundColor: chromeFill },
         headerTintColor: semanticColors.foreground,
         headerTitleStyle: {
-          fontFamily: "Poppins_600SemiBold",
+          fontFamily: "InstrumentSerif_400Regular",
           fontSize: 17,
         },
         headerShadowVisible: false,
@@ -64,7 +64,7 @@ export default function SettingsLayout() {
               maxFontSizeMultiplier={1.3}
               style={{
                 color: semanticColors.foreground,
-                fontFamily: "Poppins_600SemiBold",
+                fontFamily: "Inter_600SemiBold",
                 fontSize: 14,
               }}
             >

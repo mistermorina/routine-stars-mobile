@@ -34,10 +34,10 @@ export interface ConfirmDialogProps {
 /**
  * Branded replacement for Alert.alert on confirmations.
  *
- * Never use Alert.alert in this app: it ignores Poppins, the palette and the
- * radius scale, and it cannot be screenshotted for the store. Backdrop tap and
- * the hardware back button both resolve to `onCancel`, so the safe choice is
- * always the easy one.
+ * Never use Alert.alert in this app: it ignores the bundled fonts, the palette
+ * and the radius scale, and it cannot be screenshotted for the store. Backdrop
+ * tap and the hardware back button both resolve to `onCancel`, so the safe
+ * choice is always the easy one.
  */
 export function ConfirmDialog({
   visible,

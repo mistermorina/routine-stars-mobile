@@ -1,4 +1,8 @@
 import React, { useCallback, useEffect } from "react";
+import { Inter_400Regular } from "@expo-google-fonts/inter/400Regular";
+import { Inter_600SemiBold } from "@expo-google-fonts/inter/600SemiBold";
+import { Inter_700Bold } from "@expo-google-fonts/inter/700Bold";
+import { InstrumentSerif_400Regular } from "@expo-google-fonts/instrument-serif/400Regular";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
@@ -24,9 +28,10 @@ void SplashScreen.preventAutoHideAsync().catch(() => {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    Poppins_400Regular: require("../assets/fonts/Poppins-Regular.ttf"),
-    Poppins_600SemiBold: require("../assets/fonts/Poppins-SemiBold.ttf"),
-    Poppins_700Bold: require("../assets/fonts/Poppins-Bold.ttf"),
+    InstrumentSerif_400Regular,
+    Inter_400Regular,
+    Inter_600SemiBold,
+    Inter_700Bold,
   });
 
   // A font that fails to load must not strand the user on a splash screen —

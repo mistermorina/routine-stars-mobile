@@ -188,7 +188,7 @@ Cross-Check-Abschnitt in `outputs/RELEASE_CHECKLIST.md`.
 - Ändert sich ein Text in `lib/legal-content.ts`, denselben Text hier nachziehen
   und `legalLastUpdated` **sowie** die vier `Stand: …`-Angaben in den HTML-Dateien
   aktualisieren (`index.html`, `privacy.html` × 2, `terms.html`, `imprint.html`).
-- Die Seiten laden keine Schrift nach: `font-family: Poppins, system-ui, …`. Wer
-  Poppins lokal installiert hat, sieht Poppins, alle anderen die System-Schrift.
+- Die Seiten laden keine Schrift nach: `font-family: Inter, system-ui, …`. Wer
+  Inter lokal installiert hat, sieht Inter, alle anderen die System-Schrift.
   Das ist Absicht — kein Google-Fonts-Request, damit die Datenschutz-Seite nicht
   selbst Daten an Dritte sendet.

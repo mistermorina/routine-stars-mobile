@@ -99,8 +99,7 @@ mobile/
 │   ├── auth-context.tsx          # Eltern-Gate (In-Memory, re-lockt beim Neustart)
 │   └── star-flight-target.tsx    # Landepunkt für die Stern-Flug-Animation
 ├── scripts/                      # Guardrails + Generatoren (siehe „Befehle")
-└── assets/
-    └── fonts/                    # Poppins (400, 600, 700)
+└── assets/                       # Bilder, Sticker und weitere App-Assets
 ```
 
 **Kein Login, kein Abo:** `app/(auth)/login.tsx` und `app/settings/billing.tsx`
@@ -130,7 +129,8 @@ Verbindlich: `docs/ai/DESIGN_DIRECTION.md` (das *Was*) und
 | Accent | `#245A74` (Deep Teal) | Sekundäre CTA, Links — **nicht** mehr Sky Blue |
 | Gold | `#FFD700` | Sterne (`semanticColors.gold`) |
 | Foreground | `#1a1a2e` | Text |
-| Font | Poppins 400/600/700 | Überall |
+| Font | Instrument Serif 400 | Überschriften (`font-headline`) |
+| Font | Inter 400/600/700 | Fließtext und UI (`font-body*`) |
 
 Dazu Status-Token (`success`/`warning`/`destructive` je mit `soft`, `foreground`,
 `strong`) — Kontrastwerte stehen in `DESIGN_DIRECTION.md`.

@@ -14,10 +14,10 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ["Poppins_400Regular"],
-        "body-semibold": ["Poppins_600SemiBold"],
-        "body-bold": ["Poppins_700Bold"],
-        headline: ["Poppins_700Bold"],
+        body: ["Inter_400Regular"],
+        "body-semibold": ["Inter_600SemiBold"],
+        "body-bold": ["Inter_700Bold"],
+        headline: ["InstrumentSerif_400Regular"],
       },
       colors: {
         background: "#F8E9D7",
