@@ -130,7 +130,7 @@ export const semanticColors = {
   card: "#FFFFFF",
   cardForeground: "#1a1a2e",
   muted: "#F5F5F5",
-  mutedForeground: "#737373",
+  mutedForeground: "#4A4A4A",
   border: "#E5E5E5",
   primary: "#F3E5AB",
   primaryForeground: "#1a1a2e",

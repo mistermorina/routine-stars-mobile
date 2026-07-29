@@ -1,6 +1,7 @@
 import React from "react";
 import {
   Pressable,
+  StyleSheet,
   Text,
   type GestureResponderEvent,
   type PressableProps,
@@ -17,8 +18,8 @@ import { triggerFeedback } from "@/lib/feedback";
 import { springs } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useDesignMode } from "@/contexts/design-mode-context";
-import { getAccentTokens } from "@/lib/design-mode";
-import { getThemePalette } from "@/lib/theme";
+import { getCtaGradient } from "@/lib/gradients";
+import { LinearGradient } from "expo-linear-gradient";
 
 /**
  * The Pressable itself is animated instead of being wrapped in an extra view:
@@ -96,8 +97,8 @@ export function Button({
 }: ButtonProps) {
   const scale = useSharedValue(1);
   const { designMode } = useDesignMode();
-  const accents = getAccentTokens(designMode, getThemePalette(null));
   const isGlassPrimary = designMode === "glass" && variant === "default";
+  const ctaGradient = getCtaGradient();
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -123,22 +124,43 @@ export function Button({
     onPressOut?.(event);
   };
 
+  // Call sites pass their own fill (style={{ backgroundColor: palette.button }}).
+  // In glass the surface belongs to the mode, so that fill is discarded — the
+  // same rule card.tsx already applies. Without this the caller's colour lands
+  // on top of the gradient and the token has no effect.
+  const { backgroundColor: _callerFill, borderColor: _callerBorder, ...callerStyle } =
+    (StyleSheet.flatten(style) ?? {}) as ViewStyle;
+  const resolvedStyle = isGlassPrimary ? callerStyle : style;
+
   return (
     <AnimatedPressable
       {...props}
       className={cn(
         "flex-row items-center justify-center rounded-lg",
-        // Glass mode paints the primary fill itself (azure), so the pastel
-        // class is dropped for that one variant.
-        isGlassPrimary ? "" : buttonVariants[variant],
+        // Glass paints the fill itself, so the pastel class is dropped and the
+        // gradient layer needs clipping to the button's radius.
+        isGlassPrimary ? "overflow-hidden" : buttonVariants[variant],
         buttonSizes[size],
         className
       )}
       disabled={disabled}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={[isGlassPrimary ? { backgroundColor: accents.accent } : null, style, animatedStyle]}
+      style={[
+        isGlassPrimary ? { backgroundColor: "transparent" } : null,
+        resolvedStyle,
+        animatedStyle,
+      ]}
     >
+      {isGlassPrimary ? (
+        <LinearGradient
+          colors={[ctaGradient.from, ctaGradient.to]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          pointerEvents="none"
+          style={StyleSheet.absoluteFillObject}
+        />
+      ) : null}
       {typeof children === "string" ? (
         <Text
           className={cn(

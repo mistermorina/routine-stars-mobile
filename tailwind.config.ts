@@ -36,7 +36,11 @@ export default {
         },
         muted: {
           DEFAULT: "#F5F5F5",
-          foreground: "#737373",
+          // Dark enough to survive a saturated gradient underneath: 8.86:1 on
+          // white, and still above AA over every screen ramp's content band.
+          // The old #737373 was 4.74:1 on white and only 3.90:1 on the glass
+          // ramp, i.e. already failing in the lower half of every screen.
+          foreground: "#4A4A4A",
         },
         accent: {
           DEFAULT: "#245A74",

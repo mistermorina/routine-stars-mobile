@@ -16,7 +16,8 @@ import { getBackgroundSkinOption } from "@/lib/background-skins";
 import { getThemePalette } from "@/lib/theme";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useDesignMode } from "@/contexts/design-mode-context";
-import { getScreenGradient } from "@/lib/design-mode";
+import { DEFAULT_HUE, getScreenRamp } from "@/lib/gradients";
+import { RadialBlob } from "@/components/ui/radial-blob";
 import type { BackgroundSkinId, ChildTheme } from "@/lib/types";
 
 interface FloatingShapeProps {
@@ -96,7 +97,10 @@ export function ThemedScreenBackground({
   const palette = getThemePalette(theme);
   const { designMode } = useDesignMode();
   const isGlass = designMode === "glass";
-  const screenGradient = getScreenGradient(designMode, palette);
+  // A skin carries the look on its own, so the ramp stays neutral underneath
+  // it; otherwise the screen wears the app's brand hue.
+  const rampHue = DEFAULT_HUE;
+  const screenRamp = getScreenRamp(rampHue);
   const skin = getBackgroundSkinOption(backgroundSkin);
   const hasSkin = skin.id !== "none" && Boolean(skin.image);
 
@@ -191,14 +195,25 @@ export function ThemedScreenBackground({
     <View className={cn("flex-1 overflow-hidden", className)} style={{ backgroundColor: palette.backgroundBase }}>
       {isGlass ? (
         // Frosted panes need something to refract; a flat fill gives them
-        // nothing, so glass mode replaces the tinted blobs with a real ramp.
-        <LinearGradient
-          colors={screenGradient.colors}
-          start={{ x: 0.1, y: 0 }}
-          end={{ x: 0.9, y: 1 }}
-          pointerEvents="none"
-          style={StyleSheet.absoluteFillObject}
-        />
+        // nothing. The ramp is vertical and holds white through the top
+        // quarter, so headlines and the header always sit on a clean field
+        // while colour builds toward the foot — the band behind the floating
+        // tab bar. Content never sits on the strongest part.
+        <>
+          <LinearGradient
+            colors={screenRamp.colors}
+            locations={screenRamp.locations}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            pointerEvents="none"
+            style={StyleSheet.absoluteFillObject}
+          />
+          {/* An illustrated skin brings its own art and its own measured
+              legibility (scripts/check-background-skins.mjs samples it against
+              a flat pale base). Adding a bloom underneath would invalidate
+              that measurement, so the two never render together. */}
+          {hasSkin ? null : <RadialBlob hue={rampHue} />}
+        </>
       ) : (
         <>
           <View

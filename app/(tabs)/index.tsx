@@ -30,6 +30,8 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { PressableScale } from "@/components/ui/pressable-scale";
+import { GradientFill } from "@/components/ui/gradient-fill";
+import { useDesignMode } from "@/contexts/design-mode-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemedScreenBackground } from "@/components/ui/themed-screen-background";
 import { toast } from "@/hooks/use-toast";
@@ -140,6 +142,8 @@ export default function DashboardScreen() {
   const [starFlights, setStarFlights] = useState<StarFlightRequest[]>([]);
   const starFlightSeq = useRef(0);
   const { getTarget } = useStarFlightTarget();
+  const { designMode } = useDesignMode();
+  const isGlassMode = designMode === "glass";
   const scrollRef = useRef<ScrollView>(null);
   const routineListY = useRef(0);
   const routinePositions = useRef<Record<string, number>>({});
@@ -714,9 +718,10 @@ export default function DashboardScreen() {
                       accessibilityRole="button"
                       accessibilityLabel={allDone ? "Belohnungen ansehen" : "Routine starten"}
                       containerClassName="mt-4 self-start"
-                      className="flex-row items-center gap-2 rounded-full px-5 py-3"
-                      style={{ backgroundColor: palette.button }}
+                      className="flex-row items-center gap-2 overflow-hidden rounded-full px-5 py-3"
+                      style={{ backgroundColor: isGlassMode ? "transparent" : palette.button }}
                     >
+                      <GradientFill />
                       <Text
                         className="text-base font-body-semibold leading-[22px] text-white"
                         maxFontSizeMultiplier={1.3}

@@ -1,5 +1,6 @@
 import type { ThemePalette } from "@/lib/theme";
 import { shadowPresets } from "@/lib/theme";
+import { getCtaGradient } from "@/lib/gradients";
 
 /**
  * Two visual languages, switchable at runtime so both can be judged against the
@@ -113,9 +114,16 @@ export interface AccentTokens {
   iconColor: string;
 }
 
-/** Azure, chosen to sit with the cool gradients rather than fight them. */
-const GLASS_AZURE = "#1E7FBF";
-const GLASS_AZURE_DEEP = "#125C8F";
+/**
+ * Azure, chosen to sit with the cool gradients rather than fight them.
+ *
+ * `accent` is the CTA gradient's lighter stop, not a free-standing colour: it
+ * carries white label text and therefore has to clear 4.5:1 on its own. The
+ * previous value (#1E7FBF) measured 4.34:1 and only escaped notice because
+ * nearly every call site overrode the fill — see the note in button.tsx.
+ */
+const GLASS_AZURE = getCtaGradient("blue").from;
+const GLASS_AZURE_DEEP = getCtaGradient("blue").to;
 
 export function getAccentTokens(mode: DesignMode, palette: ThemePalette): AccentTokens {
   if (mode === "glass") {
