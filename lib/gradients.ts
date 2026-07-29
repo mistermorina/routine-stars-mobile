@@ -164,9 +164,16 @@ export function getCardGradient(hue: HueId = DEFAULT_HUE): GradientPair {
   return { from: mid, to: foot };
 }
 
-/** Text and icon colour on a card wash: the CTA's deep stop, ~8:1 on the wash. */
-export function getOnCardColor(hue: HueId = DEFAULT_HUE): string {
-  return CTA_PAIRS[hue].to;
+/**
+ * Text colour on a card wash.
+ *
+ * Deliberately the plain foreground, not a tinted shade of the hue: the wash
+ * is a light tint, so a mid-dark hue on it lands around 3.5:1 (the CTA's deep
+ * stop measures 3.55:1 on blue). Near-black clears 7:1 on every hue's wash.
+ * scripts/check-gradients.mjs asserts this.
+ */
+export function getOnCardColor(): string {
+  return "#1a1a2e";
 }
 
 /** Flat colour when a gradient is not available (soft mode, small chips). */

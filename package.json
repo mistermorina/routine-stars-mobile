@@ -13,6 +13,7 @@
     "test:ui-quality": "node scripts/check-ui-quality.mjs",
     "test:contrast-smoke": "node scripts/check-color-contrast.mjs",
     "test:background-skins": "node scripts/check-background-skins.mjs",
+    "test:gradients": "node scripts/check-gradients.mjs",
     "test:smoke": "node scripts/check-task-timer-modal-order.mjs",
     "test:progress-smoke": "node scripts/check-local-day-progress.mjs",
     "test:onboarding": "node scripts/check-onboarding-flow.mjs",
