@@ -13,7 +13,9 @@ import { shadowPresets } from "@/lib/theme";
  */
 export type DesignMode = "soft" | "glass";
 
-export const DEFAULT_DESIGN_MODE: DesignMode = "soft";
+// Glass is the design being built now; soft stays reachable through the
+// toggle for comparison, but a fresh install should show the current look.
+export const DEFAULT_DESIGN_MODE: DesignMode = "glass";
 export const DESIGN_MODES: DesignMode[] = ["soft", "glass"];
 
 export function normalizeDesignMode(value?: string | null): DesignMode {
@@ -216,3 +218,20 @@ export function getScreenGradient(
 
 /** Pale azure — the same family as the accent, at backdrop strength. */
 const GLASS_GRADIENT_END = "#DCEBF7";
+
+/**
+ * Fill for surfaces that sit outside any themed screen: navigator scenes and
+ * the small tiles behind avatars. Soft mode keeps the warm brand cream; glass
+ * has no warm tones at all, so it takes the cool end of its own ramp.
+ */
+export function getNeutralFill(mode: DesignMode, softFill: string): string {
+  return mode === "glass" ? GLASS_GRADIENT_END : softFill;
+}
+
+/**
+ * Tile behind an avatar illustration. Pale azure in both modes: the artwork
+ * carries its own warm tones, so a cream tile muddied it and read as apricot.
+ */
+export function getAvatarTileFill(): string {
+  return "#D9EAF8";
+}

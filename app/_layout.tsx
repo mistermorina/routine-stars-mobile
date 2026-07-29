@@ -10,7 +10,8 @@ import { ToastHost } from "@/components/ui/toast";
 import { AuthProvider } from "@/contexts/auth-context";
 import { ChildrenProvider } from "@/contexts/children-context";
 import { StarFlightTargetProvider } from "@/contexts/star-flight-target";
-import { DesignModeProvider } from "@/contexts/design-mode-context";
+import { DesignModeProvider, useDesignMode } from "@/contexts/design-mode-context";
+import { getNeutralFill } from "@/lib/design-mode";
 import { initFeedback } from "@/lib/sound-adapter";
 import { semanticColors } from "@/lib/theme";
 import "../global.css";
@@ -63,13 +64,7 @@ export default function RootLayout() {
           <AuthProvider>
             <ChildrenProvider>
               <StarFlightTargetProvider>
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  contentStyle: { backgroundColor: semanticColors.background },
-                  animation: "slide_from_right",
-                }}
-              >
+              <AppStack>
                 <Stack.Screen name="index" />
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(tabs)" />
@@ -82,7 +77,7 @@ export default function RootLayout() {
                   }}
                 />
                 <Stack.Screen name="settings" />
-              </Stack>
+              </AppStack>
                 <ToastHost />
               </StarFlightTargetProvider>
             </ChildrenProvider>
@@ -90,5 +85,27 @@ export default function RootLayout() {
         </ErrorBoundary>
       </DesignModeProvider>
     </GestureHandlerRootView>
+  );
+}
+
+/**
+ * Scene background for the whole app. Lives in its own component because
+ * RootLayout renders the provider and therefore cannot read the mode itself.
+ */
+function AppStack({ children }: { children: React.ReactNode }) {
+  const { designMode } = useDesignMode();
+
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: {
+          backgroundColor: getNeutralFill(designMode, semanticColors.background),
+        },
+        animation: "slide_from_right",
+      }}
+    >
+      {children}
+    </Stack>
   );
 }
