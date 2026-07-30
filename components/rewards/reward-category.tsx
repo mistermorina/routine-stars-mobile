@@ -71,7 +71,9 @@ export function RewardCategorySection({
           >
             <CategoryIcon size={20} color={palette.accentStrong} />
           </View>
-          <Text className="text-base font-headline text-foreground">{category.label}</Text>
+          <Text className="text-[21px] font-headline leading-7 text-foreground">
+            {category.label}
+          </Text>
           {addedCount > 0 && (
             <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: palette.button }}>
               <Text className="text-xs font-body-semibold text-white" maxFontSizeMultiplier={1.3}>

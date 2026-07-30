@@ -6,14 +6,14 @@ Native mobile Version von **Routine Stars** — eine kinderfreundliche iOS-App f
 
 - **App Name**: Routine Stars
 - **Bundle ID**: `com.routinestars.app`
-- **Expo SDK**: 54
-- **React Native**: 0.81.5
+- **Expo SDK**: 57
+- **React Native**: 0.86.2
 
 ## Tech-Stack
 
 | Bereich | Technologie |
 |---------|-------------|
-| Framework | Expo SDK 54 + Expo Router (file-based routing) |
+| Framework | Expo SDK 57 + Expo Router (file-based routing) |
 | Styling | NativeWind v4 (Tailwind CSS für RN) |
 | Animations | react-native-reanimated v4 |
 | Icons | lucide-react-native + Icon-Registry (`lib/icons.tsx`) |

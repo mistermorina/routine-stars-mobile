@@ -155,32 +155,26 @@ export default function RewardsSettingsScreen() {
       <ScrollView className="flex-1" contentContainerClassName="p-4 pb-10">
         <Card className="overflow-hidden rounded-[30px] border p-0">
           <View className="rounded-[30px] bg-secondary/70 px-4 py-5">
-            <View className="flex-row items-start justify-between">
-              <View className="mr-4 flex-1">
-                <Text
-                  className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground"
-                  maxFontSizeMultiplier={1.3}
-                >
-                  Familienbelohnungen
-                </Text>
-                <Text className="mt-2 text-[28px] font-headline text-foreground">
-                  Belohnungen wirklich pflegen
-                </Text>
-                <Text className="mt-2 text-base font-body leading-6 text-muted-foreground">
-                  Hier legst du fest, welche Wünsche erreichbar sind und wie viele Sterne
-                  ein kleiner oder grosser Moment kosten soll.
-                </Text>
-              </View>
-              <View className="items-end gap-2">
-                <View className="rounded-full bg-white/85 px-3 py-1.5">
-                  <Text
-                    className="text-xs font-body-semibold uppercase tracking-[0.7px] text-foreground"
-                    maxFontSizeMultiplier={1.3}
-                  >
-                    {isLoading ? "…" : `${rewards.length} Belohnungen`}
-                  </Text>
-                </View>
-              </View>
+            <Text
+              className="text-xs font-body-semibold uppercase tracking-[0.8px] text-muted-foreground"
+              maxFontSizeMultiplier={1.3}
+            >
+              Familienbelohnungen
+            </Text>
+            <Text className="mt-2 text-[28px] font-headline leading-[34px] text-foreground">
+              Belohnungen wirklich pflegen
+            </Text>
+            <Text className="mt-2 text-base font-body leading-6 text-muted-foreground">
+              Hier legst du fest, welche Wünsche erreichbar sind und wie viele Sterne ein
+              kleiner oder grosser Moment kosten soll.
+            </Text>
+            <View className="mt-4 self-start rounded-full bg-white/85 px-3 py-1.5">
+              <Text
+                className="text-xs font-body-semibold uppercase tracking-[0.7px] text-foreground"
+                maxFontSizeMultiplier={1.3}
+              >
+                {isLoading ? "…" : `${rewards.length} Belohnungen`}
+              </Text>
             </View>
           </View>
         </Card>

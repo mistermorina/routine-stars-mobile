@@ -32,8 +32,14 @@
   dynamische Werte wie Farben/Animationswerte). `cn()` aus `lib/utils.ts` für
   bedingte Klassen.
 - **Neue Dependencies** mit `npx expo install <paket>` (nicht blank `npm i`),
-  damit die Versionen zu Expo SDK 54 passen. `npx expo install --fix` korrigiert
-  Versionskonflikte.
+  damit die Versionen zu Expo SDK 57 passen. `npx expo install --fix` korrigiert
+  Versionskonflikte — **hängt dabei aber Config-Plugins an `app.json` an**. Nach
+  jedem `expo install` prüfen, ob die neuen `plugins`-Einträge wirklich ein
+  Plugin mitbringen (`node_modules/<paket>/app.plugin.js` oder `plugin/build/`);
+  ein Eintrag ohne Plugin-Datei verhindert den App-Start komplett.
+- **`newArchEnabled` gehört nicht mehr in `app.json`.** Seit SDK 57 ist die neue
+  Architektur Pflicht, der Schlüssel ist aus dem Schema gefallen und lässt
+  `expo-doctor` fehlschlagen.
 - **Keine rohen Hex-Werte in `app/` oder `components/`.** Farbquellen in dieser
   Reihenfolge: Tailwind-Token → `getThemePalette(child.theme)` → `semanticColors`
   aus `lib/theme.ts`. `npm run test:ui-quality` bricht bei neuen Hex-Literalen ab;
